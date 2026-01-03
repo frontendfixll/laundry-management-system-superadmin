@@ -19,6 +19,13 @@ interface DashboardOverview {
       customers: number
     }
   }
+  tenancies?: {
+    total: number
+    active: number
+    new: number
+    platformRevenue: number
+    byPlan: Record<string, number>
+  }
   recentOrders: any[]
   topBranches: any[]
   revenue: {

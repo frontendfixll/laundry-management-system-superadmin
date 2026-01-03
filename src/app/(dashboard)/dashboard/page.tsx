@@ -254,6 +254,56 @@ export default function SuperAdminDashboard() {
         <StatsCards data={dashboardData.overview} loading={loading} />
       )}
 
+      {/* Tenancy Stats */}
+      {dashboardData?.tenancies && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Total Tenancies</p>
+                <p className="text-2xl font-bold text-gray-900">{dashboardData.tenancies.total}</p>
+              </div>
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-purple-600" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Active Tenancies</p>
+                <p className="text-2xl font-bold text-green-600">{dashboardData.tenancies.active}</p>
+              </div>
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">New This Period</p>
+                <p className="text-2xl font-bold text-blue-600">{dashboardData.tenancies.new}</p>
+              </div>
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Platform Revenue</p>
+                <p className="text-2xl font-bold text-purple-600">₹{(dashboardData.tenancies.platformRevenue || 0).toLocaleString()}</p>
+              </div>
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Shield className="w-5 h-5 text-purple-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Order Status Pie Chart */}

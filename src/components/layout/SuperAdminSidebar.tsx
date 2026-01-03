@@ -23,11 +23,17 @@ import {
   Truck,
   Package,
   Sparkles,
-  X
+  X,
+  Receipt,
+  PieChart
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'analytics' },
+  { name: 'Tenancies', href: '/tenancies', icon: Crown, permission: 'settings' },
+  { name: 'Tenancy Analytics', href: '/tenancy-analytics', icon: PieChart, permission: 'analytics' },
+  { name: 'Billing', href: '/billing', icon: Receipt, permission: 'finances' },
+  { name: 'Billing Plans', href: '/billing/plans', icon: Tag, permission: 'settings' },
   { name: 'Branches', href: '/branches', icon: Building2, permission: 'branches' },
   { name: 'Logistics Partners', href: '/logistics', icon: Truck, permission: 'branches' },
   { name: 'Admins', href: '/admins', icon: Shield, permission: 'users' },
