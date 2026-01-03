@@ -363,7 +363,12 @@ export default function TenanciesPage() {
                         {tenancy.owner?.email && <div className="text-muted-foreground text-xs">{tenancy.owner.email}</div>}
                       </div>
                     </TableCell>
-                    <TableCell>{format(new Date(tenancy.createdAt), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>
+                      {tenancy.createdAt 
+                        ? format(new Date(tenancy.createdAt), 'MMM d, yyyy')
+                        : 'N/A'
+                      }
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button 

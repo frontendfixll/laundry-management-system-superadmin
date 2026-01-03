@@ -121,12 +121,12 @@ export function useTenancies() {
       if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
 
       const response = await superAdminApi.get(`/tenancies?${queryParams.toString()}`);
-      if (response.data.success) {
-        setTenancies(response.data.data.tenancies);
-        setPagination(response.data.data.pagination);
+      if (response.success) {
+        setTenancies(response.data.tenancies || []);
+        setPagination(response.data.pagination || { current: 1, pages: 1, total: 0, limit: 20 });
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch tenancies');
+      setError(err.message || 'Failed to fetch tenancies');
     } finally {
       setLoading(false);
     }
@@ -135,8 +135,8 @@ export function useTenancies() {
   const fetchStats = useCallback(async () => {
     try {
       const response = await superAdminApi.get('/tenancies/stats');
-      if (response.data.success) {
-        setStats(response.data.data.stats);
+      if (response.success) {
+        setStats(response.data.stats);
       }
     } catch (err: any) {
       console.error('Failed to fetch tenancy stats:', err);
@@ -146,12 +146,12 @@ export function useTenancies() {
   const getTenancyById = useCallback(async (id: string): Promise<Tenancy | null> => {
     try {
       const response = await superAdminApi.get(`/tenancies/${id}`);
-      if (response.data.success) {
-        return response.data.data.tenancy;
+      if (response.success) {
+        return response.data.tenancy;
       }
       return null;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch tenancy');
+      setError(err.message || 'Failed to fetch tenancy');
       return null;
     }
   }, []);
@@ -161,18 +161,18 @@ export function useTenancies() {
     setError(null);
     try {
       const response = await superAdminApi.post('/tenancies', data);
-      if (response.data.success) {
+      if (response.success) {
         await fetchTenancies();
         await fetchStats();
         return {
           success: true,
-          tenancy: response.data.data.tenancy,
-          tempPassword: response.data.data.owner?.tempPassword
+          tenancy: response.data.tenancy,
+          tempPassword: response.data.owner?.tempPassword
         };
       }
-      return { success: false, message: response.data.message };
+      return { success: false, message: response.message };
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Failed to create tenancy';
+      const message = err.message || 'Failed to create tenancy';
       setError(message);
       return { success: false, message };
     } finally {
@@ -185,13 +185,13 @@ export function useTenancies() {
     setError(null);
     try {
       const response = await superAdminApi.put(`/tenancies/${id}`, data);
-      if (response.data.success) {
+      if (response.success) {
         await fetchTenancies();
         return true;
       }
       return false;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update tenancy');
+      setError(err.message || 'Failed to update tenancy');
       return false;
     } finally {
       setLoading(false);
@@ -203,14 +203,14 @@ export function useTenancies() {
     setError(null);
     try {
       const response = await superAdminApi.patch(`/tenancies/${id}/status`, { status });
-      if (response.data.success) {
+      if (response.success) {
         await fetchTenancies();
         await fetchStats();
         return true;
       }
       return false;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update status');
+      setError(err.message || 'Failed to update status');
       return false;
     } finally {
       setLoading(false);
@@ -220,9 +220,9 @@ export function useTenancies() {
   const updateBranding = useCallback(async (id: string, branding: Partial<Tenancy['branding']>): Promise<boolean> => {
     try {
       const response = await superAdminApi.patch(`/tenancies/${id}/branding`, { branding });
-      return response.data.success;
+      return response.success;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update branding');
+      setError(err.message || 'Failed to update branding');
       return false;
     }
   }, []);
@@ -230,13 +230,13 @@ export function useTenancies() {
   const updateSubscription = useCallback(async (id: string, subscription: Partial<Tenancy['subscription']>): Promise<boolean> => {
     try {
       const response = await superAdminApi.patch(`/tenancies/${id}/subscription`, { subscription });
-      if (response.data.success) {
+      if (response.success) {
         await fetchTenancies();
         return true;
       }
       return false;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update subscription');
+      setError(err.message || 'Failed to update subscription');
       return false;
     }
   }, [fetchTenancies]);
@@ -246,14 +246,14 @@ export function useTenancies() {
     setError(null);
     try {
       const response = await superAdminApi.delete(`/tenancies/${id}`);
-      if (response.data.success) {
+      if (response.success) {
         await fetchTenancies();
         await fetchStats();
         return true;
       }
       return false;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete tenancy');
+      setError(err.message || 'Failed to delete tenancy');
       return false;
     } finally {
       setLoading(false);
@@ -269,19 +269,19 @@ export function useTenancies() {
   }): Promise<{ success: boolean; message?: string }> => {
     try {
       const response = await superAdminApi.post('/invitations/invite', data);
-      if (response.data.success) {
+      if (response.success) {
         return { success: true, message: 'Invitation sent successfully' };
       }
-      return { success: false, message: response.data.message };
+      return { success: false, message: response.message };
     } catch (err: any) {
-      return { success: false, message: err.response?.data?.message || 'Failed to send invitation' };
+      return { success: false, message: err.message || 'Failed to send invitation' };
     }
   }, []);
 
   const getPendingInvitations = useCallback(async () => {
     try {
       const response = await superAdminApi.get('/invitations/pending');
-      return response.data.data || [];
+      return response.data || [];
     } catch (err: any) {
       console.error('Failed to fetch pending invitations:', err);
       return [];
@@ -291,9 +291,9 @@ export function useTenancies() {
   const resendInvitation = useCallback(async (userId: string): Promise<boolean> => {
     try {
       const response = await superAdminApi.post(`/invitations/${userId}/resend`);
-      return response.data.success;
+      return response.success;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to resend invitation');
+      setError(err.message || 'Failed to resend invitation');
       return false;
     }
   }, []);
@@ -301,9 +301,9 @@ export function useTenancies() {
   const cancelInvitation = useCallback(async (userId: string): Promise<boolean> => {
     try {
       const response = await superAdminApi.delete(`/invitations/${userId}`);
-      return response.data.success;
+      return response.success;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to cancel invitation');
+      setError(err.message || 'Failed to cancel invitation');
       return false;
     }
   }, []);
