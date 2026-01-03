@@ -1262,6 +1262,49 @@ class SuperAdminAPI {
     
     return this.handleResponse(response)
   }
+
+  // Generic HTTP methods for flexible API calls
+  async get(endpoint: string) {
+    const response = await fetch(`${API_BASE_URL}/superadmin${endpoint}`, {
+      headers: this.getAuthHeaders()
+    })
+    return this.handleResponse(response)
+  }
+
+  async post(endpoint: string, data?: any) {
+    const response = await fetch(`${API_BASE_URL}/superadmin${endpoint}`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: data ? JSON.stringify(data) : undefined
+    })
+    return this.handleResponse(response)
+  }
+
+  async put(endpoint: string, data?: any) {
+    const response = await fetch(`${API_BASE_URL}/superadmin${endpoint}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: data ? JSON.stringify(data) : undefined
+    })
+    return this.handleResponse(response)
+  }
+
+  async patch(endpoint: string, data?: any) {
+    const response = await fetch(`${API_BASE_URL}/superadmin${endpoint}`, {
+      method: 'PATCH',
+      headers: this.getAuthHeaders(),
+      body: data ? JSON.stringify(data) : undefined
+    })
+    return this.handleResponse(response)
+  }
+
+  async delete(endpoint: string) {
+    const response = await fetch(`${API_BASE_URL}/superadmin${endpoint}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+    return this.handleResponse(response)
+  }
 }
 
 export const superAdminApi = new SuperAdminAPI()
