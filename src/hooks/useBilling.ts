@@ -59,11 +59,11 @@ export function useBilling() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPlans = useCallback(async () => {
+  const fetchPlans = useCallback(async (includeInactive: boolean = true) => {
     try {
-      const response = await superAdminApi.get('/billing/plans');
-      if (response.data.success) {
-        setPlans(response.data.data.plans);
+      const response = await superAdminApi.get(`/billing/plans?includeInactive=${includeInactive}`);
+      if (response.success) {
+        setPlans(response.data.plans);
       }
     } catch (err: any) {
       console.error('Failed to fetch plans:', err);
@@ -79,11 +79,11 @@ export function useBilling() {
       if (params?.page) queryParams.append('page', params.page.toString());
       
       const response = await superAdminApi.get(`/billing/invoices?${queryParams.toString()}`);
-      if (response.data.success) {
-        setInvoices(response.data.data.invoices);
+      if (response.success) {
+        setInvoices(response.data.invoices);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch invoices');
+      setError(err.message || 'Failed to fetch invoices');
     } finally {
       setLoading(false);
     }
@@ -92,8 +92,8 @@ export function useBilling() {
   const fetchStats = useCallback(async () => {
     try {
       const response = await superAdminApi.get('/billing/stats');
-      if (response.data.success) {
-        setStats(response.data.data.stats);
+      if (response.success) {
+        setStats(response.data.stats);
       }
     } catch (err: any) {
       console.error('Failed to fetch billing stats:', err);
@@ -103,13 +103,13 @@ export function useBilling() {
   const generateInvoice = useCallback(async (tenancyId: string, billingCycle: 'monthly' | 'yearly' = 'monthly') => {
     try {
       const response = await superAdminApi.post('/billing/invoices', { tenancyId, billingCycle });
-      if (response.data.success) {
+      if (response.success) {
         await fetchInvoices();
-        return { success: true, invoice: response.data.data.invoice };
+        return { success: true, invoice: response.data.invoice };
       }
       return { success: false };
     } catch (err: any) {
-      return { success: false, message: err.response?.data?.message || 'Failed to generate invoice' };
+      return { success: false, message: err.message || 'Failed to generate invoice' };
     }
   }, [fetchInvoices]);
 
@@ -119,14 +119,14 @@ export function useBilling() {
         paymentMethod,
         transactionId
       });
-      if (response.data.success) {
+      if (response.success) {
         await fetchInvoices();
         await fetchStats();
         return true;
       }
       return false;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to mark invoice as paid');
+      setError(err.message || 'Failed to mark invoice as paid');
       return false;
     }
   }, [fetchInvoices, fetchStats]);
@@ -134,9 +134,9 @@ export function useBilling() {
   const updateTenancyPlan = useCallback(async (tenancyId: string, plan: string) => {
     try {
       const response = await superAdminApi.patch(`/billing/tenancies/${tenancyId}/plan`, { plan });
-      return response.data.success;
+      return response.success;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update plan');
+      setError(err.message || 'Failed to update plan');
       return false;
     }
   }, []);
@@ -147,13 +147,13 @@ export function useBilling() {
         name: planName,
         ...data
       });
-      if (response.data.success) {
+      if (response.success) {
         await fetchPlans();
         return true;
       }
       return false;
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update plan');
+      setError(err.message || 'Failed to update plan');
       return false;
     }
   }, [fetchPlans]);

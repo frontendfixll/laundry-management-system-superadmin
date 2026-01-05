@@ -47,11 +47,11 @@ export function useTenancyAnalytics() {
     setError(null);
     try {
       const response = await superAdminApi.get(`/tenancy-analytics/${tenancyId}?period=${period}`);
-      if (response.data.success) {
-        setTenancyAnalytics(response.data.data);
+      if (response.success) {
+        setTenancyAnalytics(response.data);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch tenancy analytics');
+      setError(err.message || 'Failed to fetch tenancy analytics');
     } finally {
       setLoading(false);
     }
@@ -62,11 +62,11 @@ export function useTenancyAnalytics() {
     setError(null);
     try {
       const response = await superAdminApi.get(`/tenancy-analytics/platform?period=${period}`);
-      if (response.data.success) {
-        setPlatformAnalytics(response.data.data);
+      if (response.success) {
+        setPlatformAnalytics(response.data);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch platform analytics');
+      setError(err.message || 'Failed to fetch platform analytics');
     } finally {
       setLoading(false);
     }
@@ -75,12 +75,12 @@ export function useTenancyAnalytics() {
   const compareTenancies = useCallback(async (tenancyIds: string[], period: string = '30d') => {
     try {
       const response = await superAdminApi.post(`/tenancy-analytics/compare?period=${period}`, { tenancyIds });
-      if (response.data.success) {
-        return response.data.data.comparisons;
+      if (response.success) {
+        return response.data.comparisons;
       }
       return [];
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to compare tenancies');
+      setError(err.message || 'Failed to compare tenancies');
       return [];
     }
   }, []);
