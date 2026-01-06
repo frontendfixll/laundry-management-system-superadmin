@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { CenterAdminPermissionMatrix, getDefaultCenterAdminPermissions, getFullCenterAdminPermissions } from '@/components/rbac/CenterAdminPermissionMatrix'
 import { 
   Shield, Search, Loader2, RefreshCw, Mail, Phone, Building2, X, Check,
-  UserPlus, Key, ChevronDown, ChevronUp, UserX, UserCheck, Eye, EyeOff, Edit,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Send, Clock, XCircle, RotateCcw
+  UserX, UserCheck, Eye, EyeOff, Edit, Key, Send, ChevronDown, ChevronUp,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, XCircle, RotateCcw
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -216,8 +216,8 @@ export default function AdminsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Admins Management</h1>
-          <p className="text-gray-600">Manage admins and center admins with RBAC permissions</p>
+          <h1 className="text-2xl font-bold text-gray-800">Admin Management</h1>
+          <p className="text-gray-600">Manage admins with RBAC permissions and invite new admins</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setShowInviteModal(true)} className="bg-purple-500 hover:bg-purple-600">
@@ -514,7 +514,11 @@ export default function AdminsPage() {
                         Clear All
                       </button>
                     </div>
-                    <CenterAdminPermissionMatrix permissions={newAdminPermissions} onChange={setNewAdminPermissions} />
+                    <CenterAdminPermissionMatrix 
+                      permissions={newAdminPermissions} 
+                      onChange={setNewAdminPermissions} 
+                      compact={true}
+                    />
                   </div>
                 )}
               </div>
@@ -528,7 +532,6 @@ export default function AdminsPage() {
           </div>
         </div>
       )}
-
 
       {/* Edit Permissions Modal */}
       {showEditModal && selectedAdmin && (
@@ -556,7 +559,11 @@ export default function AdminsPage() {
                   Clear All
                 </button>
               </div>
-              <CenterAdminPermissionMatrix permissions={editPermissions} onChange={setEditPermissions} />
+              <CenterAdminPermissionMatrix 
+                permissions={editPermissions} 
+                onChange={setEditPermissions} 
+                compact={true}
+              />
             </div>
             <div className="flex justify-end gap-3 p-6 border-t">
               <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>

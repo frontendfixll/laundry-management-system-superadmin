@@ -13,7 +13,6 @@ import {
   BarChart3,
   Settings,
   Shield,
-  AlertTriangle,
   FileText,
   LogOut,
   ChevronLeft,
@@ -36,7 +35,7 @@ const navigation = [
   { name: 'Billing Plans', href: '/billing/plans', icon: Tag, permission: 'settings' },
   { name: 'Branches', href: '/branches', icon: Building2, permission: 'branches' },
   { name: 'Logistics Partners', href: '/logistics', icon: Truck, permission: 'branches' },
-  { name: 'Admins', href: '/admins', icon: Shield, permission: 'users' },
+  { name: 'Admin Management', href: '/admins', icon: Shield, permission: 'users' },
   { name: 'Users', href: '/users', icon: Users, permission: 'users' },
   { name: 'Customers', href: '/customers', icon: UserCircle, permission: 'users' },
   { name: 'Orders', href: '/orders', icon: ShoppingBag, permission: 'orders' },
@@ -44,7 +43,6 @@ const navigation = [
   { name: 'Financial', href: '/financial', icon: DollarSign, permission: 'finances' },
   { name: 'Analytics & Growth', href: '/analytics', icon: BarChart3, permission: 'analytics' },
   { name: 'Pricing & Policy', href: '/pricing', icon: Tag, permission: 'settings' },
-  { name: 'Risk & Escalation', href: '/risk', icon: AlertTriangle, permission: 'settings' },
   { name: 'Audit Logs', href: '/audit', icon: FileText, permission: 'settings' },
   { name: 'Settings', href: '/settings', icon: Settings, permission: 'settings' }
 ]

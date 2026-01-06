@@ -122,6 +122,116 @@ export function CenterAdminPermissionMatrix({
     return { enabled, total: actions.length }
   }
 
+  // Compact version - just checkboxes in a table
+  if (compact) {
+    return (
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-3 py-2 text-left font-medium text-gray-700 w-48">Module</th>
+                <th className="px-2 py-2 text-center font-medium text-gray-700 w-16">View</th>
+                <th className="px-2 py-2 text-center font-medium text-gray-700 w-16">Create</th>
+                <th className="px-2 py-2 text-center font-medium text-gray-700 w-16">Update</th>
+                <th className="px-2 py-2 text-center font-medium text-gray-700 w-16">Delete</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-700 min-w-64">Special Permissions</th>
+                <th className="px-2 py-2 text-center font-medium text-gray-700 w-20">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {CENTER_ADMIN_MODULES.map(module => {
+                const actions = getModuleActions(module.key)
+                const specialActions = CENTER_ADMIN_ADVANCED_ACTIONS[module.key] || []
+                const { enabled, total } = getModulePermissionCount(module.key)
+                
+                return (
+                  <tr key={module.key} className="hover:bg-gray-50">
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{module.icon}</span>
+                        <div>
+                          <div className="font-medium text-gray-800">{module.label}</div>
+                          <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                            enabled === total 
+                              ? 'bg-green-100 text-green-700' 
+                              : enabled > 0 
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {enabled}/{total}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    
+                    {/* Basic CRUD permissions */}
+                    {COMMON_ACTIONS.map(action => (
+                      <td key={action} className="px-2 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={permissions[module.key]?.[action] || false}
+                          onChange={(e) => handlePermissionChange(module.key, action, e.target.checked)}
+                          disabled={disabled}
+                          className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                      </td>
+                    ))}
+                    
+                    {/* Special permissions - with more space */}
+                    <td className="px-3 py-3">
+                      {specialActions.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {specialActions.map(action => (
+                            <label key={action} className="flex items-center gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={permissions[module.key]?.[action] || false}
+                                onChange={(e) => handlePermissionChange(module.key, action, e.target.checked)}
+                                disabled={disabled}
+                                className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                              />
+                              <span className="text-gray-700">{ACTION_LABELS[action]}</span>
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">No special permissions</span>
+                      )}
+                    </td>
+                    
+                    {/* Quick actions */}
+                    <td className="px-2 py-3">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          type="button"
+                          onClick={() => toggleAllModulePermissions(module.key, true)}
+                          disabled={disabled}
+                          className="text-xs px-2 py-1 text-green-600 hover:bg-green-50 rounded disabled:opacity-50"
+                        >
+                          All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleAllModulePermissions(module.key, false)}
+                          disabled={disabled}
+                          className="text-xs px-2 py-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                        >
+                          None
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+
+  // Original expanded version
   return (
     <div className="space-y-2">
       {CENTER_ADMIN_MODULES.map(module => {
