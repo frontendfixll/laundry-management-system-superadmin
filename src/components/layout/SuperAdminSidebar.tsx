@@ -42,7 +42,6 @@ const navigation = [
   { name: 'Tenancy Analytics', href: '/tenancy-analytics', icon: PieChart, permission: 'analytics' },
   { name: 'Billing', href: '/billing', icon: Receipt, permission: 'finances' },
   { name: 'Billing Plans', href: '/billing/plans', icon: Tag, permission: 'settings' },
-  { name: 'Branches', href: '/branches', icon: Building2, permission: 'branches' },
   { name: 'Logistics Partners', href: '/logistics', icon: Truck, permission: 'branches' },
   { name: 'Admin Management', href: '/admins', icon: Shield, permission: 'users' },
   { name: 'Users', href: '/users', icon: Users, permission: 'users' },
