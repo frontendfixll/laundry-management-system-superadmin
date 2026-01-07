@@ -17,6 +17,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Crown,
   Tag,
   Truck,
@@ -24,12 +26,19 @@ import {
   Sparkles,
   X,
   Receipt,
-  PieChart
+  PieChart,
+  Gift,
+  Percent,
+  Users2,
+  Star,
+  Target
 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'analytics' },
   { name: 'Tenancies', href: '/tenancies', icon: Crown, permission: 'settings' },
+  { name: 'Campaigns', href: '/campaigns', icon: Target, permission: 'settings' },
   { name: 'Tenancy Analytics', href: '/tenancy-analytics', icon: PieChart, permission: 'analytics' },
   { name: 'Billing', href: '/billing', icon: Receipt, permission: 'finances' },
   { name: 'Billing Plans', href: '/billing/plans', icon: Tag, permission: 'settings' },
@@ -40,6 +49,19 @@ const navigation = [
   { name: 'Customers', href: '/customers', icon: UserCircle, permission: 'users' },
   { name: 'Orders', href: '/orders', icon: ShoppingBag, permission: 'orders' },
   { name: 'Services', href: '/services', icon: Sparkles, permission: 'settings' },
+  { 
+    name: 'Global Programs', 
+    icon: Gift, 
+    permission: 'settings',
+    isExpandable: true,
+    subItems: [
+      { name: 'Overview', href: '/promotional/overview', icon: BarChart3, permission: 'analytics' },
+      { name: 'Coupons', href: '/promotional/coupons', icon: Tag, permission: 'settings' },
+      { name: 'Discounts', href: '/promotional/discounts', icon: Percent, permission: 'settings' },
+      { name: 'Referrals', href: '/promotional/referrals', icon: Users2, permission: 'settings' },
+      { name: 'Loyalty', href: '/promotional/loyalty', icon: Star, permission: 'settings' },
+    ]
+  },
   { name: 'Financial', href: '/financial', icon: DollarSign, permission: 'finances' },
   { name: 'Analytics & Growth', href: '/analytics', icon: BarChart3, permission: 'analytics' },
   { name: 'Pricing & Policy', href: '/pricing', icon: Tag, permission: 'settings' },
@@ -55,14 +77,134 @@ interface SuperAdminSidebarProps {
 export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }: SuperAdminSidebarProps) {
   const pathname = usePathname()
   const { admin, logout, sidebarCollapsed, setSidebarCollapsed } = useSuperAdminStore()
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Global Programs']) // Programs expanded by default
+
+  useEffect(() => {
+    const savedExpanded = localStorage.getItem('superadmin-sidebar-expanded')
+    if (savedExpanded) {
+      setExpandedItems(JSON.parse(savedExpanded))
+    }
+  }, [])
+
+  const toggleExpanded = (itemName: string) => {
+    const newExpanded = expandedItems.includes(itemName)
+      ? expandedItems.filter(item => item !== itemName)
+      : [...expandedItems, itemName]
+    
+    setExpandedItems(newExpanded)
+    localStorage.setItem('superadmin-sidebar-expanded', JSON.stringify(newExpanded))
+  }
 
   const handleLogout = () => {
     logout()
     window.location.href = '/auth/login'
   }
 
+  const handleLinkClick = () => {
+    // Only close sidebar on mobile devices
+    if (window.innerWidth < 1024) {
+      onMobileClose?.()
+    }
+  }
+
   const hasPermission = (permission: string) => {
     return admin?.permissions[permission as keyof typeof admin.permissions] || false
+  }
+
+  // Check if any sub-item is active
+  const isParentActive = (item: any) => {
+    if (item.href) {
+      return pathname === item.href || pathname.startsWith(item.href + '/')
+    }
+    if (item.subItems) {
+      return item.subItems.some((subItem: any) => 
+        pathname === subItem.href || pathname.startsWith(subItem.href + '/')
+      )
+    }
+    return false
+  }
+
+  const renderNavItem = (item: any) => {
+    if (!hasPermission(item.permission)) return null
+    
+    const isActive = isParentActive(item)
+    const Icon = item.icon
+    const isExpanded = expandedItems.includes(item.name)
+
+    if (item.isExpandable && item.subItems) {
+      return (
+        <div key={item.name}>
+          {/* Parent Item */}
+          <button
+            onClick={() => toggleExpanded(item.name)}
+            className={`group flex items-center w-full px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
+              isActive
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Icon className={`flex-shrink-0 w-5 h-5 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} />
+            {/* Always show text on mobile, conditionally on desktop */}
+            <span className={`flex-1 text-left ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{item.name}</span>
+            {!sidebarCollapsed && (
+              <span className="lg:block hidden">
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4 ml-2" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                )}
+              </span>
+            )}
+          </button>
+
+          {/* Sub Items */}
+          {!sidebarCollapsed && isExpanded && (
+            <div className="ml-6 mt-1 space-y-1">
+              {item.subItems
+                .filter((subItem: any) => hasPermission(subItem.permission))
+                .map((subItem: any) => {
+                const isSubActive = pathname === subItem.href || pathname.startsWith(subItem.href + '/')
+                const SubIcon = subItem.icon
+
+                return (
+                  <Link
+                    key={subItem.name}
+                    href={subItem.href}
+                    onClick={onMobileClose}
+                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      isSubActive
+                        ? 'bg-purple-100 text-purple-700 border-l-2 border-purple-500'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <SubIcon className={`flex-shrink-0 w-4 h-4 mr-3 ${isSubActive ? 'text-purple-500' : 'text-gray-400 group-hover:text-gray-500'}`} />
+                    <span>{subItem.name}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    // Regular navigation item
+    return (
+      <Link
+        key={item.name}
+        href={item.href}
+        onClick={onMobileClose}
+        className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
+          isActive
+            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+            : 'text-gray-700 hover:bg-gray-100'
+        }`}
+      >
+        <Icon className={`flex-shrink-0 w-5 h-5 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} />
+        {/* Always show text on mobile, conditionally on desktop */}
+        <span className={sidebarCollapsed ? 'lg:hidden' : ''}>{item.name}</span>
+      </Link>
+    )
   }
 
   // On mobile: always show full width (w-64), on desktop: respect sidebarCollapsed
@@ -137,29 +279,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
 
         {/* Navigation */}
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto min-h-0">
-          {navigation.map((item) => {
-            if (!hasPermission(item.permission)) return null
-            
-            const isActive = pathname === item.href
-            const Icon = item.icon
-            
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={onMobileClose}
-                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <Icon className={`flex-shrink-0 w-5 h-5 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} />
-                {/* Always show text on mobile, conditionally on desktop */}
-                <span className={sidebarCollapsed ? 'lg:hidden' : ''}>{item.name}</span>
-              </Link>
-            )
-          })}
+          {navigation.map(renderNavItem)}
         </nav>
 
         {/* Footer */}
