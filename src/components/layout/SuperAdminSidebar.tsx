@@ -283,6 +283,13 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
           {navigation.map(renderNavItem)}
         </nav>
 
+        {/* Version Info */}
+        <div className={`flex-shrink-0 px-4 py-2 border-t border-gray-200 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
+          <div className="text-xs text-gray-400 text-center">
+            v2.0.0
+          </div>
+        </div>
+
         {/* Footer */}
         <div className="flex-shrink-0 border-t border-gray-200 p-2">
           <button
