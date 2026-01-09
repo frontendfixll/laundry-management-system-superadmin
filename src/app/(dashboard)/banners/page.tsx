@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Search, Eye, Edit, Trash2, BarChart3, Power, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import {
   useAllBanners,
   useDeleteAnyBanner,
@@ -11,6 +12,9 @@ import {
 } from '@/hooks/useSuperAdminBanners';
 import CreateGlobalBannerModal from '@/components/banners/CreateGlobalBannerModal';
 import PlatformAnalyticsDashboard from '@/components/banners/PlatformAnalyticsDashboard';
+import BannerPreviewModal from '@/components/banners/BannerPreviewModal';
+import EditBannerModal from '@/components/banners/EditBannerModal';
+import BannerAnalyticsModal from '@/components/banners/BannerAnalyticsModal';
 
 export default function SuperAdminBannersPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,6 +29,10 @@ export default function SuperAdminBannersPage() {
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showBannerAnalytics, setShowBannerAnalytics] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
   const { getAllBanners, loading } = useAllBanners();
   const { deleteBanner } = useDeleteAnyBanner();
@@ -48,21 +56,24 @@ export default function SuperAdminBannersPage() {
       if (scopeFilter !== 'ALL') params.scope = scopeFilter;
 
       const result = await getAllBanners(params);
-      setBanners(result.data || []);
-      setTotalPages(result.pagination?.totalPages || 1);
+      const bannersData = result.data?.banners || [];
+      setBanners(Array.isArray(bannersData) ? bannersData : []);
+      setTotalPages(result.data?.pagination?.pages || 1);
     } catch (error) {
       console.error('Failed to load banners:', error);
+      setBanners([]); // Set empty array on error
     }
   };
 
   const handleDelete = async (bannerId: string) => {
-    if (!confirm('Are you sure you want to delete this banner? This action cannot be undone.')) return;
-    
     try {
       await deleteBanner(bannerId);
+      toast.success('Banner deleted successfully');
       loadBanners();
-    } catch (error) {
+      setShowDeleteConfirm(null);
+    } catch (error: any) {
       console.error('Failed to delete banner:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete banner');
     }
   };
 
@@ -133,7 +144,7 @@ export default function SuperAdminBannersPage() {
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
           >
             <Plus size={20} />
-            Create Global Banner
+            Create
           </button>
         </div>
       </div>
@@ -153,13 +164,13 @@ export default function SuperAdminBannersPage() {
         <div className="bg-white rounded-lg shadow-sm p-4">
           <p className="text-sm text-gray-600 mb-1">Active Banners</p>
           <p className="text-2xl font-bold text-green-600">
-            {banners.filter(b => b.status === 'ACTIVE').length}
+            {banners.filter(b => b.state === 'ACTIVE').length}
           </p>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-4">
           <p className="text-sm text-gray-600 mb-1">Pending Approval</p>
           <p className="text-2xl font-bold text-yellow-600">
-            {banners.filter(b => b.requiresApproval && !b.isApproved).length}
+            {banners.filter(b => b.approval?.required && b.approval?.status === 'PENDING').length}
           </p>
         </div>
       </div>
@@ -232,17 +243,17 @@ export default function SuperAdminBannersPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-semibold text-gray-900">{banner.title}</h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(banner.status)}`}>
-                      {banner.status}
+                    <h3 className="text-xl font-semibold text-gray-900">{banner.content?.title || 'Untitled Banner'}</h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(banner.state)}`}>
+                      {banner.state}
                     </span>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getScopeBadge(banner.bannerScope)}`}>
                       {banner.bannerScope}
                     </span>
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                      {banner.type}
+                      {banner.templateType}
                     </span>
-                    {banner.requiresApproval && !banner.isApproved && (
+                    {banner.approval?.required && banner.approval?.status === 'PENDING' && (
                       <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                         Pending Approval
                       </span>
@@ -250,9 +261,9 @@ export default function SuperAdminBannersPage() {
                   </div>
 
                   <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                    <span>📅 {new Date(banner.startDate).toLocaleDateString()} - {new Date(banner.endDate).toLocaleDateString()}</span>
-                    <span>📍 {banner.targetPages?.join(', ')}</span>
-                    {banner.tenancyId && <span>🏢 Tenant: {banner.tenancyId.name || banner.tenancyId}</span>}
+                    <span>📅 {new Date(banner.schedule?.startDate).toLocaleDateString()} - {new Date(banner.schedule?.endDate).toLocaleDateString()}</span>
+                    <span>📍 {banner.position}</span>
+                    {banner.tenancy && <span>🏢 Tenant: {banner.tenancy.name || banner.tenancy}</span>}
                   </div>
 
                   {/* Analytics Preview */}
@@ -278,7 +289,7 @@ export default function SuperAdminBannersPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 ml-4">
-                  {banner.requiresApproval && !banner.isApproved && (
+                  {banner.approval?.required && banner.approval?.status === 'PENDING' && (
                     <>
                       <button
                         onClick={() => handleApprove(banner._id, true)}
@@ -297,18 +308,30 @@ export default function SuperAdminBannersPage() {
                     </>
                   )}
                   <button
+                    onClick={() => {
+                      setSelectedBanner(banner);
+                      setShowPreviewModal(true);
+                    }}
                     className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
                     title="Preview"
                   >
                     <Eye size={20} />
                   </button>
                   <button
+                    onClick={() => {
+                      setSelectedBanner(banner);
+                      setShowEditModal(true);
+                    }}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                     title="Edit"
                   >
                     <Edit size={20} />
                   </button>
                   <button
+                    onClick={() => {
+                      setSelectedBanner(banner);
+                      setShowBannerAnalytics(true);
+                    }}
                     className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
                     title="Analytics"
                   >
@@ -323,8 +346,8 @@ export default function SuperAdminBannersPage() {
                   </button>
                   <button
                     onClick={() => {
-                      setSelectedBanner(banner);
-                      setShowDisableModal(true);
+                      const reason = prompt('Enter reason for emergency disable:');
+                      if (reason) handleDisable(banner._id, reason);
                     }}
                     className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition"
                     title="Emergency Disable"
@@ -332,7 +355,7 @@ export default function SuperAdminBannersPage() {
                     <AlertTriangle size={20} />
                   </button>
                   <button
-                    onClick={() => handleDelete(banner._id)}
+                    onClick={() => setShowDeleteConfirm(banner._id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                     title="Delete"
                   >
@@ -391,6 +414,68 @@ export default function SuperAdminBannersPage() {
         isOpen={showAnalytics}
         onClose={() => setShowAnalytics(false)}
       />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Delete Banner</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this banner? This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(showDeleteConfirm)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedBanner && (
+        <>
+          <BannerPreviewModal
+            isOpen={showPreviewModal}
+            onClose={() => {
+              setShowPreviewModal(false);
+              setSelectedBanner(null);
+            }}
+            banner={selectedBanner}
+          />
+
+          <EditBannerModal
+            isOpen={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedBanner(null);
+            }}
+            banner={selectedBanner}
+            onSuccess={() => {
+              loadBanners();
+              setShowEditModal(false);
+              setSelectedBanner(null);
+            }}
+          />
+
+          <BannerAnalyticsModal
+            isOpen={showBannerAnalytics}
+            onClose={() => {
+              setShowBannerAnalytics(false);
+              setSelectedBanner(null);
+            }}
+            banner={selectedBanner}
+          />
+        </>
+      )}
     </div>
   );
 }

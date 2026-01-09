@@ -304,7 +304,7 @@ export default function SuperAdminCampaignsPage() {
             className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Create Campaign
+            Create
           </button>
         </div>
       </div>

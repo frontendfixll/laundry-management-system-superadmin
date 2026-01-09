@@ -17,6 +17,8 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = useSuperAdminStore.getState().token
+    console.log('🔐 API Interceptor - Token exists:', !!token);
+    console.log('🔐 API Interceptor - Token preview:', token?.substring(0, 50) + '...');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }

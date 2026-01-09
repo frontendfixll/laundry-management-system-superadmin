@@ -31,14 +31,14 @@ import {
   Percent,
   Users2,
   Star,
-  Target
+  Target,
+  Image
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'analytics' },
   { name: 'Tenancies', href: '/tenancies', icon: Crown, permission: 'settings' },
-  { name: 'Campaigns', href: '/campaigns', icon: Target, permission: 'settings' },
   { name: 'Tenancy Analytics', href: '/tenancy-analytics', icon: PieChart, permission: 'analytics' },
   { name: 'Billing', href: '/billing', icon: Receipt, permission: 'finances' },
   { name: 'Billing Plans', href: '/billing/plans', icon: Tag, permission: 'settings' },
@@ -55,6 +55,8 @@ const navigation = [
     isExpandable: true,
     subItems: [
       { name: 'Overview', href: '/promotional/overview', icon: BarChart3, permission: 'analytics' },
+      { name: 'Campaigns', href: '/campaigns', icon: Target, permission: 'settings' },
+      { name: 'Banners', href: '/banners', icon: Image, permission: 'settings' },
       { name: 'Coupons', href: '/promotional/coupons', icon: Tag, permission: 'settings' },
       { name: 'Discounts', href: '/promotional/discounts', icon: Percent, permission: 'settings' },
       { name: 'Referrals', href: '/promotional/referrals', icon: Users2, permission: 'settings' },

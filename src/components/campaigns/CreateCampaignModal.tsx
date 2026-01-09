@@ -93,6 +93,17 @@ export default function CreateCampaignModal({
   const [loading, setLoading] = useState(false)
   const [tenancies, setTenancies] = useState<Tenancy[]>([])
   const [promotions, setPromotions] = useState<Promotion[]>([])
+  const [allPromotions, setAllPromotions] = useState<{
+    discounts: any[];
+    coupons: any[];
+    loyalty: any[];
+    referrals: any[];
+  }>({
+    discounts: [],
+    coupons: [],
+    loyalty: [],
+    referrals: []
+  })
 
   const [formData, setFormData] = useState({
     name: '',
@@ -171,17 +182,46 @@ export default function CreateCampaignModal({
 
   const fetchPromotions = async () => {
     try {
-      // Fetch available promotions (discounts, coupons, etc.)
-      const res = await fetch(`${API_BASE}/superadmin/promotional/overview`, {
+      console.log('🔍 Fetching all promotions for campaign...');
+      // Fetch all promotions using the same endpoint as banners
+      const res = await fetch(`${API_BASE}/superadmin/banners/promotions/all`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
-      if (data.success) {
-        // This is a simplified approach - you might want separate endpoints for each promotion type
-        setPromotions([])
+      console.log('📦 Promotions response:', data);
+      
+      if (data.success && data.data) {
+        setAllPromotions({
+          discounts: data.data.discounts || [],
+          coupons: data.data.coupons || [],
+          loyalty: data.data.loyalty || [],
+          referrals: data.data.referrals || []
+        });
+        console.log('✅ Promotions loaded:', {
+          discounts: data.data.discounts?.length || 0,
+          coupons: data.data.coupons?.length || 0,
+          loyalty: data.data.loyalty?.length || 0,
+          referrals: data.data.referrals?.length || 0
+        });
       }
     } catch (error) {
-      console.error('Failed to fetch promotions:', error)
+      console.error('❌ Failed to fetch promotions:', error)
+      toast.error('Failed to load promotions')
+    }
+  }
+
+  const getPromotionOptions = (type: string) => {
+    switch (type) {
+      case 'DISCOUNT':
+        return allPromotions.discounts;
+      case 'COUPON':
+        return allPromotions.coupons;
+      case 'LOYALTY_POINTS':
+        return allPromotions.loyalty;
+      case 'WALLET_CREDIT':
+        return allPromotions.referrals; // or create separate wallet credits
+      default:
+        return [];
     }
   }
 
@@ -644,7 +684,7 @@ export default function CreateCampaignModal({
                         value={promotion.type}
                         onChange={(e) => {
                           const newPromotions = [...formData.promotions]
-                          newPromotions[index] = { ...promotion, type: e.target.value as any }
+                          newPromotions[index] = { ...promotion, type: e.target.value as any, promotionId: '' }
                           setFormData({ ...formData, promotions: newPromotions })
                         }}
                         className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -655,9 +695,7 @@ export default function CreateCampaignModal({
                         <option value="WALLET_CREDIT">Wallet Credit</option>
                       </select>
 
-                      <input
-                        type="text"
-                        placeholder="Promotion ID (will be dropdown in real implementation)"
+                      <select
                         value={promotion.promotionId}
                         onChange={(e) => {
                           const newPromotions = [...formData.promotions]
@@ -665,7 +703,19 @@ export default function CreateCampaignModal({
                           setFormData({ ...formData, promotions: newPromotions })
                         }}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
+                      >
+                        <option value="">Select {promotion.type.toLowerCase().replace('_', ' ')}</option>
+                        {getPromotionOptions(promotion.type).map((promo: any) => (
+                          <option key={promo.id} value={promo.id}>
+                            {promo.name}
+                          </option>
+                        ))}
+                      </select>
+                      {getPromotionOptions(promotion.type).length === 0 && (
+                        <span className="text-xs text-amber-600">
+                          No {promotion.type.toLowerCase()}s available
+                        </span>
+                      )}
 
                       <button
                         type="button"

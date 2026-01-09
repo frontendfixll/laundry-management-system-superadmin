@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -20,9 +20,8 @@ export const useAllBanners = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_URL}/superadmin/banners`, {
-        params,
-        withCredentials: true
+      const response = await api.get(`/superadmin/banners/all-banners`, {
+        params
       });
       return response.data;
     } catch (err: any) {
@@ -45,9 +44,7 @@ export const useCreateGlobalBanner = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`${API_URL}/superadmin/banners`, bannerData, {
-        withCredentials: true
-      });
+      const response = await api.post(`/superadmin/banners/global-banners`, bannerData);
       return response.data;
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create global banner');
@@ -69,9 +66,7 @@ export const useUpdateAnyBanner = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.put(`${API_URL}/superadmin/banners/${bannerId}`, bannerData, {
-        withCredentials: true
-      });
+      const response = await api.put(`/superadmin/banners/${bannerId}`, bannerData);
       return response.data;
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to update banner');
@@ -93,9 +88,7 @@ export const useDeleteAnyBanner = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.delete(`${API_URL}/superadmin/banners/${bannerId}`, {
-        withCredentials: true
-      });
+      const response = await api.delete(`/superadmin/banners/${bannerId}`);
       return response.data;
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to delete banner');
@@ -117,11 +110,12 @@ export const useApproveBanner = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.patch(`${API_URL}/superadmin/banners/${bannerId}/approve`, {
-        approved,
+      const endpoint = approved 
+        ? `/superadmin/banners/${bannerId}/approve`
+        : `/superadmin/banners/${bannerId}/reject`;
+      
+      const response = await api.post(endpoint, {
         rejectionReason
-      }, {
-        withCredentials: true
       });
       return response.data;
     } catch (err: any) {
@@ -135,7 +129,7 @@ export const useApproveBanner = () => {
   return { approveBanner, loading, error };
 };
 
-// Toggle banner status
+// Toggle banner status (change state)
 export const useToggleAnyBannerStatus = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,9 +138,8 @@ export const useToggleAnyBannerStatus = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.patch(`${API_URL}/superadmin/banners/${bannerId}/toggle-status`, {}, {
-        withCredentials: true
-      });
+      // Don't pass newState - let backend determine it automatically
+      const response = await api.patch(`/superadmin/banners/${bannerId}/state`, {});
       return response.data;
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to toggle status');
@@ -168,10 +161,8 @@ export const useDisableBanner = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.patch(`${API_URL}/superadmin/banners/${bannerId}/disable`, {
+      const response = await api.post(`/superadmin/banners/${bannerId}/emergency-disable`, {
         reason
-      }, {
-        withCredentials: true
       });
       return response.data;
     } catch (err: any) {
@@ -198,9 +189,8 @@ export const usePlatformAnalytics = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_URL}/superadmin/banners/analytics/platform`, {
-        params,
-        withCredentials: true
+      const response = await api.get(`/superadmin/banners/analytics/platform`, {
+        params
       });
       return response.data;
     } catch (err: any) {
