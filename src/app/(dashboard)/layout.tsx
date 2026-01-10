@@ -9,6 +9,8 @@ import { useSessionTimeout } from '@/hooks/useSessionTimeout'
 import { SessionTimeoutModal } from '@/components/SessionTimeoutModal'
 import toast from 'react-hot-toast'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrypro-backend-605c.onrender.com/api'
+
 export default function DashboardLayout({
   children,
 }: {
@@ -17,8 +19,9 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { isAuthenticated, admin, sidebarCollapsed } = useSuperAdminStore()
+  const { isAuthenticated, admin, token, sidebarCollapsed, logout, clearAll } = useSuperAdminStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isValidating, setIsValidating] = useState(true)
 
   // Session timeout hook (1 hour timeout, 5 min warning)
   const { showWarning, remainingTime, stayLoggedIn, logout: sessionLogout } = useSessionTimeout({
@@ -26,6 +29,46 @@ export default function DashboardLayout({
     warningMinutes: 5,
     enabled: isAuthenticated
   })
+
+  // Validate token on mount
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!isAuthenticated || !token) {
+        setIsValidating(false)
+        router.push('/auth/login')
+        return
+      }
+
+      try {
+        // Verify token by calling profile API
+        const response = await fetch(`${API_URL}/superadmin/auth/profile`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          // Token is invalid - clear everything and redirect
+          console.log('🔴 Token validation failed, logging out...')
+          clearAll()
+          toast.error('Session expired. Please login again.')
+          router.push('/auth/login')
+          return
+        }
+
+        // Token is valid
+        console.log('✅ Token validated successfully')
+        setIsValidating(false)
+      } catch (error) {
+        console.error('Token validation error:', error)
+        // Network error - don't logout, just proceed
+        setIsValidating(false)
+      }
+    }
+
+    validateToken()
+  }, [isAuthenticated, token, router, clearAll])
 
   // Check for session expired message
   useEffect(() => {
@@ -48,13 +91,13 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, router])
 
-  // Show loading or redirect for unauthenticated users
-  if (!isAuthenticated) {
+  // Show loading while validating token
+  if (isValidating || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
+          <p className="text-gray-600">Verifying session...</p>
         </div>
       </div>
     )

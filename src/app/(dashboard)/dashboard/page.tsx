@@ -169,6 +169,15 @@ export default function SuperAdminDashboard() {
   }
 
   if (error) {
+    const handleClearAndRetry = () => {
+      // Clear all superadmin storage
+      localStorage.removeItem('superadmin-storage')
+      localStorage.removeItem('superadmin-token')
+      localStorage.removeItem('superAdminToken')
+      // Redirect to login
+      window.location.href = '/auth/login'
+    }
+    
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center bg-white rounded-2xl shadow-xl p-8 border border-gray-100 max-w-md">
@@ -177,12 +186,23 @@ export default function SuperAdminDashboard() {
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Failed to Load Dashboard</h2>
           <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => { clearError(); handleRefresh(); }}
-            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg shadow-purple-500/30 font-medium"
-          >
-            Try Again
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => { clearError(); handleRefresh(); }}
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg shadow-purple-500/30 font-medium"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={handleClearAndRetry}
+              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-medium"
+            >
+              Clear Session & Login Again
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-4">
+            If the problem persists, try clearing your browser cache.
+          </p>
         </div>
       </div>
     )

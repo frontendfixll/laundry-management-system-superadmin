@@ -56,6 +56,17 @@ class SuperAdminAPI {
     const data = await response.json()
     
     if (!response.ok) {
+      // Handle 401 Unauthorized - auto logout
+      if (response.status === 401) {
+        console.log('🔴 401 Unauthorized - clearing auth data')
+        this.clearAuthData()
+        // Redirect to login
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login?expired=true'
+        }
+        throw new Error('Session expired. Please login again.')
+      }
+      
       // Show validation errors if available
       if (data.errors && Array.isArray(data.errors)) {
         const errorMessages = data.errors.map((e: any) => e.msg || e.message).join(', ')
@@ -65,6 +76,33 @@ class SuperAdminAPI {
     }
     
     return data
+  }
+  
+  // Clear all auth data from localStorage
+  private clearAuthData() {
+    if (typeof window === 'undefined') return
+    
+    // Clear Zustand persist storage
+    const superAdminData = localStorage.getItem('superadmin-storage')
+    if (superAdminData) {
+      try {
+        const parsed = JSON.parse(superAdminData)
+        parsed.state = {
+          admin: null,
+          token: null,
+          session: null,
+          isAuthenticated: false,
+          sidebarCollapsed: false
+        }
+        localStorage.setItem('superadmin-storage', JSON.stringify(parsed))
+      } catch (e) {
+        localStorage.removeItem('superadmin-storage')
+      }
+    }
+    
+    // Clear legacy keys
+    localStorage.removeItem('superadmin-token')
+    localStorage.removeItem('superAdminToken')
   }
 
   // Authentication
