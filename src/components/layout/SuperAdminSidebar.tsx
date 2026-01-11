@@ -45,8 +45,6 @@ const navigation = [
   { name: 'Logistics Partners', href: '/logistics', icon: Truck, permission: 'branches' },
   { name: 'Admin Management', href: '/admins', icon: Shield, permission: 'users' },
   { name: 'Users', href: '/users', icon: Users, permission: 'users' },
-  { name: 'Customers', href: '/customers', icon: UserCircle, permission: 'users' },
-  { name: 'Orders', href: '/orders', icon: ShoppingBag, permission: 'orders' },
   { name: 'Services', href: '/services', icon: Sparkles, permission: 'settings' },
   { 
     name: 'Global Programs', 
@@ -115,6 +113,18 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
   // Check if any sub-item is active
   const isParentActive = (item: any) => {
     if (item.href) {
+      // For items that have child routes (like /billing has /billing/plans),
+      // only match exact path to avoid parent highlighting when child is active
+      const hasChildInNavigation = navigation.some(navItem => 
+        navItem.href !== item.href && navItem.href?.startsWith(item.href + '/')
+      )
+      
+      if (hasChildInNavigation) {
+        // Exact match only for parent items that have children
+        return pathname === item.href
+      }
+      
+      // For items without children, allow prefix matching
       return pathname === item.href || pathname.startsWith(item.href + '/')
     }
     if (item.subItems) {

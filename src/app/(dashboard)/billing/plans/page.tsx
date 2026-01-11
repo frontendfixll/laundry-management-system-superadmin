@@ -165,7 +165,7 @@ export default function BillingPlansPage() {
           const colorClass = planColors[plan.name] || planColors.free;
           
           return (
-            <Card key={plan._id} className={`relative ${colorClass} border-2`}>
+            <Card key={plan._id} className={`relative ${colorClass} border-2 flex flex-col h-full`}>
               {!plan.isActive && (
                 <div className="absolute top-2 right-2">
                   <Badge variant="secondary">Disabled</Badge>
@@ -178,7 +178,7 @@ export default function BillingPlansPage() {
                 </div>
                 <CardDescription className="capitalize">{plan.name} plan</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex flex-col flex-1">
                 {/* Pricing */}
                 <div>
                   <div className="text-3xl font-bold">{formatPrice(plan.price.monthly)}</div>
@@ -193,7 +193,7 @@ export default function BillingPlansPage() {
                 </div>
 
                 {/* Limits */}
-                <div className="space-y-1 text-sm">
+                <div className="space-y-1 text-sm mt-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Orders</span>
                     <span className="font-medium">{formatLimit(plan.features.maxOrders)}</span>
@@ -212,8 +212,8 @@ export default function BillingPlansPage() {
                   </div>
                 </div>
 
-                {/* Features */}
-                <div className="space-y-1 text-sm border-t pt-3">
+                {/* Features - Fixed height section */}
+                <div className="space-y-1 text-sm border-t pt-3 mt-4 flex-1">
                   <FeatureRow label="Custom Branding" enabled={plan.features.customBranding} />
                   <FeatureRow label="Custom Domain" enabled={plan.features.customDomain} />
                   <FeatureRow label="Analytics" enabled={plan.features.advancedAnalytics} />
@@ -222,6 +222,7 @@ export default function BillingPlansPage() {
                   <FeatureRow label="Priority Support" enabled={plan.features.prioritySupport} />
                 </div>
 
+                {/* Button always at bottom */}
                 <Button 
                   variant="outline" 
                   className="w-full mt-4"
