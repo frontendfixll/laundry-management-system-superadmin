@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { superAdminApi } from '@/lib/superAdminApi'
+import toast from 'react-hot-toast'
 import { 
   ArrowLeft,
   Search,
@@ -87,7 +88,7 @@ export default function SettlementsPage() {
       await superAdminApi.approveSettlement(settlementId)
       fetchSettlements()
     } catch (err: any) {
-      alert(err.message)
+      toast.error(err.message)
     } finally {
       setActionLoading(null)
     }

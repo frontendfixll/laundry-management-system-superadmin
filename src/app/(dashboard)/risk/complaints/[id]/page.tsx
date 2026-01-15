@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { superAdminApi } from '@/lib/superAdminApi'
+import toast from 'react-hot-toast'
 import { 
   ArrowLeft,
   AlertTriangle,
@@ -102,7 +103,7 @@ export default function ComplaintDetailPage() {
       setEscalateReason('')
       fetchComplaint()
     } catch (err: any) {
-      alert(err.message)
+      toast.error(err.message)
     } finally {
       setActionLoading(false)
     }
@@ -116,7 +117,7 @@ export default function ComplaintDetailPage() {
       setShowResolveModal(false)
       fetchComplaint()
     } catch (err: any) {
-      alert(err.message)
+      toast.error(err.message)
     } finally {
       setActionLoading(false)
     }

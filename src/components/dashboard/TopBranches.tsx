@@ -3,10 +3,7 @@
 import Link from 'next/link'
 import { 
   Building2, 
-  TrendingUp, 
-  ArrowRight, 
-  MapPin,
-  Users,
+  TrendingUp,
   ShoppingBag,
   DollarSign
 } from 'lucide-react'
@@ -74,13 +71,6 @@ export default function TopBranches({ branches, loading }: TopBranchesProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">Top Performing Branches</h3>
-        <Link 
-          href="/superadmin/branches"
-          className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center space-x-1 transition-colors"
-        >
-          <span>View All</span>
-          <ArrowRight className="w-4 h-4" />
-        </Link>
       </div>
 
       {/* Branches List */}
@@ -174,7 +164,7 @@ export default function TopBranches({ branches, loading }: TopBranchesProps) {
 
       {/* Performance Indicators */}
       {safeBranches.length > 0 && (
-        <div className="mt-4 flex items-center justify-between text-sm">
+        <div className="mt-4 flex items-center text-sm">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-400 rounded-full"></div>
@@ -189,13 +179,6 @@ export default function TopBranches({ branches, loading }: TopBranchesProps) {
               <span className="text-gray-600">Needs Attention</span>
             </div>
           </div>
-          
-          <Link
-            href="/superadmin/analytics"
-            className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
-          >
-            View Analytics →
-          </Link>
         </div>
       )}
     </div>

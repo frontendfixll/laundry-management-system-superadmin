@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { 
   Truck, Plus, Search, Edit, Trash2, ToggleLeft, ToggleRight,
   Phone, Mail, IndianRupee
@@ -32,6 +34,7 @@ export default function LogisticsPartnersPage() {
   const [settlementMonth, setSettlementMonth] = useState(new Date().getMonth() + 1)
   const [settlementYear, setSettlementYear] = useState(new Date().getFullYear())
   const [settlementData, setSettlementData] = useState<any>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string } | null>(null)
 
   // Form state
   const [form, setForm] = useState({
@@ -139,7 +142,7 @@ export default function LogisticsPartnersPage() {
         resetForm()
         fetchPartners()
       } else {
-        alert(data.message || 'Failed to save')
+        toast.error(data.message || 'Failed to save')
       }
     } catch (error) {
       console.error('Save error:', error)
@@ -184,16 +187,20 @@ export default function LogisticsPartnersPage() {
   }
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
     try {
       const res = await fetch(`${API_URL}/superadmin/logistics/partners/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       })
-      if ((await res.json()).success) fetchPartners()
+      if ((await res.json()).success) {
+        toast.success('Partner deleted')
+        fetchPartners()
+      }
     } catch (error) {
       console.error('Delete error:', error)
+      toast.error('Failed to delete partner')
     }
+    setDeleteConfirm(null)
   }
 
   // Settlement functions
@@ -343,7 +350,7 @@ export default function LogisticsPartnersPage() {
                       <button onClick={() => handleEdit(partner)} className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(partner._id, partner.companyName)} className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                      <button onClick={() => setDeleteConfirm({ isOpen: true, id: partner._id, name: partner.companyName })} className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -618,6 +625,18 @@ export default function LogisticsPartnersPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm?.isOpen || false}
+        title="Delete Partner"
+        message={`Are you sure you want to delete "${deleteConfirm?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm.id, deleteConfirm.name)}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   )
 }

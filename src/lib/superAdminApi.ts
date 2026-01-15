@@ -1202,7 +1202,7 @@ class SuperAdminAPI {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/superadmin/auth/notifications?${searchParams}`,
+      `${API_BASE_URL}/superadmin/notifications?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
     
@@ -1211,7 +1211,7 @@ class SuperAdminAPI {
 
   async getNotificationUnreadCount() {
     const response = await fetch(
-      `${API_BASE_URL}/superadmin/auth/notifications/unread-count`,
+      `${API_BASE_URL}/superadmin/notifications/unread-count`,
       { headers: this.getAuthHeaders() }
     )
     
@@ -1219,7 +1219,7 @@ class SuperAdminAPI {
   }
 
   async markNotificationsAsRead(notificationIds: string[]) {
-    const response = await fetch(`${API_BASE_URL}/superadmin/auth/notifications/mark-read`, {
+    const response = await fetch(`${API_BASE_URL}/superadmin/notifications/read`, {
       method: 'PUT',
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ notificationIds })
@@ -1229,7 +1229,7 @@ class SuperAdminAPI {
   }
 
   async markAllNotificationsAsRead() {
-    const response = await fetch(`${API_BASE_URL}/superadmin/auth/notifications/mark-all-read`, {
+    const response = await fetch(`${API_BASE_URL}/superadmin/notifications/read-all`, {
       method: 'PUT',
       headers: this.getAuthHeaders()
     })
@@ -1298,6 +1298,23 @@ class SuperAdminAPI {
       { headers: this.getAuthHeaders() }
     )
     
+    return this.handleResponse(response)
+  }
+
+  // Billing Plans
+  async getBillingPlans() {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/billing/plans`,
+      { headers: this.getAuthHeaders() }
+    )
+    return this.handleResponse(response)
+  }
+
+  async getBillingPlan(planId: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/billing/plans/${planId}`,
+      { headers: this.getAuthHeaders() }
+    )
     return this.handleResponse(response)
   }
 

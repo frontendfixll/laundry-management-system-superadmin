@@ -6,6 +6,7 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Plus, Edit2, Trash2, Loader2, Search, X, Save, Package } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 const ITEMS_PER_PAGE = 8
@@ -52,6 +53,7 @@ export default function SuperAdminServiceItemsPage() {
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [formStep, setFormStep] = useState(1)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; name: string; category: string } | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -194,8 +196,6 @@ export default function SuperAdminServiceItemsPage() {
   }
 
   const handleDeleteGroup = async (name: string, category: string) => {
-    if (!confirm(`Delete all prices for "${name}"?`)) return
-    
     try {
       const authToken = getToken()
       const itemsToDelete = items.filter(i => i.name === name && i.category === category)
@@ -212,6 +212,7 @@ export default function SuperAdminServiceItemsPage() {
     } catch (error) {
       toast.error('Failed to delete items')
     }
+    setDeleteConfirm(null)
   }
 
   const openEditModal = (groupedItem: any) => {
@@ -412,7 +413,7 @@ export default function SuperAdminServiceItemsPage() {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteGroup(item.name, item.category)}
+                      onClick={() => setDeleteConfirm({ isOpen: true, name: item.name, category: item.category })}
                       className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -598,6 +599,17 @@ export default function SuperAdminServiceItemsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm?.isOpen || false}
+        title="Delete Item"
+        message={`Delete all prices for "${deleteConfirm?.name}"?`}
+        confirmText="Delete"
+        type="danger"
+        onConfirm={() => deleteConfirm && handleDeleteGroup(deleteConfirm.name, deleteConfirm.category)}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   )
 }

@@ -1,12 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { CenterAdminPermissionMatrix, getDefaultCenterAdminPermissions, getFullCenterAdminPermissions } from '@/components/rbac/CenterAdminPermissionMatrix'
 import { 
-  Shield, Search, Loader2, RefreshCw, Mail, Phone, Building2, X, Check,
-  UserX, UserCheck, Eye, EyeOff, Edit, Key, Send, ChevronDown, ChevronUp,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, XCircle, RotateCcw
+  Search, Loader2, Building2,
+  UserX, UserCheck,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -42,126 +40,25 @@ interface Admin {
   role: string
   isActive: boolean
   createdAt: string
-  permissions?: Record<string, Record<string, boolean>>
-  permissionSummary?: { modules: number; totalPermissions: number }
   staffCount?: number
   assignedBranch?: { _id: string; name: string; code: string }
 }
 
-interface Invitation {
-  _id: string
-  email: string
-  role: string
-  status: 'pending' | 'accepted' | 'expired'
-  expiresAt: string
-  createdAt: string
-  assignedBranch?: { _id: string; name: string; code: string }
-}
-
-const roleColors: Record<string, string> = {
-  admin: 'bg-purple-100 text-purple-800'
-}
-
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<Admin[]>([])
-  const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [goToPage, setGoToPage] = useState('')
-  const [showInviteModal, setShowInviteModal] = useState(false)
-  const [inviting, setInviting] = useState(false)
-  const [newInvite, setNewInvite] = useState({ email: '', assignedBranch: '' })
-  const [newAdminPermissions, setNewAdminPermissions] = useState(getDefaultCenterAdminPermissions())
-  const [showPermissions, setShowPermissions] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null)
-  const [editPermissions, setEditPermissions] = useState(getDefaultCenterAdminPermissions())
-  const [updating, setUpdating] = useState(false)
-  const [branches, setBranches] = useState<{_id: string, name: string}[]>([])
-  const [activeTab, setActiveTab] = useState<'admins' | 'invitations'>('admins')
 
   useEffect(() => { setCurrentPage(1) }, [searchTerm])
 
-  useEffect(() => { fetchAdmins(); fetchBranches(); fetchInvitations() }, [])
-
-  const fetchBranches = async () => {
-    try { const d = await apiCall('/superadmin/branches'); setBranches(d.data?.branches || d.data || []) } catch {}
-  }
+  useEffect(() => { fetchAdmins() }, [])
 
   const fetchAdmins = async () => {
     setLoading(true)
     try { const d = await apiCall('/superadmin/admins'); setAdmins(d.data?.admins || []) } catch { setAdmins([]) }
     setLoading(false)
-  }
-
-  const fetchInvitations = async () => {
-    try { const d = await apiCall('/superadmin/admins/invitations'); setInvitations(d.data?.invitations || []) } catch { setInvitations([]) }
-  }
-
-  const handleInviteAdmin = async () => {
-    if (!newInvite.email) {
-      toast.error('Please enter email address'); return
-    }
-    if (!newInvite.assignedBranch) { 
-      toast.error('Admin must be assigned to a branch'); return 
-    }
-    const hasP = Object.values(newAdminPermissions).some(m => Object.values(m).some(v => v))
-    if (!hasP) { toast.error('Assign at least one permission'); return }
-    
-    setInviting(true)
-    try {
-      await apiCall('/superadmin/admins/invite', {
-        method: 'POST',
-        body: JSON.stringify({ 
-          email: newInvite.email,
-          role: 'admin',
-          permissions: newAdminPermissions,
-          assignedBranch: newInvite.assignedBranch
-        })
-      })
-      toast.success('Invitation sent successfully!')
-      setShowInviteModal(false)
-      setNewInvite({ email: '', assignedBranch: '' })
-      setNewAdminPermissions(getDefaultCenterAdminPermissions())
-      fetchInvitations()
-    } catch (e: any) { toast.error(e.message) }
-    setInviting(false)
-  }
-
-  const handleResendInvitation = async (invitationId: string) => {
-    try {
-      await apiCall(`/superadmin/admins/invitations/${invitationId}/resend`, { method: 'POST' })
-      toast.success('Invitation resent!')
-      fetchInvitations()
-    } catch (e: any) { toast.error(e.message) }
-  }
-
-  const handleCancelInvitation = async (invitationId: string) => {
-    try {
-      await apiCall(`/superadmin/admins/invitations/${invitationId}`, { method: 'DELETE' })
-      toast.success('Invitation cancelled')
-      fetchInvitations()
-    } catch (e: any) { toast.error(e.message) }
-  }
-
-  const openEditModal = async (admin: Admin) => {
-    try {
-      const d = await apiCall(`/superadmin/admins/${admin._id}`)
-      setSelectedAdmin(d.data?.admin)
-      setEditPermissions(d.data?.admin?.permissions || getDefaultCenterAdminPermissions())
-      setShowEditModal(true)
-    } catch { toast.error('Failed to load admin') }
-  }
-
-  const handleUpdatePermissions = async () => {
-    if (!selectedAdmin) return
-    setUpdating(true)
-    try {
-      await apiCall(`/superadmin/admins/${selectedAdmin._id}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions: editPermissions }) })
-      toast.success('Permissions updated!'); setShowEditModal(false); fetchAdmins()
-    } catch (e: any) { toast.error(e.message) }
-    setUpdating(false)
   }
 
   const handleDeactivateAdmin = async (admin: Admin) => {
@@ -211,26 +108,17 @@ export default function AdminsPage() {
     if (page >= 1 && page <= totalPages) { setCurrentPage(page); setGoToPage('') }
   }
 
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Admin Management</h1>
-          <p className="text-gray-600">Manage admins with RBAC permissions and invite new admins</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowInviteModal(true)} className="bg-purple-500 hover:bg-purple-600">
-            <Send className="w-4 h-4 mr-2" />Invite Admin
-          </Button>
-          <Button onClick={() => { fetchAdmins(); fetchInvitations() }} variant="outline">
-            <RefreshCw className="w-4 h-4 mr-2" />Refresh
-          </Button>
+          <h1 className="text-2xl font-bold text-gray-800">Branch Admin Management</h1>
+          <p className="text-gray-600">View branch admins. Permissions are managed through billing plans.</p>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4">
           <div className="text-2xl font-bold text-white">{admins.length}</div>
           <div className="text-sm text-purple-100">Total Admins</div>
@@ -239,34 +127,13 @@ export default function AdminsPage() {
           <div className="text-2xl font-bold text-white">{admins.filter(a => a.isActive).length}</div>
           <div className="text-sm text-teal-100">Active</div>
         </div>
-        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4">
-          <div className="text-2xl font-bold text-white">{invitations.filter(i => i.status === 'pending').length}</div>
-          <div className="text-sm text-amber-100">Pending Invites</div>
-        </div>
         <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-xl p-4">
           <div className="text-2xl font-bold text-white">{admins.filter(a => !a.isActive).length}</div>
           <div className="text-sm text-red-100">Inactive</div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b">
-        <button
-          onClick={() => setActiveTab('admins')}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeTab === 'admins' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-        >
-          Admins ({admins.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('invitations')}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeTab === 'invitations' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-        >
-          Invitations ({invitations.length})
-        </button>
-      </div>
-
       {/* Filters */}
-      {activeTab === 'admins' && (
       <div className="bg-white rounded-xl shadow-sm border p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
@@ -275,10 +142,8 @@ export default function AdminsPage() {
           </div>
         </div>
       </div>
-      )}
 
       {/* Admins Table */}
-      {activeTab === 'admins' && (
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         {loading ? (
           <div className="flex justify-center items-center py-12"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>
@@ -291,7 +156,6 @@ export default function AdminsPage() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Admin</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Branch</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Permissions</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
@@ -321,25 +185,12 @@ export default function AdminsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {admin.permissionSummary ? (
-                        <div className="text-sm">
-                          <span className="font-medium">{admin.permissionSummary.modules}</span> modules, 
-                          <span className="font-medium ml-1">{admin.permissionSummary.totalPermissions}</span> permissions
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-sm">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${admin.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                         {admin.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openEditModal(admin)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit Permissions">
-                          <Key className="w-4 h-4" />
-                        </button>
                         {admin.isActive ? (
                           <button onClick={() => handleDeactivateAdmin(admin)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Deactivate">
                             <UserX className="w-4 h-4" />
@@ -357,7 +208,6 @@ export default function AdminsPage() {
             </table>
           </div>
         )}
-
 
         {/* Pagination */}
         {filteredAdmins.length > 0 && (
@@ -402,178 +252,6 @@ export default function AdminsPage() {
           </div>
         )}
       </div>
-      )}
-
-      {/* Invitations Table */}
-      {activeTab === 'invitations' && (
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        {invitations.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">No invitations found</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Branch</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expires</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {invitations.map((inv) => (
-                  <tr key={inv._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-900">{inv.email}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {inv.assignedBranch ? (
-                        <div className="flex items-center gap-1 text-sm">
-                          <Building2 className="w-4 h-4 text-gray-400" />
-                          {inv.assignedBranch.name}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-sm">Not assigned</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1 w-fit ${
-                        inv.status === 'pending' ? 'bg-amber-100 text-amber-800' : 
-                        inv.status === 'accepted' ? 'bg-green-100 text-green-800' : 
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {inv.status === 'pending' && <Clock className="w-3 h-3" />}
-                        {inv.status === 'accepted' && <Check className="w-3 h-3" />}
-                        {inv.status === 'expired' && <XCircle className="w-3 h-3" />}
-                        {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {new Date(inv.expiresAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {inv.status === 'pending' && (
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => handleResendInvitation(inv._id)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Resend">
-                            <RotateCcw className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleCancelInvitation(inv._id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Cancel">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-      )}
-
-      {/* Invite Admin Modal */}
-      {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-xl font-semibold">Invite Admin</h3>
-              <button onClick={() => setShowInviteModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700">
-                <p>An invitation email will be sent to the admin. They will set their own password when accepting the invitation.</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Email Address *</label>
-                <input type="email" value={newInvite.email} onChange={(e) => setNewInvite({ ...newInvite, email: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="admin@example.com" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Assign Branch *</label>
-                <select value={newInvite.assignedBranch} onChange={(e) => setNewInvite({ ...newInvite, assignedBranch: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
-                  <option value="">Select Branch</option>
-                  {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <button onClick={() => setShowPermissions(!showPermissions)} className="flex items-center gap-2 text-sm font-medium text-purple-600">
-                  {showPermissions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  {showPermissions ? 'Hide' : 'Configure'} Permissions
-                </button>
-                {showPermissions && (
-                  <div className="mt-4 border rounded-lg p-4">
-                    <div className="flex gap-2 mb-4">
-                      <button type="button" onClick={() => setNewAdminPermissions(getFullCenterAdminPermissions())} className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200">
-                        Full Access
-                      </button>
-                      <button type="button" onClick={() => setNewAdminPermissions(getDefaultCenterAdminPermissions())} className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
-                        Clear All
-                      </button>
-                    </div>
-                    <CenterAdminPermissionMatrix 
-                      permissions={newAdminPermissions} 
-                      onChange={setNewAdminPermissions} 
-                      compact={true}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 p-6 border-t">
-              <Button variant="outline" onClick={() => setShowInviteModal(false)}>Cancel</Button>
-              <Button onClick={handleInviteAdmin} disabled={inviting} className="bg-purple-500 hover:bg-purple-600">
-                {inviting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending...</> : <><Send className="w-4 h-4 mr-2" />Send Invitation</>}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Permissions Modal */}
-      {showEditModal && selectedAdmin && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <div>
-                <h3 className="text-xl font-semibold">Edit Permissions</h3>
-                <p className="text-sm text-gray-500">{selectedAdmin.name} ({selectedAdmin.email})</p>
-                {selectedAdmin.assignedBranch && (
-                  <div className="flex items-center gap-1 mt-1 text-sm text-gray-600">
-                    <Building2 className="w-4 h-4" />
-                    {selectedAdmin.assignedBranch.name}
-                  </div>
-                )}
-              </div>
-              <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-6">
-              <div className="flex gap-2 mb-4">
-                <button type="button" onClick={() => setEditPermissions(getFullCenterAdminPermissions())} className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200">
-                  Full Access
-                </button>
-                <button type="button" onClick={() => setEditPermissions(getDefaultCenterAdminPermissions())} className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
-                  Clear All
-                </button>
-              </div>
-              <CenterAdminPermissionMatrix 
-                permissions={editPermissions} 
-                onChange={setEditPermissions} 
-                compact={true}
-              />
-            </div>
-            <div className="flex justify-end gap-3 p-6 border-t">
-              <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
-              <Button onClick={handleUpdatePermissions} disabled={updating} className="bg-purple-500 hover:bg-purple-600">
-                {updating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : <><Check className="w-4 h-4 mr-2" />Save Permissions</>}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

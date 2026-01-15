@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 interface ReferralReward {
   type: 'credit' | 'coupon' | 'discount' | 'points' | 'free_service'
@@ -90,6 +91,7 @@ export default function GlobalReferralsPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingProgram, setEditingProgram] = useState<ReferralProgram | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string } | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -221,8 +223,6 @@ export default function GlobalReferralsPage() {
   }
 
   const handleDelete = async (programId: string) => {
-    if (!confirm('Are you sure you want to delete this global referral program?')) return
-
     try {
       const res = await fetch(`${API_BASE}/superadmin/promotional/referrals/${programId}`, {
         method: 'DELETE',
@@ -240,6 +240,7 @@ export default function GlobalReferralsPage() {
       console.error('Delete referral program error:', error)
       toast.error('Failed to delete referral program')
     }
+    setDeleteConfirm(null)
   }
 
   const resetForm = () => {
@@ -530,7 +531,7 @@ export default function GlobalReferralsPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(program._id)}
+                          onClick={() => setDeleteConfirm({ isOpen: true, id: program._id })}
                           className="text-red-600 hover:text-red-900"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -946,6 +947,17 @@ export default function GlobalReferralsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm?.isOpen || false}
+        title="Delete Referral Program"
+        message="Are you sure you want to delete this global referral program?"
+        confirmText="Delete"
+        type="danger"
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm.id)}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   )
 }

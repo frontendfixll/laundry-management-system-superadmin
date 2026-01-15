@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 interface Coupon {
   _id: string
@@ -75,6 +76,7 @@ export default function GlobalCouponsPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string } | null>(null)
 
   const [formData, setFormData] = useState({
     code: '',
@@ -194,8 +196,6 @@ export default function GlobalCouponsPage() {
   }
 
   const handleDelete = async (couponId: string) => {
-    if (!confirm('Are you sure you want to delete this global coupon?')) return
-
     try {
       const res = await fetch(`${API_BASE}/superadmin/promotional/coupons/${couponId}`, {
         method: 'DELETE',
@@ -213,6 +213,7 @@ export default function GlobalCouponsPage() {
       console.error('Delete coupon error:', error)
       toast.error('Failed to delete coupon')
     }
+    setDeleteConfirm(null)
   }
 
   const resetForm = () => {
@@ -470,7 +471,7 @@ export default function GlobalCouponsPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(coupon._id)}
+                          onClick={() => setDeleteConfirm({ isOpen: true, id: coupon._id })}
                           className="text-red-600 hover:text-red-900"
                         >
                           <Trash2 className="w-4 h-4" />

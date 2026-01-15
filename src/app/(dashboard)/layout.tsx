@@ -9,7 +9,7 @@ import { useSessionTimeout } from '@/hooks/useSessionTimeout'
 import { SessionTimeoutModal } from '@/components/SessionTimeoutModal'
 import toast from 'react-hot-toast'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrypro-backend-605c.onrender.com/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://LaundryLobby-backend-605c.onrender.com/api'
 
 export default function DashboardLayout({
   children,
@@ -22,6 +22,12 @@ export default function DashboardLayout({
   const { isAuthenticated, admin, token, sidebarCollapsed, logout, clearAll } = useSuperAdminStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isValidating, setIsValidating] = useState(true)
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Wait for Zustand to hydrate from localStorage
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   // Session timeout hook (1 hour timeout, 5 min warning)
   const { showWarning, remainingTime, stayLoggedIn, logout: sessionLogout } = useSessionTimeout({
@@ -30,8 +36,10 @@ export default function DashboardLayout({
     enabled: isAuthenticated
   })
 
-  // Validate token on mount
+  // Validate token on mount - only after hydration
   useEffect(() => {
+    if (!isHydrated) return
+
     const validateToken = async () => {
       if (!isAuthenticated || !token) {
         setIsValidating(false)
@@ -68,7 +76,7 @@ export default function DashboardLayout({
     }
 
     validateToken()
-  }, [isAuthenticated, token, router, clearAll])
+  }, [isHydrated, isAuthenticated, token, router, clearAll])
 
   // Check for session expired message
   useEffect(() => {
@@ -84,15 +92,18 @@ export default function DashboardLayout({
   }, [pathname])
 
   useEffect(() => {
+    // Only check after hydration
+    if (!isHydrated) return
+    
     // Check if user is authenticated
     if (!isAuthenticated) {
       router.push('/auth/login')
       return
     }
-  }, [isAuthenticated, router])
+  }, [isHydrated, isAuthenticated, router])
 
-  // Show loading while validating token
-  if (isValidating || !isAuthenticated) {
+  // Show loading while hydrating or validating token
+  if (!isHydrated || isValidating || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">

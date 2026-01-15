@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 interface LoyaltyProgram {
   _id: string
@@ -69,6 +70,7 @@ export default function GlobalLoyaltyPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingProgram, setEditingProgram] = useState<LoyaltyProgram | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string } | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -176,8 +178,6 @@ export default function GlobalLoyaltyPage() {
   }
 
   const handleDelete = async (programId: string) => {
-    if (!confirm('Are you sure you want to delete this global loyalty program?')) return
-
     try {
       const res = await fetch(`${API_BASE}/superadmin/promotional/loyalty/${programId}`, {
         method: 'DELETE',
@@ -195,6 +195,7 @@ export default function GlobalLoyaltyPage() {
       console.error('Delete loyalty program error:', error)
       toast.error('Failed to delete loyalty program')
     }
+    setDeleteConfirm(null)
   }
 
   const resetForm = () => {
@@ -422,7 +423,7 @@ export default function GlobalLoyaltyPage() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(program._id)}
+                            onClick={() => setDeleteConfirm({ isOpen: true, id: program._id })}
                             className="text-red-600 hover:text-red-900"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -583,6 +584,17 @@ export default function GlobalLoyaltyPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm?.isOpen || false}
+        title="Delete Loyalty Program"
+        message="Are you sure you want to delete this global loyalty program?"
+        confirmText="Delete"
+        type="danger"
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm.id)}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   )
 }

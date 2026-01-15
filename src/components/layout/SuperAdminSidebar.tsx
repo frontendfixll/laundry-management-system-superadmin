@@ -32,18 +32,20 @@ import {
   Users2,
   Star,
   Target,
-  Image
+  Image,
+  UserPlus,
+  IndianRupee
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'analytics' },
+  { name: 'Leads', href: '/leads', icon: UserPlus, permission: 'settings', showBadge: true },
   { name: 'Tenancies', href: '/tenancies', icon: Crown, permission: 'settings' },
   { name: 'Tenancy Analytics', href: '/tenancy-analytics', icon: PieChart, permission: 'analytics' },
-  { name: 'Billing', href: '/billing', icon: Receipt, permission: 'finances' },
   { name: 'Billing Plans', href: '/billing/plans', icon: Tag, permission: 'settings' },
   { name: 'Logistics Partners', href: '/logistics', icon: Truck, permission: 'branches' },
-  { name: 'Admin Management', href: '/admins', icon: Shield, permission: 'users' },
+  { name: 'Branch Admins', href: '/admins', icon: Shield, permission: 'users' },
   { name: 'Users', href: '/users', icon: Users, permission: 'users' },
   { name: 'Services', href: '/services', icon: Sparkles, permission: 'settings' },
   { 
@@ -62,8 +64,6 @@ const navigation = [
     ]
   },
   { name: 'Financial', href: '/financial', icon: DollarSign, permission: 'finances' },
-  { name: 'Analytics & Growth', href: '/analytics', icon: BarChart3, permission: 'analytics' },
-  { name: 'Pricing & Policy', href: '/pricing', icon: Tag, permission: 'settings' },
   { name: 'Audit Logs', href: '/audit', icon: FileText, permission: 'settings' },
   { name: 'Settings', href: '/settings', icon: Settings, permission: 'settings' }
 ]
@@ -75,8 +75,44 @@ interface SuperAdminSidebarProps {
 
 export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }: SuperAdminSidebarProps) {
   const pathname = usePathname()
-  const { admin, logout, sidebarCollapsed, setSidebarCollapsed } = useSuperAdminStore()
+  const { admin, logout, sidebarCollapsed, setSidebarCollapsed, newLeadsCount, setNewLeadsCount } = useSuperAdminStore()
   const [expandedItems, setExpandedItems] = useState<string[]>(['Global Programs']) // Programs expanded by default
+
+  // Fetch new leads count on mount and periodically
+  useEffect(() => {
+    const fetchNewLeadsCount = async () => {
+      try {
+        const token = localStorage.getItem('superadmin-storage')
+        if (!token) return
+        
+        const parsed = JSON.parse(token)
+        const authToken = parsed.state?.token
+        if (!authToken) return
+
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://LaundryLobby-backend-605c.onrender.com/api'
+        const response = await fetch(`${API_URL}/superadmin/leads/stats`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.data?.stats?.new !== undefined) {
+            setNewLeadsCount(data.data.stats.new)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch new leads count:', error)
+      }
+    }
+
+    fetchNewLeadsCount()
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchNewLeadsCount, 60000)
+    return () => clearInterval(interval)
+  }, [setNewLeadsCount])
 
   useEffect(() => {
     const savedExpanded = localStorage.getItem('superadmin-sidebar-expanded')
@@ -213,7 +249,15 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
       >
         <Icon className={`flex-shrink-0 w-5 h-5 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} />
         {/* Always show text on mobile, conditionally on desktop */}
-        <span className={sidebarCollapsed ? 'lg:hidden' : ''}>{item.name}</span>
+        <span className={`flex-1 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{item.name}</span>
+        {/* Badge for new leads */}
+        {item.showBadge && newLeadsCount > 0 && !sidebarCollapsed && (
+          <span className={`ml-auto px-2 py-0.5 text-xs font-medium rounded-full ${
+            isActive ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-700'
+          }`}>
+            {newLeadsCount > 99 ? '99+' : newLeadsCount}
+          </span>
+        )}
       </Link>
     )
   }
@@ -243,7 +287,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">Super Admin</h1>
-              <p className="text-xs text-gray-500">LaundryPro</p>
+              <p className="text-xs text-gray-500">LaundryLobby</p>
             </div>
           </div>
           

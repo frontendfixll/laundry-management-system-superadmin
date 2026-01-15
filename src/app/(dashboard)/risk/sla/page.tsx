@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { superAdminApi } from '@/lib/superAdminApi'
+import toast from 'react-hot-toast'
 import { 
   ArrowLeft,
   Plus,
@@ -93,7 +94,7 @@ export default function SLAConfigPage() {
       })
       fetchConfigs()
     } catch (err: any) {
-      alert(err.message)
+      toast.error(err.message)
     } finally {
       setCreateLoading(false)
     }

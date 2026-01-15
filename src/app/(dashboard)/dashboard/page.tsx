@@ -1,25 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useSuperAdminDashboard } from '@/hooks/useSuperAdminDashboard'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import StatsCards from '@/components/dashboard/StatsCards'
 import RevenueChart from '@/components/dashboard/RevenueChart'
-import RecentOrders from '@/components/dashboard/RecentOrders'
 import SystemAlerts from '@/components/dashboard/SystemAlerts'
 import TopBranches from '@/components/dashboard/TopBranches'
 import { 
-  RefreshCw, 
-  Calendar, 
   Download,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
   Sparkles,
   Shield,
-  ShoppingBag,
-  Users,
   Building2
 } from 'lucide-react'
 import {
@@ -42,8 +36,6 @@ export default function SuperAdminDashboard() {
     loading,
     error,
     fetchDashboardOverview,
-    autoRefresh,
-    setAutoRefresh,
     isDataStale,
     clearError
   } = useSuperAdminDashboard()
@@ -53,10 +45,6 @@ export default function SuperAdminDashboard() {
   const handleTimeframeChange = (newTimeframe: string) => {
     setTimeframe(newTimeframe)
     fetchDashboardOverview(newTimeframe)
-  }
-
-  const handleRefresh = () => {
-    fetchDashboardOverview(timeframe)
   }
 
   const handleExport = () => {
@@ -188,7 +176,7 @@ export default function SuperAdminDashboard() {
           <p className="text-gray-600 mb-6">{error}</p>
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => { clearError(); handleRefresh(); }}
+              onClick={() => { clearError(); fetchDashboardOverview(timeframe); }}
               className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg shadow-purple-500/30 font-medium"
             >
               Try Again
@@ -249,14 +237,6 @@ export default function SuperAdminDashboard() {
               <option value="30d" className="text-gray-800">Last 30 days</option>
               <option value="90d" className="text-gray-800">Last 90 days</option>
             </select>
-
-            <button
-              onClick={handleRefresh}
-              disabled={loading}
-              className="p-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-all disabled:opacity-50"
-            >
-              <RefreshCw className={`w-5 h-5 text-white ${loading ? 'animate-spin' : ''}`} />
-            </button>
 
             <button
               onClick={handleExport}
@@ -444,52 +424,20 @@ export default function SuperAdminDashboard() {
               loading={loading}
               onDismiss={(alertId) => {
                 console.log('Alert dismissed:', alertId)
-                // Could save to localStorage or API to persist dismissed alerts
               }}
               onClearAll={() => {
                 console.log('All alerts cleared')
-                // Could save to localStorage or API to persist cleared state
               }}
             />
           )}
         </div>
       </div>
 
-      {/* Secondary Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          {dashboardData && (
-            <RecentOrders orders={dashboardData.recentOrders} loading={loading} />
-          )}
-        </div>
-        <div>
-          {dashboardData && (
-            <TopBranches branches={dashboardData.topBranches} loading={loading} />
-          )}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link href="/superadmin/analytics" className="group flex items-center justify-center p-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/30 hover:-translate-y-1">
-            <TrendingUp className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-            <span className="font-medium">View Analytics</span>
-          </Link>
-          <Link href="/superadmin/financial" className="group flex items-center justify-center p-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-2xl hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-1">
-            <Calendar className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-            <span className="font-medium">Financial Reports</span>
-          </Link>
-          <Link href="/superadmin/orders" className="group flex items-center justify-center p-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-500/30 hover:-translate-y-1">
-            <CheckCircle className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-            <span className="font-medium">Review Orders</span>
-          </Link>
-          <Link href="/superadmin/audit" className="group flex items-center justify-center p-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/30 hover:-translate-y-1">
-            <Shield className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-            <span className="font-medium">Security & Audit</span>
-          </Link>
-        </div>
+      {/* Top Branches - Full Width */}
+      <div>
+        {dashboardData && (
+          <TopBranches branches={dashboardData.topBranches} loading={loading} />
+        )}
       </div>
 
       {/* Footer Info - System Status */}

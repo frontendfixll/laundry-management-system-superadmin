@@ -33,11 +33,13 @@ interface SuperAdminState {
   session: Session | null
   isAuthenticated: boolean
   sidebarCollapsed: boolean
+  newLeadsCount: number
   
   setAdmin: (admin: SuperAdmin) => void
   setToken: (token: string) => void
   setSession: (session: Session) => void
   setSidebarCollapsed: (collapsed: boolean) => void
+  setNewLeadsCount: (count: number) => void
   logout: () => void
   clearAll: () => void
 }
@@ -50,6 +52,7 @@ export const useSuperAdminStore = create<SuperAdminState>()(
       session: null,
       isAuthenticated: false,
       sidebarCollapsed: false,
+      newLeadsCount: 0,
 
       setAdmin: (admin) => set({ 
         admin, 
@@ -62,18 +65,22 @@ export const useSuperAdminStore = create<SuperAdminState>()(
 
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
+      setNewLeadsCount: (count) => set({ newLeadsCount: count }),
+
       logout: () => set({ 
         admin: null, 
         token: null, 
         session: null, 
-        isAuthenticated: false 
+        isAuthenticated: false,
+        newLeadsCount: 0
       }),
 
       clearAll: () => set({ 
         admin: null, 
         token: null, 
         session: null, 
-        isAuthenticated: false 
+        isAuthenticated: false,
+        newLeadsCount: 0
       })
     }),
     {
@@ -83,7 +90,8 @@ export const useSuperAdminStore = create<SuperAdminState>()(
         token: state.token,
         session: state.session,
         isAuthenticated: state.isAuthenticated,
-        sidebarCollapsed: state.sidebarCollapsed
+        sidebarCollapsed: state.sidebarCollapsed,
+        newLeadsCount: state.newLeadsCount
       })
     }
   )

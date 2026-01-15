@@ -21,6 +21,7 @@ import {
   Lock
 } from 'lucide-react'
 import Link from 'next/link'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 const categoryConfig = {
   management: { color: 'text-purple-600 bg-purple-50 border-purple-200', icon: Crown, text: 'Management' },
@@ -67,6 +68,8 @@ export default function RolesPage() {
   })
   const [showFilters, setShowFilters] = useState(false)
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string } | null>(null)
+  const [initConfirm, setInitConfirm] = useState(false)
 
   useEffect(() => {
     fetchRoles({ page: 1, limit: 10, ...filters })
@@ -81,24 +84,22 @@ export default function RolesPage() {
     fetchRoles({ page, limit: 10, ...filters })
   }
 
-  const handleDelete = async (roleId: string, roleName: string) => {
-    if (window.confirm(`Are you sure you want to delete the role "${roleName}"?`)) {
-      try {
-        await deleteRole(roleId)
-      } catch (error) {
-        console.error('Delete error:', error)
-      }
+  const handleDelete = async (roleId: string) => {
+    try {
+      await deleteRole(roleId)
+    } catch (error) {
+      console.error('Delete error:', error)
     }
+    setDeleteConfirm(null)
   }
 
   const handleInitializeRoles = async () => {
-    if (window.confirm('Initialize default system roles? This will create standard roles like Center Admin, Staff, etc.')) {
-      try {
-        await initializeDefaultRoles()
-      } catch (error) {
-        console.error('Initialize roles error:', error)
-      }
+    try {
+      await initializeDefaultRoles()
+    } catch (error) {
+      console.error('Initialize roles error:', error)
     }
+    setInitConfirm(false)
   }
 
   const getLevelColor = (level: number) => {
@@ -144,7 +145,7 @@ export default function RolesPage() {
         <div className="flex items-center space-x-3">
           {roles.length === 0 && (
             <button
-              onClick={handleInitializeRoles}
+              onClick={() => setInitConfirm(true)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
             >
               <Shield className="w-5 h-5" />
@@ -279,7 +280,7 @@ export default function RolesPage() {
             </p>
             <div className="flex items-center justify-center space-x-3">
               <button
-                onClick={handleInitializeRoles}
+                onClick={() => setInitConfirm(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
               >
                 <Shield className="w-5 h-5" />
@@ -421,7 +422,7 @@ export default function RolesPage() {
                     </Link>
                     {!role.isSystemRole && (
                       <button
-                        onClick={() => handleDelete(role._id, role.displayName)}
+                        onClick={() => setDeleteConfirm({ isOpen: true, id: role._id, name: role.displayName })}
                         className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete Role"
                       >
@@ -506,6 +507,28 @@ export default function RolesPage() {
           <div className="text-sm text-orange-100">System Roles</div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm?.isOpen || false}
+        title="Delete Role"
+        message={`Are you sure you want to delete the role "${deleteConfirm?.name}"?`}
+        confirmText="Delete"
+        type="danger"
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm.id)}
+        onCancel={() => setDeleteConfirm(null)}
+      />
+
+      {/* Initialize Roles Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={initConfirm}
+        title="Initialize Default Roles"
+        message="Initialize default system roles? This will create standard roles like Center Admin, Staff, etc."
+        confirmText="Initialize"
+        type="info"
+        onConfirm={handleInitializeRoles}
+        onCancel={() => setInitConfirm(false)}
+      />
     </div>
   )
 }

@@ -262,7 +262,7 @@ export default function ResetPassword() {
         {/* Footer */}
         <div className="text-center">
           <p className="text-gray-400 text-sm">
-            LaundryPro Super Admin Portal
+            LaundryLobby Super Admin Portal
           </p>
         </div>
       </div>

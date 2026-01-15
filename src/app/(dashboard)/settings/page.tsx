@@ -22,6 +22,7 @@ import {
   Key
 } from 'lucide-react'
 import { useSettings } from '@/hooks/useSettings'
+import toast from 'react-hot-toast'
 
 const settingsTabs = [
   { id: 'general', label: 'General', icon: Settings },
@@ -72,14 +73,14 @@ export default function SettingsPage() {
     e.preventDefault()
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('New passwords do not match')
+      toast.error('New passwords do not match')
       return
     }
 
     try {
       await changePassword(passwordData.currentPassword, passwordData.newPassword)
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
-      alert('Password changed successfully')
+      toast.success('Password changed successfully')
     } catch (error) {
       console.error('Failed to change password:', error)
     }

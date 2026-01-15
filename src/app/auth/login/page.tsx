@@ -17,7 +17,7 @@ import {
   KeyRound
 } from 'lucide-react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrypro-backend-605c.onrender.com/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://LaundryLobby-backend-605c.onrender.com/api'
 
 export default function SuperAdminLogin() {
   const router = useRouter()
@@ -184,7 +184,7 @@ export default function SuperAdminLogin() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full pl-10 pr-3 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="admin@laundrypro.com"
+                    placeholder="admin@LaundryLobby.com"
                   />
                 </div>
               </div>
@@ -357,7 +357,7 @@ export default function SuperAdminLogin() {
         {/* Footer */}
         <div className="text-center">
           <p className="text-gray-400 text-sm">
-            LaundryPro Super Admin Portal
+            LaundryLobby Super Admin Portal
           </p>
           <Link href="/" className="text-purple-400 hover:text-purple-300 text-sm transition-colors">
             ← Back to main site

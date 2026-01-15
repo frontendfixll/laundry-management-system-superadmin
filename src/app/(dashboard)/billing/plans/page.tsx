@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useBilling, BillingPlan } from '@/hooks/useBilling';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -17,16 +18,70 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Settings, 
   Edit, 
   Check, 
   X,
   Zap,
   Crown,
   Building2,
-  Rocket
+  Rocket,
+  Plus,
+  Trash2,
+  Star,
+  Settings,
+  Shirt,
+  Sparkles,
+  Megaphone,
+  Wallet,
+  Users,
+  Award,
+  Package,
+  Palette,
+  Globe,
+  HeadphonesIcon,
+  Code,
+  BarChart3,
+  Shield,
+  UserCog,
+  Truck,
+  CreditCard,
+  UserCheck,
+  FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+interface FeatureDefinition {
+  _id: string;
+  key: string;
+  name: string;
+  description?: string;
+  category: string;
+  valueType: 'boolean' | 'number';
+  defaultValue: boolean | number;
+  isActive: boolean;
+  sortOrder: number;
+  icon?: string;
+}
+
+interface BillingPlan {
+  _id: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  price: { monthly: number; yearly: number };
+  features: Record<string, boolean | number>;
+  trialDays?: number;
+  isPopular?: boolean;
+  badge?: string;
+  isActive: boolean;
+  isDefault?: boolean;
+  isCustom?: boolean;
+  showOnMarketing: boolean;
+  sortOrder?: number;
+}
 
 const planIcons: Record<string, any> = {
   free: Zap,
@@ -42,52 +97,182 @@ const planColors: Record<string, string> = {
   enterprise: 'bg-amber-50 border-amber-300'
 };
 
+const categoryLabels: Record<string, string> = {
+  admin_permissions: 'Admin Permissions',
+  platform: 'Platform',
+  limits: 'Limits',
+  branding: 'Branding',
+  support: 'Support'
+};
+
+const iconMap: Record<string, any> = {
+  Shirt, Sparkles, Megaphone, Wallet, Users, Award, Package, Building2, 
+  Palette, Globe, HeadphonesIcon, Code, BarChart3, Zap, Shield, UserCog,
+  Truck, CreditCard, UserCheck, FileText
+};
+
 export default function BillingPlansPage() {
-  const { plans, loading, fetchPlans, updatePlan } = useBilling();
+  const [plans, setPlans] = useState<BillingPlan[]>([]);
+  const [featureDefinitions, setFeatureDefinitions] = useState<FeatureDefinition[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingPlan, setEditingPlan] = useState<BillingPlan | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; name: string } | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    displayName: string;
+    description: string;
+    priceMonthly: number;
+    priceYearly: number;
+    trialDays: number;
+    isPopular: boolean;
+    badge: string;
+    isActive: boolean;
+    showOnMarketing: boolean;
+    features: Record<string, boolean | number>;
+  }>({
+    name: '',
     displayName: '',
+    description: '',
     priceMonthly: 0,
     priceYearly: 0,
-    maxOrders: 0,
-    maxStaff: 0,
-    maxCustomers: 0,
-    maxBranches: 0,
-    customDomain: false,
-    advancedAnalytics: false,
-    apiAccess: false,
-    whiteLabel: false,
-    prioritySupport: false,
-    customBranding: true,
-    isActive: true
+    trialDays: 14,
+    isPopular: false,
+    badge: '',
+    isActive: true,
+    showOnMarketing: true,
+    features: {}
   });
 
   useEffect(() => {
-    fetchPlans();
-  }, [fetchPlans]);
+    fetchData();
+  }, []);
+
+  const getAuthHeaders = () => {
+    let token = null;
+    const superAdminData = localStorage.getItem('superadmin-storage');
+    if (superAdminData) {
+      try {
+        const parsed = JSON.parse(superAdminData);
+        token = parsed.state?.token || parsed.token;
+      } catch (e) {}
+    }
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` })
+    };
+  };
+
+  const fetchData = async () => {
+    try {
+      const response = await fetch(`${API_URL}/superadmin/billing/plans?includeInactive=true`, {
+        headers: getAuthHeaders()
+      });
+      const data = await response.json();
+      if (data.success) {
+        setPlans(data.data.plans || []);
+        setFeatureDefinitions(data.data.featureDefinitions || []);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch plans');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDefaultFeatures = (): Record<string, boolean | number> => {
+    const defaults: Record<string, boolean | number> = {};
+    featureDefinitions.forEach(f => {
+      defaults[f.key] = f.defaultValue;
+    });
+    return defaults;
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      displayName: '',
+      description: '',
+      priceMonthly: 0,
+      priceYearly: 0,
+      trialDays: 14,
+      isPopular: false,
+      badge: '',
+      isActive: true,
+      showOnMarketing: true,
+      features: getDefaultFeatures()
+    });
+  };
+
+  const openCreateDialog = () => {
+    resetForm();
+    setIsCreateOpen(true);
+  };
 
   const openEditDialog = (plan: BillingPlan) => {
     setEditingPlan(plan);
+    // Merge plan features with defaults (in case new features were added)
+    const mergedFeatures = { ...getDefaultFeatures(), ...plan.features };
     setFormData({
+      name: plan.name,
       displayName: plan.displayName,
+      description: plan.description || '',
       priceMonthly: plan.price.monthly,
       priceYearly: plan.price.yearly,
-      maxOrders: plan.features.maxOrders,
-      maxStaff: plan.features.maxStaff,
-      maxCustomers: plan.features.maxCustomers,
-      maxBranches: plan.features.maxBranches,
-      customDomain: plan.features.customDomain,
-      advancedAnalytics: plan.features.advancedAnalytics,
-      apiAccess: plan.features.apiAccess,
-      whiteLabel: plan.features.whiteLabel,
-      prioritySupport: plan.features.prioritySupport,
-      customBranding: plan.features.customBranding,
-      isActive: plan.isActive
+      trialDays: plan.trialDays || 14,
+      isPopular: plan.isPopular || false,
+      badge: plan.badge || '',
+      isActive: plan.isActive,
+      showOnMarketing: plan.showOnMarketing !== false,
+      features: mergedFeatures
     });
     setIsEditOpen(true);
+  };
+
+  const handleCreate = async () => {
+    if (!formData.name.trim()) {
+      toast.error('Plan name is required');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch(`${API_URL}/superadmin/billing/plans/create`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: formData.name,
+          displayName: formData.displayName || formData.name,
+          description: formData.description,
+          price: {
+            monthly: formData.priceMonthly,
+            yearly: formData.priceYearly
+          },
+          features: formData.features,
+          trialDays: formData.trialDays,
+          isPopular: formData.isPopular,
+          badge: formData.badge,
+          showOnMarketing: formData.showOnMarketing
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Plan created!');
+        setIsCreateOpen(false);
+        fetchData();
+      } else {
+        toast.error(data.message || 'Failed to create plan');
+      }
+    } catch (err) {
+      toast.error('Failed to create plan');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSave = async () => {
@@ -95,33 +280,34 @@ export default function BillingPlansPage() {
     
     setSaving(true);
     try {
-      const success = await updatePlan(editingPlan.name, {
-        displayName: formData.displayName,
-        price: {
-          monthly: formData.priceMonthly,
-          yearly: formData.priceYearly
-        },
-        features: {
-          maxOrders: formData.maxOrders,
-          maxStaff: formData.maxStaff,
-          maxCustomers: formData.maxCustomers,
-          maxBranches: formData.maxBranches,
-          customDomain: formData.customDomain,
-          advancedAnalytics: formData.advancedAnalytics,
-          apiAccess: formData.apiAccess,
-          whiteLabel: formData.whiteLabel,
-          prioritySupport: formData.prioritySupport,
-          customBranding: formData.customBranding
-        },
-        isActive: formData.isActive
+      const response = await fetch(`${API_URL}/superadmin/billing/plans`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: editingPlan.name,
+          displayName: formData.displayName,
+          description: formData.description,
+          price: {
+            monthly: formData.priceMonthly,
+            yearly: formData.priceYearly
+          },
+          features: formData.features,
+          trialDays: formData.trialDays,
+          isPopular: formData.isPopular,
+          badge: formData.badge,
+          isActive: formData.isActive,
+          showOnMarketing: formData.showOnMarketing
+        })
       });
 
-      if (success) {
-        toast.success('Plan updated successfully');
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Plan updated!');
         setIsEditOpen(false);
         setEditingPlan(null);
+        fetchData();
       } else {
-        toast.error('Failed to update plan');
+        toast.error(data.message || 'Failed to update plan');
       }
     } catch (err) {
       toast.error('Failed to update plan');
@@ -129,6 +315,38 @@ export default function BillingPlansPage() {
       setSaving(false);
     }
   };
+
+  const handleDelete = async (planName: string) => {
+    setDeleting(planName);
+    try {
+      const response = await fetch(`${API_URL}/superadmin/billing/plans/${planName}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Plan deleted!');
+        fetchData();
+      } else {
+        toast.error(data.message || 'Failed to delete plan');
+      }
+    } catch (err) {
+      toast.error('Failed to delete plan');
+    } finally {
+      setDeleting(null);
+      setDeleteConfirm(null);
+    }
+  };
+
+  const updateFeature = (key: string, value: boolean | number) => {
+    setFormData(prev => ({
+      ...prev,
+      features: { ...prev.features, [key]: value }
+    }));
+  };
+
+  const isDefaultPlan = (name: string) => ['free', 'basic', 'pro', 'enterprise'].includes(name);
 
   const formatPrice = (amount: number) => {
     if (amount === 0) return 'Free';
@@ -141,7 +359,25 @@ export default function BillingPlansPage() {
     return value.toLocaleString();
   };
 
-  if (loading && plans.length === 0) {
+  const getIcon = (iconName?: string) => {
+    if (!iconName) return Package;
+    return iconMap[iconName] || Package;
+  };
+
+  const getFeaturesByCategory = () => {
+    const grouped: Record<string, FeatureDefinition[]> = {};
+    featureDefinitions.filter(f => f.isActive).forEach(f => {
+      if (!grouped[f.category]) grouped[f.category] = [];
+      grouped[f.category].push(f);
+    });
+    return grouped;
+  };
+
+  const countEnabledFeatures = (plan: BillingPlan) => {
+    return Object.entries(plan.features || {}).filter(([_, v]) => v === true || (typeof v === 'number' && v !== 0)).length;
+  };
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -149,125 +385,199 @@ export default function BillingPlansPage() {
     );
   }
 
+  const featuresByCategory = getFeaturesByCategory();
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Billing Plans</h1>
-          <p className="text-muted-foreground">Manage subscription plans and pricing</p>
+          <p className="text-muted-foreground">Manage subscription plans with dynamic features</p>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/billing/features">
+            <Button variant="outline">
+              <Settings className="h-4 w-4 mr-2" />
+              Manage Features
+            </Button>
+          </Link>
+          <Button onClick={openCreateDialog}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Plan
+          </Button>
         </div>
       </div>
 
       {/* Plans Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {plans.map((plan) => {
-          const Icon = planIcons[plan.name] || Zap;
-          const colorClass = planColors[plan.name] || planColors.free;
+          const Icon = planIcons[plan.name] || Star;
+          const colorClass = planColors[plan.name] || 'bg-green-50 border-green-300';
+          const isCustom = !isDefaultPlan(plan.name);
           
           return (
             <Card key={plan._id} className={`relative ${colorClass} border-2 flex flex-col h-full`}>
-              {!plan.isActive && (
-                <div className="absolute top-2 right-2">
-                  <Badge variant="secondary">Disabled</Badge>
+              {plan.isPopular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-primary text-white">{plan.badge || 'Popular'}</Badge>
                 </div>
               )}
-              <CardHeader className="pb-2">
+              {isCustom && (
+                <div className="absolute top-2 left-2">
+                  <Badge variant="secondary" className="bg-green-100 text-green-700">Custom</Badge>
+                </div>
+              )}
+              <div className="absolute top-2 right-2 flex gap-1">
+                {plan.showOnMarketing && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">Public</Badge>
+                )}
+                {!plan.isActive && (
+                  <Badge variant="destructive">Disabled</Badge>
+                )}
+              </div>
+              
+              <CardHeader className="pb-2 pt-6">
                 <div className="flex items-center gap-2">
                   <Icon className="h-5 w-5" />
                   <CardTitle className="text-lg">{plan.displayName}</CardTitle>
                 </div>
-                <CardDescription className="capitalize">{plan.name} plan</CardDescription>
+                {plan.description && (
+                  <CardDescription className="text-xs">{plan.description}</CardDescription>
+                )}
               </CardHeader>
+              
               <CardContent className="flex flex-col flex-1">
-                {/* Pricing */}
-                <div>
+                <div className="mb-4">
                   <div className="text-3xl font-bold">{formatPrice(plan.price.monthly)}</div>
                   <div className="text-sm text-muted-foreground">
                     {plan.price.monthly > 0 ? '/month' : ''}
                   </div>
                   {plan.price.yearly > 0 && (
                     <div className="text-sm text-green-600">
-                      {formatPrice(plan.price.yearly)}/year (save {Math.round((1 - plan.price.yearly / (plan.price.monthly * 12)) * 100)}%)
+                      {formatPrice(plan.price.yearly)}/year
+                    </div>
+                  )}
+                  {plan.trialDays && plan.trialDays > 0 && (
+                    <div className="text-xs text-amber-600 mt-1">
+                      {plan.trialDays} days trial
                     </div>
                   )}
                 </div>
 
-                {/* Limits */}
-                <div className="space-y-1 text-sm mt-4">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Orders</span>
-                    <span className="font-medium">{formatLimit(plan.features.maxOrders)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Staff</span>
-                    <span className="font-medium">{formatLimit(plan.features.maxStaff)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Customers</span>
-                    <span className="font-medium">{formatLimit(plan.features.maxCustomers)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Branches</span>
-                    <span className="font-medium">{formatLimit(plan.features.maxBranches)}</span>
-                  </div>
+                {/* Quick Stats */}
+                <div className="text-xs text-muted-foreground mb-3">
+                  {countEnabledFeatures(plan)} features enabled
                 </div>
 
-                {/* Features - Fixed height section */}
-                <div className="space-y-1 text-sm border-t pt-3 mt-4 flex-1">
-                  <FeatureRow label="Custom Branding" enabled={plan.features.customBranding} />
-                  <FeatureRow label="Custom Domain" enabled={plan.features.customDomain} />
-                  <FeatureRow label="Analytics" enabled={plan.features.advancedAnalytics} />
-                  <FeatureRow label="API Access" enabled={plan.features.apiAccess} />
-                  <FeatureRow label="White Label" enabled={plan.features.whiteLabel} />
-                  <FeatureRow label="Priority Support" enabled={plan.features.prioritySupport} />
+                {/* Key Limits */}
+                <div className="space-y-1 text-sm flex-1">
+                  {plan.features.max_orders !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Orders</span>
+                      <span className="font-medium">{formatLimit(plan.features.max_orders as number)}</span>
+                    </div>
+                  )}
+                  {plan.features.max_staff !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Staff</span>
+                      <span className="font-medium">{formatLimit(plan.features.max_staff as number)}</span>
+                    </div>
+                  )}
+                  {plan.features.max_branches !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Branches</span>
+                      <span className="font-medium">{formatLimit(plan.features.max_branches as number)}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Button always at bottom */}
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4"
-                  onClick={() => openEditDialog(plan)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Plan
-                </Button>
+                {/* Key Features */}
+                <div className="space-y-1 text-sm border-t pt-3 mt-3">
+                  <FeatureRow label="Campaigns" enabled={!!plan.features.campaigns} />
+                  <FeatureRow label="Loyalty" enabled={!!plan.features.loyalty_points} />
+                  <FeatureRow label="Analytics" enabled={!!plan.features.advanced_analytics} />
+                </div>
+
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" className="flex-1" onClick={() => openEditDialog(plan)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  {isCustom && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => setDeleteConfirm({ isOpen: true, name: plan.name })}
+                      disabled={deleting === plan.name}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* Create/Edit Dialog */}
+      <Dialog open={isCreateOpen || isEditOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsCreateOpen(false);
+          setIsEditOpen(false);
+          setEditingPlan(null);
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit {editingPlan?.displayName} Plan</DialogTitle>
-            <DialogDescription>Update pricing and feature limits</DialogDescription>
+            <DialogTitle>
+              {isCreateOpen ? 'Create New Plan' : `Edit ${editingPlan?.displayName} Plan`}
+            </DialogTitle>
+            <DialogDescription>
+              Configure pricing and features for this plan
+            </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-6 py-4">
-            {/* Basic Info */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Display Name</Label>
-                <Input
-                  value={formData.displayName}
-                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                />
-              </div>
-              <div className="flex items-center space-x-2 pt-6">
-                <Switch
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
-                />
-                <Label>Plan Active</Label>
-              </div>
-            </div>
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="features">Features</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
 
-            {/* Pricing */}
-            <div className="space-y-3">
-              <h4 className="font-medium">Pricing</h4>
+            {/* Basic Info Tab */}
+            <TabsContent value="basic" className="space-y-4 mt-4">
               <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Plan Name (slug) *</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
+                    placeholder="e.g., premium_plus"
+                    disabled={!!editingPlan}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Display Name *</Label>
+                  <Input
+                    value={formData.displayName}
+                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                    placeholder="e.g., Premium Plus"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Brief description of this plan"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Monthly Price (₹)</Label>
                   <Input
@@ -283,99 +593,141 @@ export default function BillingPlansPage() {
                     value={formData.priceYearly}
                     onChange={(e) => setFormData({ ...formData, priceYearly: parseInt(e.target.value) || 0 })}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Suggested: ₹{Math.round(formData.priceMonthly * 10)} (2 months free)
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Limits */}
-            <div className="space-y-3">
-              <h4 className="font-medium">Usage Limits</h4>
-              <p className="text-xs text-muted-foreground">Use -1 for unlimited</p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Max Orders/Month</Label>
-                  <Input
-                    type="number"
-                    value={formData.maxOrders}
-                    onChange={(e) => setFormData({ ...formData, maxOrders: parseInt(e.target.value) || 0 })}
-                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Max Staff</Label>
+                  <Label>Trial Days</Label>
                   <Input
                     type="number"
-                    value={formData.maxStaff}
-                    onChange={(e) => setFormData({ ...formData, maxStaff: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Max Customers</Label>
-                  <Input
-                    type="number"
-                    value={formData.maxCustomers}
-                    onChange={(e) => setFormData({ ...formData, maxCustomers: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Max Branches</Label>
-                  <Input
-                    type="number"
-                    value={formData.maxBranches}
-                    onChange={(e) => setFormData({ ...formData, maxBranches: parseInt(e.target.value) || 0 })}
+                    value={formData.trialDays}
+                    onChange={(e) => setFormData({ ...formData, trialDays: parseInt(e.target.value) || 0 })}
                   />
                 </div>
               </div>
-            </div>
+            </TabsContent>
 
-            {/* Features */}
-            <div className="space-y-3">
-              <h4 className="font-medium">Features</h4>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FeatureToggle
-                  label="Custom Branding"
-                  checked={formData.customBranding}
-                  onChange={(checked) => setFormData({ ...formData, customBranding: checked })}
-                />
-                <FeatureToggle
-                  label="Custom Domain"
-                  checked={formData.customDomain}
-                  onChange={(checked) => setFormData({ ...formData, customDomain: checked })}
-                />
-                <FeatureToggle
-                  label="Advanced Analytics"
-                  checked={formData.advancedAnalytics}
-                  onChange={(checked) => setFormData({ ...formData, advancedAnalytics: checked })}
-                />
-                <FeatureToggle
-                  label="API Access"
-                  checked={formData.apiAccess}
-                  onChange={(checked) => setFormData({ ...formData, apiAccess: checked })}
-                />
-                <FeatureToggle
-                  label="White Label"
-                  checked={formData.whiteLabel}
-                  onChange={(checked) => setFormData({ ...formData, whiteLabel: checked })}
-                />
-                <FeatureToggle
-                  label="Priority Support"
-                  checked={formData.prioritySupport}
-                  onChange={(checked) => setFormData({ ...formData, prioritySupport: checked })}
-                />
+            {/* Features Tab */}
+            <TabsContent value="features" className="space-y-6 mt-4">
+              {Object.entries(featuresByCategory).map(([category, features]) => (
+                <div key={category} className="space-y-3">
+                  <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                    {categoryLabels[category] || category}
+                  </h4>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {features.map((feature) => {
+                      const Icon = getIcon(feature.icon);
+                      const value = formData.features[feature.key];
+                      
+                      return (
+                        <div
+                          key={feature.key}
+                          className="flex items-center justify-between p-3 border rounded-lg bg-white"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4 text-gray-500" />
+                            <div>
+                              <span className="text-sm font-medium">{feature.name}</span>
+                              {feature.description && (
+                                <p className="text-xs text-muted-foreground">{feature.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          {feature.valueType === 'boolean' ? (
+                            <Switch
+                              checked={value === true}
+                              onCheckedChange={(c) => updateFeature(feature.key, c)}
+                            />
+                          ) : (
+                            <Input
+                              type="number"
+                              className="w-24 h-8 text-sm"
+                              value={value as number || 0}
+                              onChange={(e) => updateFeature(feature.key, parseInt(e.target.value) || 0)}
+                              placeholder="-1 = unlimited"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </TabsContent>
+
+            {/* Settings Tab */}
+            <TabsContent value="settings" className="space-y-4 mt-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <Label className="font-medium">Plan Active</Label>
+                    <p className="text-xs text-muted-foreground">Enable or disable this plan</p>
+                  </div>
+                  <Switch
+                    checked={formData.isActive}
+                    onCheckedChange={(c) => setFormData({ ...formData, isActive: c })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <Label className="font-medium">Show on Marketing Page</Label>
+                    <p className="text-xs text-muted-foreground">Display on public pricing page</p>
+                  </div>
+                  <Switch
+                    checked={formData.showOnMarketing}
+                    onCheckedChange={(c) => setFormData({ ...formData, showOnMarketing: c })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <Label className="font-medium">Mark as Popular</Label>
+                    <p className="text-xs text-muted-foreground">Highlight this plan on pricing page</p>
+                  </div>
+                  <Switch
+                    checked={formData.isPopular}
+                    onCheckedChange={(c) => setFormData({ ...formData, isPopular: c })}
+                  />
+                </div>
+
+                {formData.isPopular && (
+                  <div className="space-y-2">
+                    <Label>Badge Text</Label>
+                    <Input
+                      value={formData.badge}
+                      onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                      placeholder="e.g., Most Popular, Best Value"
+                    />
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => {
+              setIsCreateOpen(false);
+              setIsEditOpen(false);
+              setEditingPlan(null);
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={isCreateOpen ? handleCreate : handleSave} disabled={saving}>
+              {saving ? 'Saving...' : isCreateOpen ? 'Create Plan' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm?.isOpen || false}
+        title="Delete Plan"
+        message={`Delete "${deleteConfirm?.name}" plan? This cannot be undone.`}
+        confirmText="Delete"
+        type="danger"
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm.name)}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }
@@ -384,28 +736,7 @@ function FeatureRow({ label, enabled }: { label: string; enabled: boolean }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground">{label}</span>
-      {enabled ? (
-        <Check className="h-4 w-4 text-green-600" />
-      ) : (
-        <X className="h-4 w-4 text-gray-300" />
-      )}
-    </div>
-  );
-}
-
-function FeatureToggle({ 
-  label, 
-  checked, 
-  onChange 
-}: { 
-  label: string; 
-  checked: boolean; 
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between p-2 border rounded-lg">
-      <Label className="cursor-pointer">{label}</Label>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      {enabled ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-300" />}
     </div>
   );
 }

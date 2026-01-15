@@ -86,7 +86,13 @@ export interface CreateTenancyData {
     phone?: string;
     password?: string;
   };
-  subscription?: Partial<Tenancy['subscription']>;
+  subscription?: {
+    plan?: string;
+    planId?: string;
+    status?: string;
+    features?: Record<string, boolean>;
+    trialDays?: number;
+  };
 }
 
 export function useTenancies() {

@@ -22,6 +22,8 @@ export interface BillingPlan {
     customBranding: boolean;
   };
   isActive: boolean;
+  isCustom?: boolean;
+  showOnMarketing?: boolean;
 }
 
 export interface Invoice {

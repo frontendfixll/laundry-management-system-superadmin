@@ -10,7 +10,6 @@ import {
   User, 
   LogOut, 
   Shield, 
-  RefreshCw,
   AlertTriangle,
   CheckCircle,
   Package,
@@ -84,6 +83,20 @@ export default function SuperAdminHeader({ onMenuClick, sidebarCollapsed = false
       fetchNotifications()
     }
   }, [showNotifications])
+
+  // Auto mark as read when dropdown opens and notifications are loaded
+  useEffect(() => {
+    if (showNotifications && notifications.length > 0) {
+      const unreadIds = notifications.filter(n => !n.isRead).map(n => n._id)
+      if (unreadIds.length > 0) {
+        // Small delay to let user see the notifications first
+        const timer = setTimeout(() => {
+          handleMarkAsRead(unreadIds)
+        }, 1500)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [showNotifications, notifications])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -205,11 +218,6 @@ export default function SuperAdminHeader({ onMenuClick, sidebarCollapsed = false
 
           {/* Right side */}
           <div className="flex items-center space-x-4">
-            
-            {/* Refresh Button */}
-            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <RefreshCw className="h-5 w-5" />
-            </button>
 
             {/* Notifications */}
             <div className="relative" ref={notifRef}>

@@ -27,6 +27,7 @@ import {
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 const statusConfig = {
   active: { color: 'text-green-600 bg-green-50 border-green-200', icon: CheckCircle, text: 'Active' },
@@ -63,6 +64,8 @@ export default function BranchesPage() {
   const [selectedManager, setSelectedManager] = useState('')
   const [assigning, setAssigning] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string } | null>(null)
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
 
   useEffect(() => {
     fetchBranches({ page: 1, limit: 10, ...filters })
@@ -118,26 +121,26 @@ export default function BranchesPage() {
     fetchBranches({ page, limit: 10, ...filters })
   }
 
-  const handleDelete = async (branchId: string, branchName: string) => {
-    if (window.confirm(`Are you sure you want to deactivate "${branchName}"?`)) {
-      try {
-        await deleteBranch(branchId, false)
-      } catch (error) {
-        console.error('Delete error:', error)
-      }
+  const handleDelete = async (branchId: string) => {
+    try {
+      await deleteBranch(branchId, false)
+    } catch (error) {
+      console.error('Delete error:', error)
     }
+    setDeleteConfirm(null)
   }
 
   const handleBulkAction = async (action: string) => {
     if (selectedBranches.length === 0) return
     
-    if (action === 'delete' && window.confirm(`Deactivate ${selectedBranches.length} selected branches?`)) {
+    if (action === 'delete') {
       try {
         await Promise.all(selectedBranches.map(id => deleteBranch(id, false)))
         setSelectedBranches([])
       } catch (error) {
         console.error('Bulk delete error:', error)
       }
+      setBulkDeleteConfirm(false)
     }
   }
 
@@ -180,7 +183,7 @@ export default function BranchesPage() {
                 {selectedBranches.length} selected
               </span>
               <button
-                onClick={() => handleBulkAction('delete')}
+                onClick={() => setBulkDeleteConfirm(true)}
                 className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
               >
                 Deactivate Selected
@@ -417,7 +420,7 @@ export default function BranchesPage() {
                             <button
                               onClick={() => {
                                 setOpenMenuId(null)
-                                handleDelete(branch._id, branch.name)
+                                setDeleteConfirm({ isOpen: true, id: branch._id, name: branch.name })
                               }}
                               className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                             >
@@ -492,7 +495,7 @@ export default function BranchesPage() {
                       <Eye className="w-4 h-4" />
                     </Link>
                     <button
-                      onClick={() => handleDelete(branch._id, branch.name)}
+                      onClick={() => setDeleteConfirm({ isOpen: true, id: branch._id, name: branch.name })}
                       className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Deactivate Branch"
                     >
@@ -688,6 +691,28 @@ export default function BranchesPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm?.isOpen || false}
+        title="Deactivate Branch"
+        message={`Are you sure you want to deactivate "${deleteConfirm?.name}"?`}
+        confirmText="Deactivate"
+        type="danger"
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm.id)}
+        onCancel={() => setDeleteConfirm(null)}
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={bulkDeleteConfirm}
+        title="Deactivate Selected Branches"
+        message={`Deactivate ${selectedBranches.length} selected branches?`}
+        confirmText="Deactivate All"
+        type="danger"
+        onConfirm={() => handleBulkAction('delete')}
+        onCancel={() => setBulkDeleteConfirm(false)}
+      />
     </div>
   )
 }

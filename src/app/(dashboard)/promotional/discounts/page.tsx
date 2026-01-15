@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 interface DiscountRule {
   type: 'percentage' | 'fixed_amount' | 'tiered' | 'conditional'
@@ -108,6 +109,7 @@ export default function GlobalDiscountsPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string } | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -236,8 +238,6 @@ export default function GlobalDiscountsPage() {
   }
 
   const handleDelete = async (discountId: string) => {
-    if (!confirm('Are you sure you want to delete this global discount?')) return
-
     try {
       const res = await fetch(`${API_BASE}/superadmin/promotional/discounts/${discountId}`, {
         method: 'DELETE',
@@ -255,6 +255,7 @@ export default function GlobalDiscountsPage() {
       console.error('Delete discount error:', error)
       toast.error('Failed to delete discount')
     }
+    setDeleteConfirm(null)
   }
 
   const resetForm = () => {
@@ -538,7 +539,7 @@ export default function GlobalDiscountsPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(discount._id)}
+                          onClick={() => setDeleteConfirm({ isOpen: true, id: discount._id })}
                           className="text-red-600 hover:text-red-900"
                         >
                           <Trash2 className="w-4 h-4" />
