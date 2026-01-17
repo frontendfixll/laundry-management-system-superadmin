@@ -4,29 +4,28 @@ class SuperAdminAPI {
   private getAuthHeaders() {
     let token = null
     
-    // First try superadmin-storage (Zustand persist format)
-    const superAdminData = localStorage.getItem('superadmin-storage')
-    console.log('🔍 superadmin-storage:', superAdminData ? 'found' : 'not found')
-    if (superAdminData) {
+    // Try unified auth-storage (new unified store)
+    const authData = localStorage.getItem('auth-storage')
+    console.log('🔍 auth-storage:', authData ? 'found' : 'not found')
+    if (authData) {
       try {
-        const parsed = JSON.parse(superAdminData)
-        console.log('🔍 Parsed superadmin-storage:', { hasState: !!parsed.state, hasToken: !!parsed.state?.token })
+        const parsed = JSON.parse(authData)
+        console.log('🔍 Parsed auth-storage:', { hasState: !!parsed.state, hasToken: !!parsed.state?.token })
         token = parsed.state?.token || parsed.token
       } catch (e) {
-        console.error('Error parsing superadmin-storage:', e)
+        console.error('Error parsing auth-storage:', e)
       }
     }
     
-    // Fallback to laundry-auth (shared auth store)
+    // Fallback to legacy superadmin-storage
     if (!token) {
-      const authData = localStorage.getItem('laundry-auth')
-      console.log('🔍 laundry-auth:', authData ? 'found' : 'not found')
-      if (authData) {
+      const superAdminData = localStorage.getItem('superadmin-storage')
+      if (superAdminData) {
         try {
-          const parsed = JSON.parse(authData)
+          const parsed = JSON.parse(superAdminData)
           token = parsed.state?.token || parsed.token
         } catch (e) {
-          console.error('Error parsing laundry-auth:', e)
+          console.error('Error parsing superadmin-storage:', e)
         }
       }
     }
@@ -82,7 +81,27 @@ class SuperAdminAPI {
   private clearAuthData() {
     if (typeof window === 'undefined') return
     
-    // Clear Zustand persist storage
+    // Clear unified auth storage
+    const authData = localStorage.getItem('auth-storage')
+    if (authData) {
+      try {
+        const parsed = JSON.parse(authData)
+        parsed.state = {
+          user: null,
+          token: null,
+          session: null,
+          isAuthenticated: false,
+          userType: null,
+          sidebarCollapsed: false,
+          newLeadsCount: 0
+        }
+        localStorage.setItem('auth-storage', JSON.stringify(parsed))
+      } catch (e) {
+        localStorage.removeItem('auth-storage')
+      }
+    }
+    
+    // Clear legacy superadmin storage
     const superAdminData = localStorage.getItem('superadmin-storage')
     if (superAdminData) {
       try {

@@ -86,7 +86,7 @@ export default function ForgotPassword() {
                 The link will expire in 1 hour.
               </p>
               <Link 
-                href="/superadmin/auth/login"
+                href="/auth/login"
                 className="inline-flex items-center text-purple-400 hover:text-purple-300 transition-colors mt-4"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -131,7 +131,7 @@ export default function ForgotPassword() {
 
               <div className="text-center">
                 <Link 
-                  href="/superadmin/auth/login"
+                  href="/auth/login"
                   className="inline-flex items-center text-gray-400 hover:text-gray-300 text-sm transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />

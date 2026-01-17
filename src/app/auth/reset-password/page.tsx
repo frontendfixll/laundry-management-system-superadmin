@@ -89,7 +89,7 @@ export default function ResetPassword() {
       
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        router.push('/superadmin/auth/login')
+        router.push('/auth/login')
       }, 3000)
     } catch (error: any) {
       setError(error.message)
@@ -157,7 +157,7 @@ export default function ResetPassword() {
                 Your password has been updated. Redirecting to login...
               </p>
               <Link 
-                href="/superadmin/auth/login"
+                href="/auth/login"
                 className="inline-flex items-center text-purple-400 hover:text-purple-300 transition-colors mt-4"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -248,7 +248,7 @@ export default function ResetPassword() {
 
               <div className="text-center">
                 <Link 
-                  href="/superadmin/auth/login"
+                  href="/auth/login"
                   className="inline-flex items-center text-gray-400 hover:text-gray-300 text-sm transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />

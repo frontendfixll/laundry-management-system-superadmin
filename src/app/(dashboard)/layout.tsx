@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useAuthStore } from '@/store/authStore'
 import SuperAdminSidebar from '@/components/layout/SuperAdminSidebar'
 import SuperAdminHeader from '@/components/layout/SuperAdminHeader'
+import NotificationContainer from '@/components/NotificationContainer'
 import { useSessionTimeout } from '@/hooks/useSessionTimeout'
 import { SessionTimeoutModal } from '@/components/SessionTimeoutModal'
 import toast from 'react-hot-toast'
@@ -19,7 +20,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { isAuthenticated, admin, token, sidebarCollapsed, logout, clearAll } = useSuperAdminStore()
+  const { isAuthenticated, user, token, userType, sidebarCollapsed, logout, clearAll } = useAuthStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isValidating, setIsValidating] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
@@ -36,7 +37,7 @@ export default function DashboardLayout({
     enabled: isAuthenticated
   })
 
-  // Validate token on mount - only after hydration
+  // Validate token and user type on mount - only after hydration
   useEffect(() => {
     if (!isHydrated) return
 
@@ -44,6 +45,12 @@ export default function DashboardLayout({
       if (!isAuthenticated || !token) {
         setIsValidating(false)
         router.push('/auth/login')
+        return
+      }
+
+      // Redirect sales users to their dashboard
+      if (userType === 'sales') {
+        router.push('/sales-dashboard')
         return
       }
 
@@ -123,6 +130,9 @@ export default function DashboardLayout({
         onStayLoggedIn={stayLoggedIn}
         onLogout={sessionLogout}
       />
+      
+      {/* Real-time notification toasts */}
+      <NotificationContainer />
       
       {/* Sidebar */}
       <SuperAdminSidebar 

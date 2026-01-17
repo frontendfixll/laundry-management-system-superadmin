@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useAuthStore } from '@/store/authStore'
 
 interface UseSessionTimeoutOptions {
   timeoutMinutes?: number      // Total timeout duration (default: 60)
@@ -22,7 +22,7 @@ export function useSessionTimeout(options: UseSessionTimeoutOptions = {}) {
   } = options
 
   const router = useRouter()
-  const { logout, token } = useSuperAdminStore()
+  const { logout, token } = useAuthStore()
   
   const [showWarning, setShowWarning] = useState(false)
   const [remainingTime, setRemainingTime] = useState(timeoutMinutes * 60)
@@ -48,7 +48,7 @@ export function useSessionTimeout(options: UseSessionTimeoutOptions = {}) {
     setShowWarning(false)
     logout()
     onTimeout?.()
-    router.push('/superadmin/auth/login?expired=true')
+    router.push('/auth/login?expired=true')
   }, [clearTimers, logout, onTimeout, router])
 
   // Handle warning

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useAuthStore } from '@/store/authStore'
 import toast from 'react-hot-toast'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -16,7 +16,7 @@ export const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = useSuperAdminStore.getState().token
+    const token = useAuthStore.getState().token
     console.log('🔐 API Interceptor - Token exists:', !!token);
     console.log('🔐 API Interceptor - Token preview:', token?.substring(0, 50) + '...');
     if (token) {
@@ -37,7 +37,7 @@ api.interceptors.response.use(
     const errorCode = error.response?.data?.code
     
     if (error.response?.status === 401) {
-      const store = useSuperAdminStore.getState()
+      const store = useAuthStore.getState()
       if (store.token) {
         store.logout()
         toast.error('Session expired. Please login again.')

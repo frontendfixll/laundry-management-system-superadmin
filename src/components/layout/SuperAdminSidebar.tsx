@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useAuthStore, useSuperAdmin } from '@/store/authStore'
 import { 
   LayoutDashboard,
   Building2,
@@ -75,14 +75,15 @@ interface SuperAdminSidebarProps {
 
 export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }: SuperAdminSidebarProps) {
   const pathname = usePathname()
-  const { admin, logout, sidebarCollapsed, setSidebarCollapsed, newLeadsCount, setNewLeadsCount } = useSuperAdminStore()
+  const admin = useSuperAdmin()
+  const { logout, sidebarCollapsed, setSidebarCollapsed, newLeadsCount, setNewLeadsCount } = useAuthStore()
   const [expandedItems, setExpandedItems] = useState<string[]>(['Global Programs']) // Programs expanded by default
 
   // Fetch new leads count on mount and periodically
   useEffect(() => {
     const fetchNewLeadsCount = async () => {
       try {
-        const token = localStorage.getItem('superadmin-storage')
+        const token = localStorage.getItem('auth-storage')
         if (!token) return
         
         const parsed = JSON.parse(token)

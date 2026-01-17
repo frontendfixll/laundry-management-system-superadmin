@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useAuthStore, useSuperAdmin } from '@/store/authStore'
 import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Bell, 
@@ -37,7 +37,8 @@ interface SuperAdminHeaderProps {
 }
 
 export default function SuperAdminHeader({ onMenuClick, sidebarCollapsed = false }: SuperAdminHeaderProps) {
-  const { admin, logout } = useSuperAdminStore()
+  const admin = useSuperAdmin()
+  const { logout } = useAuthStore()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -141,7 +142,7 @@ export default function SuperAdminHeader({ onMenuClick, sidebarCollapsed = false
       console.error('Logout error:', error)
     } finally {
       logout()
-      window.location.href = '/superadmin/auth/login'
+      window.location.href = '/auth/login'
     }
   }
 
