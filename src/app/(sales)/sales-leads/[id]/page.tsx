@@ -132,7 +132,7 @@ export default function LeadDetailPage() {
       <div className="text-center py-12">
         <XCircle className="mx-auto h-12 w-12 text-red-400" />
         <h3 className="mt-2 text-sm font-medium text-gray-900">Lead not found</h3>
-        <Link href="/leads" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
+        <Link href="/sales-leads" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
           ← Back to Leads
         </Link>
       </div>
@@ -144,7 +144,7 @@ export default function LeadDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/leads" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link href="/sales-leads" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>

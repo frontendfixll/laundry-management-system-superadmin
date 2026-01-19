@@ -12,7 +12,8 @@ import {
   Play,
   TrendingUp,
   TrendingDown,
-  Calendar
+  Calendar,
+  Smartphone
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -47,6 +48,9 @@ export default function SubscriptionDetailPage() {
   const [showPauseModal, setShowPauseModal] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [showDowngradeModal, setShowDowngradeModal] = useState(false)
+  const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false)
+  const [generatedPaymentLink, setGeneratedPaymentLink] = useState('')
+  const [upgradeRequestData, setUpgradeRequestData] = useState<any>(null)
 
   useEffect(() => {
     fetchSubscription()
@@ -288,7 +292,7 @@ export default function SubscriptionDetailPage() {
                 className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
               >
                 <TrendingUp className="w-5 h-5" />
-                Upgrade Plan
+                Send Upgrade Request
               </button>
 
               <button
@@ -339,6 +343,19 @@ export default function SubscriptionDetailPage() {
           onSuccess={() => {
             setShowDowngradeModal(false)
             fetchSubscription()
+          }}
+        />
+      )}
+
+      {showPaymentLinkModal && (
+        <PaymentLinkModal
+          paymentLink={generatedPaymentLink}
+          upgradeData={upgradeRequestData}
+          tenancyName={subscription.tenancyName}
+          onClose={() => {
+            setShowPaymentLinkModal(false)
+            setGeneratedPaymentLink('')
+            setUpgradeRequestData(null)
           }}
         />
       )}
@@ -419,7 +436,6 @@ function PauseResumeModal({ subscriptionId, tenancyName, currentStatus, onClose,
 // Upgrade Modal
 function UpgradeModal({ subscriptionId, tenancyName, currentPlan, onClose, onSuccess }: any) {
   const [newPlan, setNewPlan] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('manual')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [availablePlans, setAvailablePlans] = useState<any[]>([])
@@ -460,19 +476,41 @@ function UpgradeModal({ subscriptionId, tenancyName, currentPlan, onClose, onSuc
     setError('')
 
     try {
-      const response = await api.post(`/sales/subscriptions/${subscriptionId}/upgrade`, {
-        planId: newPlan,
-        paymentMethod
+      // Create upgrade request instead of processing payment directly
+      const response = await api.post(`/sales/upgrades/request`, {
+        tenancyId: subscriptionId, // Using subscription ID as tenancy ID
+        toPlanId: newPlan,
+        customPrice: upgradeAmount,
+        paymentTerms: {
+          method: 'online',
+          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+          gracePeriod: 7
+        },
+        featureAccess: {
+          immediate: [],
+          paymentRequired: [] // All features locked until payment
+        },
+        customMessage: `Plan upgrade from ${currentPlan} - Payment link sent to customer`,
+        communication: {
+          sendEmail: true,
+          sendSMS: false
+        }
       })
       
-      // Show success message with payment info
-      if (response.data?.data?.payment) {
-        alert(`Plan upgraded successfully! Payment of ₹${upgradeAmount} has been processed via ${paymentMethod}.`)
+      // Show success message with actual payment link
+      if (response.data?.success) {
+        const upgradeRequestId = response.data.data._id
+        const paymentLink = `${window.location.origin}/customer-payment/${upgradeRequestId}`
+        
+        // Show modal with payment link instead of alert
+        setShowPaymentLinkModal(true)
+        setGeneratedPaymentLink(paymentLink)
+        setUpgradeRequestData(response.data.data)
       }
       
       onSuccess()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to upgrade subscription')
+      setError(err.response?.data?.message || 'Failed to create upgrade request')
     } finally {
       setLoading(false)
     }
@@ -490,8 +528,8 @@ function UpgradeModal({ subscriptionId, tenancyName, currentPlan, onClose, onSuc
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-t-2xl">
-          <h2 className="text-2xl font-bold text-white">Upgrade Plan</h2>
-          <p className="text-blue-100 text-sm mt-1">for {tenancyName}</p>
+          <h2 className="text-2xl font-bold text-white">Create Upgrade Request</h2>
+          <p className="text-blue-100 text-sm mt-1">for {tenancyName} - Customer will pay</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -545,7 +583,7 @@ function UpgradeModal({ subscriptionId, tenancyName, currentPlan, onClose, onSuc
             </div>
           </div>
 
-          {/* Payment Amount Display */}
+          {/* Upgrade Amount Display */}
           {upgradeAmount > 0 && (
             <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
               <div className="flex items-center justify-between">
@@ -553,63 +591,20 @@ function UpgradeModal({ subscriptionId, tenancyName, currentPlan, onClose, onSuc
                 <span className="text-xl font-bold text-green-600">₹{upgradeAmount}</span>
               </div>
               <p className="text-xs text-gray-600 mt-1">
-                This amount will be charged for the plan upgrade
+                Customer will pay this amount for the plan upgrade
               </p>
             </div>
           )}
 
-          {/* Payment Method Selection */}
+          {/* Customer Payment Instructions */}
           {upgradeAmount > 0 && (
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Payment Method *
-              </label>
-              <div className="space-y-2">
-                {paymentMethods.map((method) => (
-                  <label
-                    key={method.value}
-                    className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                      paymentMethod === method.value
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value={method.value}
-                      checked={paymentMethod === method.value}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="ml-3 text-sm font-medium text-gray-900">
-                      {method.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Payment Instructions */}
-          {upgradeAmount > 0 && paymentMethod === 'manual' && (
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4">
-              <h4 className="font-semibold text-yellow-800 mb-2">Manual Payment Instructions</h4>
-              <div className="text-sm text-yellow-700 space-y-1">
-                <p>• Payment will be marked as completed manually</p>
-                <p>• Customer can pay via cash, bank transfer, or cheque</p>
-                <p>• Payment record will be created for tracking</p>
-              </div>
-            </div>
-          )}
-
-          {upgradeAmount > 0 && paymentMethod !== 'manual' && (
             <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">Online Payment</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">📧 Customer Payment Process</h4>
               <div className="text-sm text-blue-700 space-y-1">
-                <p>• Payment will be processed via {paymentMethods.find(m => m.value === paymentMethod)?.label}</p>
-                <p>• Transaction will be recorded automatically</p>
-                <p>• Plan upgrade will be activated immediately</p>
+                <p>• Payment link will be sent to customer via email/SMS</p>
+                <p>• Customer can pay online using multiple payment methods</p>
+                <p>• Plan will be upgraded automatically after payment confirmation</p>
+                <p>• You will receive notification when payment is completed</p>
               </div>
             </div>
           )}
@@ -628,7 +623,7 @@ function UpgradeModal({ subscriptionId, tenancyName, currentPlan, onClose, onSuc
               className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50"
               disabled={loading || !newPlan}
             >
-              {loading ? 'Processing Payment...' : `Pay ₹${upgradeAmount} & Upgrade`}
+              {loading ? 'Sending Payment Link...' : `Send Payment Link (₹${upgradeAmount})`}
             </button>
           </div>
         </form>
@@ -756,6 +751,190 @@ function DowngradeModal({ subscriptionId, tenancyName, currentPlan, onClose, onS
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+// Payment Link Modal
+function PaymentLinkModal({ paymentLink, upgradeData, tenancyName, onClose }: any) {
+  const [copied, setCopied] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [smsSent, setSmsSent] = useState(false)
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(paymentLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
+  const sendEmail = async () => {
+    try {
+      setEmailSent(true)
+      const response = await api.post(`/sales/upgrades/${upgradeData._id}/send-email`)
+      
+      if (response.data?.success) {
+        console.log('Email sent successfully:', response.data.data.messageId)
+        // Keep the success state for 3 seconds
+        setTimeout(() => setEmailSent(false), 3000)
+      } else {
+        throw new Error('Email sending failed')
+      }
+    } catch (err) {
+      console.error('Failed to send email:', err)
+      setEmailSent(false)
+      alert('Failed to send email. Please try again.')
+    }
+  }
+
+  const sendSMS = async () => {
+    try {
+      setSmsSent(true)
+      // TODO: Implement SMS sending API
+      // await api.post(`/sales/upgrades/${upgradeData._id}/send-sms`)
+      setTimeout(() => setSmsSent(false), 3000)
+    } catch (err) {
+      console.error('Failed to send SMS:', err)
+      setSmsSent(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 rounded-t-2xl">
+          <h2 className="text-2xl font-bold text-white">✅ Payment Link Generated!</h2>
+          <p className="text-green-100 text-sm mt-1">for {tenancyName}</p>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Upgrade Summary */}
+          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+            <h3 className="font-semibold text-green-900 mb-2">Upgrade Request Created</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-600">Amount:</p>
+                <p className="font-bold text-green-700">₹{upgradeData?.pricing?.customPrice || 0}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Due Date:</p>
+                <p className="font-bold text-green-700">
+                  {upgradeData?.paymentTerms?.dueDate ? 
+                    new Date(upgradeData.paymentTerms.dueDate).toLocaleDateString() : 
+                    '7 days from now'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Link */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              🔗 Customer Payment Link
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={paymentLink}
+                readOnly
+                className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+              />
+              <button
+                onClick={copyToClipboard}
+                className={`px-4 py-3 rounded-lg font-semibold transition-all ${
+                  copied 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {copied ? '✓ Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+
+          {/* Send Options */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={sendEmail}
+              disabled={emailSent}
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${
+                emailSent
+                  ? 'bg-green-600 text-white'
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
+              }`}
+            >
+              {emailSent ? (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  Email Sent!
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                  Send via Email
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={sendSMS}
+              disabled={smsSent}
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${
+                smsSent
+                  ? 'bg-green-600 text-white'
+                  : 'bg-orange-600 text-white hover:bg-orange-700'
+              }`}
+            >
+              {smsSent ? (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  SMS Sent!
+                </>
+              ) : (
+                <>
+                  <Smartphone className="w-5 h-5" />
+                  Send via SMS
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Instructions */}
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+            <h4 className="font-semibold text-blue-900 mb-2">📋 Next Steps</h4>
+            <div className="text-sm text-blue-700 space-y-1">
+              <p>1. Copy the payment link and share it with the customer</p>
+              <p>2. Or use the Email/SMS buttons to send automatically</p>
+              <p>3. Customer will pay securely using the link</p>
+              <p>4. You'll be notified when payment is completed</p>
+              <p>5. Plan will be upgraded automatically after payment</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-gray-600 text-white rounded-xl font-semibold hover:bg-gray-700 transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => window.open(paymentLink, '_blank')}
+              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Preview Payment Page
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

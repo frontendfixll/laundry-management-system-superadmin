@@ -48,6 +48,7 @@ import {
   FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getAuthHeaders } from '@/lib/authUtils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -122,21 +123,6 @@ export default function FeaturesPage() {
   useEffect(() => {
     fetchFeatures();
   }, []);
-
-  const getAuthHeaders = () => {
-    let token = null;
-    const superAdminData = localStorage.getItem('superadmin-storage');
-    if (superAdminData) {
-      try {
-        const parsed = JSON.parse(superAdminData);
-        token = parsed.state?.token || parsed.token;
-      } catch (e) {}
-    }
-    return {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` })
-    };
-  };
 
   const fetchFeatures = async () => {
     try {

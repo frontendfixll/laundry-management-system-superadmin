@@ -14,7 +14,9 @@ import {
   Menu,
   X,
   Bell,
-  User
+  User,
+  TrendingUp,
+  Users2
 } from 'lucide-react'
 
 export default function SalesLayout({
@@ -26,6 +28,7 @@ export default function SalesLayout({
   const pathname = usePathname()
   const { isAuthenticated, userType, logout } = useAuthStore()
   const salesUser = useSalesUser()
+  const user = useAuthStore(state => state.user)
   const { isValidating } = useAuthValidation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -35,8 +38,8 @@ export default function SalesLayout({
   useEffect(() => {
     if (!isValidating && !isAuthenticated) {
       router.push('/auth/login')
-    } else if (!isValidating && userType !== 'sales') {
-      router.push('/dashboard') // Redirect non-sales users to SuperAdmin dashboard
+    } else if (!isValidating && userType !== 'sales' && userType !== 'superadmin') {
+      router.push('/dashboard') // Redirect non-sales/non-superadmin users to dashboard
     }
   }, [isAuthenticated, userType, router, isValidating])
 
@@ -48,6 +51,8 @@ export default function SalesLayout({
   const navigation = [
     { name: 'Dashboard', href: '/sales-dashboard', icon: LayoutDashboard },
     { name: 'Leads', href: '/sales-leads', icon: Users },
+    { name: 'Upgrades', href: '/upgrades', icon: TrendingUp },
+    { name: 'Team', href: '/sales-team', icon: Users2 },
     { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard },
     { name: 'Payments', href: '/payments', icon: DollarSign },
   ]
@@ -64,7 +69,7 @@ export default function SalesLayout({
     )
   }
 
-  if (!isAuthenticated || userType !== 'sales') {
+  if (!isAuthenticated || (userType !== 'sales' && userType !== 'superadmin')) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -93,7 +98,9 @@ export default function SalesLayout({
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
             <div>
               <h1 className="text-xl font-bold text-gray-900">LaundryLobby</h1>
-              <p className="text-xs text-blue-600 font-medium">Sales Portal</p>
+              <p className="text-xs text-blue-600 font-medium">
+                {userType === 'superadmin' ? 'SuperAdmin - Sales' : 'Sales Portal'}
+              </p>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -105,6 +112,17 @@ export default function SalesLayout({
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            {/* Back to SuperAdmin button for SuperAdmin users */}
+            {userType === 'superadmin' && (
+              <Link
+                href="/dashboard"
+                className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all mb-4 border border-gray-200"
+              >
+                <LayoutDashboard className="w-5 h-5 mr-3" />
+                ← Back to SuperAdmin
+              </Link>
+            )}
+            
             {navigation.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -132,16 +150,19 @@ export default function SalesLayout({
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center ring-2 ring-blue-100">
                   <span className="text-white font-semibold text-lg">
-                    {salesUser?.name?.charAt(0).toUpperCase()}
+                    {userType === 'superadmin' 
+                      ? user?.name?.charAt(0).toUpperCase() 
+                      : salesUser?.name?.charAt(0).toUpperCase()
+                    }
                   </span>
                 </div>
               </div>
               <div className="ml-3 flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {salesUser?.name}
+                  {userType === 'superadmin' ? user?.name : salesUser?.name}
                 </p>
                 <p className="text-xs text-gray-600 truncate">
-                  {salesUser?.designation}
+                  {userType === 'superadmin' ? 'SuperAdmin' : salesUser?.designation}
                 </p>
               </div>
             </div>
@@ -179,12 +200,19 @@ export default function SalesLayout({
               <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
                   <span className="text-white font-semibold text-sm">
-                    {salesUser?.name?.charAt(0).toUpperCase()}
+                    {userType === 'superadmin' 
+                      ? user?.name?.charAt(0).toUpperCase() 
+                      : salesUser?.name?.charAt(0).toUpperCase()
+                    }
                   </span>
                 </div>
                 <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900">{salesUser?.name}</p>
-                  <p className="text-xs text-gray-500">{salesUser?.designation}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {userType === 'superadmin' ? user?.name : salesUser?.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {userType === 'superadmin' ? 'SuperAdmin' : salesUser?.designation}
+                  </p>
                 </div>
               </div>
             </div>

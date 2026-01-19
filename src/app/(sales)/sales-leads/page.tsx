@@ -90,7 +90,7 @@ export default function LeadsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-          <p className="text-gray-600 mt-1">Manage your business leads</p>
+          <p className="text-gray-600 mt-1">Manage all business leads and conversions</p>
         </div>
         <Link
           href="/sales/leads/create"
@@ -217,7 +217,7 @@ export default function LeadsPage() {
                 </td>
                 <td className="px-6 py-4 text-right">
                   <Link
-                    href={`/leads/${lead._id}`}
+                    href={`/sales-leads/${lead._id}`}
                     className="inline-flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
                   >
                     <Eye className="w-4 h-4 mr-1" />

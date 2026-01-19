@@ -105,44 +105,43 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, trialsRes] = await Promise.all([
-        api.get('/sales/leads/stats'),
-        api.get('/sales/leads/expiring-soon')
+      const [statsRes, trialsRes, revenueRes] = await Promise.all([
+        api.get('/sales/analytics/dashboard-stats'),
+        api.get('/sales/analytics/expiring-trials'),
+        api.get('/sales/analytics/monthly-revenue')
       ])
 
       if (statsRes.data?.data) {
         const statsData = statsRes.data.data
-        setStats(statsData)
+        setStats({
+          leads: statsData.leads,
+          trials: statsData.trials || { active: 0, expiringSoon: 0, expired: 0 },
+          revenue: statsData.revenue,
+          performance: statsData.performance
+        })
         
-        // Prepare chart data
+        // Prepare chart data with real data
         const leadStatusData = [
-          { name: 'New', value: statsData.new || 0, color: '#3B82F6' },
-          { name: 'Contacted', value: statsData.contacted || 0, color: '#F59E0B' },
-          { name: 'Qualified', value: statsData.qualified || 0, color: '#10B981' },
-          { name: 'Demo Scheduled', value: statsData.demoScheduled || 0, color: '#8B5CF6' },
-          { name: 'Negotiation', value: statsData.negotiation || 0, color: '#F97316' },
-          { name: 'Converted', value: statsData.converted || 0, color: '#059669' },
-          { name: 'Lost', value: statsData.lost || 0, color: '#EF4444' }
+          { name: 'New', value: statsData.leads.new || 0, color: '#3B82F6' },
+          { name: 'Contacted', value: statsData.leads.contacted || 0, color: '#F59E0B' },
+          { name: 'Qualified', value: statsData.leads.qualified || 0, color: '#10B981' },
+          { name: 'Demo Scheduled', value: statsData.leads.demo_scheduled || 0, color: '#8B5CF6' },
+          { name: 'Negotiation', value: statsData.leads.negotiation || 0, color: '#F97316' },
+          { name: 'Converted', value: statsData.leads.converted || 0, color: '#059669' },
+          { name: 'Lost', value: statsData.leads.lost || 0, color: '#EF4444' }
         ].filter(item => item.value > 0)
 
-        // Mock monthly revenue data (you can replace with real API call)
-        const monthlyRevenueData = [
-          { month: 'Jan', revenue: 45000, leads: 12 },
-          { month: 'Feb', revenue: 52000, leads: 15 },
-          { month: 'Mar', revenue: 48000, leads: 13 },
-          { month: 'Apr', revenue: 61000, leads: 18 },
-          { month: 'May', revenue: 55000, leads: 16 },
-          { month: 'Jun', revenue: 67000, leads: 20 }
-        ]
+        // Use real monthly revenue data
+        const monthlyRevenueData = revenueRes.data?.data?.chartData || []
 
         // Conversion funnel data
-        const total = statsData.total || 1
+        const total = statsData.leads.total || 1
         const conversionFunnelData = [
           { stage: 'Leads', count: total, percentage: 100 },
-          { stage: 'Contacted', count: statsData.contacted || 0, percentage: Math.round(((statsData.contacted || 0) / total) * 100) },
-          { stage: 'Qualified', count: statsData.qualified || 0, percentage: Math.round(((statsData.qualified || 0) / total) * 100) },
-          { stage: 'Demo', count: statsData.demoScheduled || 0, percentage: Math.round(((statsData.demoScheduled || 0) / total) * 100) },
-          { stage: 'Converted', count: statsData.converted || 0, percentage: Math.round(((statsData.converted || 0) / total) * 100) }
+          { stage: 'Contacted', count: statsData.leads.contacted || 0, percentage: Math.round(((statsData.leads.contacted || 0) / total) * 100) },
+          { stage: 'Qualified', count: statsData.leads.qualified || 0, percentage: Math.round(((statsData.leads.qualified || 0) / total) * 100) },
+          { stage: 'Demo', count: statsData.leads.demo_scheduled || 0, percentage: Math.round(((statsData.leads.demo_scheduled || 0) / total) * 100) },
+          { stage: 'Converted', count: statsData.leads.converted || 0, percentage: Math.round(((statsData.leads.converted || 0) / total) * 100) }
         ]
 
         setChartData({
@@ -152,8 +151,8 @@ export default function DashboardPage() {
         })
       }
 
-      if (trialsRes.data?.data?.leads) {
-        setExpiringTrials(trialsRes.data.data.leads)
+      if (trialsRes.data?.data) {
+        setExpiringTrials(trialsRes.data.data)
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error)

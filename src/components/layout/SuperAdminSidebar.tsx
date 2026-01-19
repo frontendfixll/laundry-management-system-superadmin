@@ -34,13 +34,27 @@ import {
   Target,
   Image,
   UserPlus,
-  IndianRupee
+  IndianRupee,
+  TrendingUp
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'analytics' },
-  { name: 'Leads', href: '/leads', icon: UserPlus, permission: 'settings', showBadge: true },
+  { 
+    name: 'Sales Management', 
+    icon: Target, 
+    permission: 'settings',
+    isExpandable: true,
+    subItems: [
+      { name: 'Sales Dashboard', href: '/sales-dashboard', icon: BarChart3, permission: 'analytics' },
+      { name: 'Leads', href: '/sales-leads', icon: UserPlus, permission: 'settings', showBadge: true },
+      { name: 'Upgrades', href: '/upgrades', icon: TrendingUp, permission: 'settings' },
+      { name: 'Sales Users', href: '/sales-users', icon: Users2, permission: 'users' },
+      { name: 'Subscriptions', href: '/subscriptions', icon: Receipt, permission: 'settings' },
+      { name: 'Payments', href: '/payments', icon: IndianRupee, permission: 'finances' },
+    ]
+  },
   { name: 'Tenancies', href: '/tenancies', icon: Crown, permission: 'settings' },
   { name: 'Tenancy Analytics', href: '/tenancy-analytics', icon: PieChart, permission: 'analytics' },
   { name: 'Billing Plans', href: '/billing/plans', icon: Tag, permission: 'settings' },

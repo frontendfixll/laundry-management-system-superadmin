@@ -7,24 +7,15 @@ import {
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserCheck, UserX
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getAuthToken, getAuthHeaders } from '@/lib/authUtils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 const ITEMS_PER_PAGE = 8
 
-const getAuthToken = () => {
-  let token = null
-  try {
-    const data = localStorage.getItem('superadmin-storage')
-    if (data) { const p = JSON.parse(data); token = p.state?.token || p.token }
-  } catch (e) {}
-  return token || localStorage.getItem('superadmin-token') || localStorage.getItem('token')
-}
-
 const apiCall = async (endpoint: string, options: RequestInit = {}) => {
-  const token = getAuthToken()
   const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }), ...options.headers }
+    headers: { ...getAuthHeaders(), ...options.headers }
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.message || 'API request failed')
