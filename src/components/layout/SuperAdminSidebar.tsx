@@ -35,7 +35,8 @@ import {
   Image,
   UserPlus,
   IndianRupee,
-  TrendingUp
+  TrendingUp,
+  Globe
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
@@ -56,10 +57,12 @@ const navigation = [
     ]
   },
   { name: 'Tenancies', href: '/tenancies', icon: Crown, permission: 'settings' },
+  { name: 'Subdomains', href: '/subdomains', icon: Globe, permission: 'settings' },
   { name: 'Tenancy Analytics', href: '/tenancy-analytics', icon: PieChart, permission: 'analytics' },
   { name: 'Billing Plans', href: '/billing/plans', icon: Tag, permission: 'settings' },
   { name: 'Logistics Partners', href: '/logistics', icon: Truck, permission: 'branches' },
   { name: 'Branch Admins', href: '/admins', icon: Shield, permission: 'users' },
+  { name: 'Support Users', href: '/support-users', icon: UserCircle, permission: 'users' },
   { name: 'Users', href: '/users', icon: Users, permission: 'users' },
   { name: 'Services', href: '/services', icon: Sparkles, permission: 'settings' },
   { 

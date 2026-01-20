@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTenancies, Tenancy } from '@/hooks/useTenancies';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Building2, Users, Calendar, Settings, Trash2, Edit, RefreshCw, Tag, Check, X } from 'lucide-react';
+import { Plus, Building2, Users, Calendar, Settings, Trash2, Edit, RefreshCw, Tag, Check, X, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { superAdminApi } from '@/lib/superAdminApi';
@@ -75,6 +76,7 @@ const ALL_FEATURES = [
 ];
 
 export default function TenanciesPage() {
+  const router = useRouter();
   const { 
     tenancies, 
     loading, 
@@ -526,7 +528,15 @@ export default function TenanciesPage() {
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          title="Edit Permissions"
+                          title="Manage Owner Permissions"
+                          onClick={() => router.push(`/tenancies/${tenancy._id}`)}
+                        >
+                          <Shield className="h-4 w-4 text-purple-500" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          title="Edit Features"
                           onClick={() => openEditModal(tenancy)}
                         >
                           <Edit className="h-4 w-4 text-blue-500" />
