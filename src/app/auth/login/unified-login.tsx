@@ -18,7 +18,7 @@ import {
   Users
 } from 'lucide-react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://LaundryLobby-backend-605c.onrender.com/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
 
 export default function UnifiedLogin() {
   const router = useRouter()

@@ -107,7 +107,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
         const authToken = parsed.state?.token
         if (!authToken) return
 
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://LaundryLobby-backend-605c.onrender.com/api'
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
         const response = await fetch(`${API_URL}/superadmin/leads/stats`, {
           headers: {
             'Content-Type': 'application/json',
