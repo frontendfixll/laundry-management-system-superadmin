@@ -172,6 +172,25 @@ export const useNotificationsWebSocket = () => {
         setUnreadCount(prev => prev + 1);
       }
       
+      // Show slide notification for important notifications
+      if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
+        // Map notification severity to slide notification type
+        const slideType = notification.severity === 'error' ? 'error' :
+                         notification.severity === 'warning' ? 'warning' :
+                         notification.severity === 'success' ? 'success' : 'info';
+        
+        (window as any).__addSlideNotification({
+          title: notification.title,
+          message: notification.message,
+          type: slideType,
+          duration: 5000,
+          actionText: notification.data?.link ? 'View Details' : undefined,
+          onAction: notification.data?.link ? () => {
+            window.location.href = notification.data.link;
+          } : undefined
+        });
+      }
+      
       // Play sound
       playSound(notification.severity);
       
@@ -212,6 +231,7 @@ export const useNotificationsWebSocket = () => {
       
       // Show slide notification instead of toast
       if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
+        console.log('📢 Calling __addSlideNotification for permission update');
         (window as any).__addSlideNotification({
           title: 'Permissions Updated',
           message: 'Your access has been updated by an administrator',
@@ -223,6 +243,8 @@ export const useNotificationsWebSocket = () => {
             window.location.reload();
           }
         });
+      } else {
+        console.log('⚠️ __addSlideNotification not available, slide notification skipped');
       }
       
       // Show notification to user (for notification center)
@@ -271,6 +293,83 @@ export const useNotificationsWebSocket = () => {
           (window as any).__permissionRefreshInProgress = false;
         }, 6000);
       }
+    });
+
+    // Tenancy update events for real-time updates
+    socket.on('tenancyFeaturesUpdated', (data) => {
+      console.log('🔄 Tenancy features updated via WebSocket:', data);
+      
+      // Show slide notification
+      if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
+        (window as any).__addSlideNotification({
+          title: 'Tenancy Features Updated',
+          message: `Features updated for ${data.tenancyName || 'tenancy'}`,
+          type: 'system_alert',
+          duration: 4000,
+          actionText: 'View Changes',
+          onAction: () => {
+            console.log('🔄 User clicked view changes from slide notification');
+            // Navigate to tenancy page if not already there
+            if (window.location.pathname !== `/tenancies/${data.tenancyId}`) {
+              window.location.href = `/tenancies/${data.tenancyId}`;
+            }
+          }
+        });
+      }
+      
+      // Also add to notification center
+      const tenancyNotification: Notification = {
+        _id: `tenancy-features-${Date.now()}`,
+        title: 'Tenancy Features Updated',
+        message: `Features updated for ${data.tenancyName || 'tenancy'}`,
+        type: 'system_alert',
+        severity: 'info',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        data: data
+      };
+      
+      setNotifications(prev => [tenancyNotification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+      showBrowserNotification(tenancyNotification);
+    });
+
+    socket.on('tenancyPermissionsUpdated', (data) => {
+      console.log('🔄 Tenancy permissions updated via WebSocket:', data);
+      
+      // Show slide notification
+      if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
+        (window as any).__addSlideNotification({
+          title: 'Owner Permissions Updated',
+          message: `Permissions updated for ${data.tenancyName || 'tenancy'} owner`,
+          type: 'permission_update',
+          duration: 4000,
+          actionText: 'View Changes',
+          onAction: () => {
+            console.log('🔄 User clicked view changes from slide notification');
+            // Navigate to tenancy page if not already there
+            if (window.location.pathname !== `/tenancies/${data.tenancyId}`) {
+              window.location.href = `/tenancies/${data.tenancyId}`;
+            }
+          }
+        });
+      }
+      
+      // Also add to notification center
+      const permissionNotification: Notification = {
+        _id: `tenancy-permissions-${Date.now()}`,
+        title: 'Owner Permissions Updated',
+        message: `Permissions updated for ${data.tenancyName || 'tenancy'} owner`,
+        type: 'permission_update',
+        severity: 'info',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        data: data
+      };
+      
+      setNotifications(prev => [permissionNotification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+      showBrowserNotification(permissionNotification);
     });
 
     socketRef.current = socket;

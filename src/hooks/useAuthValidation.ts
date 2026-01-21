@@ -9,19 +9,23 @@ export const useAuthValidation = () => {
   const router = useRouter()
 
   useEffect(() => {
-    // Temporarily disable validation to debug login issue
-    console.log('🔐 Auth validation - Token:', !!token)
-    console.log('🔐 Auth validation - User:', !!user)
-    console.log('🔐 Auth validation - UserType:', userType)
+    // Add small delay to allow Zustand to hydrate from localStorage
+    const timer = setTimeout(() => {
+      console.log('🔐 Auth validation - Token:', !!token)
+      console.log('🔐 Auth validation - User:', !!user)
+      console.log('🔐 Auth validation - UserType:', userType)
+      
+      // Set validation as complete after delay
+      setIsValidating(false)
+      
+      // Only redirect if no token at all after hydration delay
+      if (!token) {
+        console.log('🔐 No token found after hydration delay, redirecting to login')
+        router.push('/auth/login')
+      }
+    }, 100) // 100ms delay for hydration
     
-    // Just set validation as complete for now
-    setIsValidating(false)
-    
-    // Only redirect if no token at all
-    if (!token) {
-      console.log('🔐 No token found, redirecting to login')
-      router.push('/auth/login')
-    }
+    return () => clearTimeout(timer)
   }, [token, user, userType, router])
 
   return { isValidating }

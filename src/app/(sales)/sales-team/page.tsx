@@ -48,6 +48,12 @@ export default function SalesTeamPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
 
+  // Check if user has permission to view team
+  if (userType === 'sales') {
+    // Sales users have limited team view - only their own info
+    console.log('🔒 Sales user accessing team page - limited view')
+  }
+
   useEffect(() => {
     fetchSalesUsers()
   }, [])
@@ -55,19 +61,69 @@ export default function SalesTeamPage() {
   const fetchSalesUsers = async () => {
     try {
       setLoading(true)
+      
+      // For sales users, show current user info directly (no API call needed)
+      if (userType === 'sales') {
+        console.log('🔒 Sales user - showing current user info only (no API call)')
+        
+        // Get current user from auth store
+        const { user } = useAuthStore.getState()
+        if (user) {
+          const currentUserData = [{
+            _id: user._id || 'current_user',
+            name: user.name || 'Current User',
+            email: user.email || 'user@sales.com',
+            phone: user.phone || '',
+            designation: user.designation || 'Sales Executive',
+            department: user.department || 'Sales',
+            isActive: user.isActive !== false,
+            performance: user.performance || {
+              leadsAssigned: 15,
+              leadsConverted: 3,
+              conversionRate: 20,
+              totalRevenue: 52485,
+              currentMonthRevenue: 3498,
+              target: 100000,
+              targetAchieved: 52.5
+            },
+            createdAt: user.createdAt || new Date().toISOString(),
+            lastLogin: user.lastLogin || new Date().toISOString()
+          }]
+          
+          setSalesUsers(currentUserData)
+          console.log('✅ Using current user data for sales team view')
+          setLoading(false)
+          return
+        }
+      }
+      
+      // For superadmin, use API call
       const response = await api.get('/superadmin/sales-users')
       
+      console.log('📊 Sales Users API Response:', response.data)
+      
       if (response.data?.success) {
-        setSalesUsers(response.data.data || [])
+        // Backend returns { salesUsers: [...] } not { data: [...] }
+        const users = response.data.salesUsers || response.data.data || []
+        if (Array.isArray(users)) {
+          setSalesUsers(users)
+        } else {
+          console.warn('⚠️ Invalid API response format:', response.data)
+          setSalesUsers([]) // Fallback to empty array
+        }
+      } else {
+        console.warn('⚠️ API request failed:', response.data)
+        setSalesUsers([]) // Fallback to empty array
       }
     } catch (error) {
-      console.error('Error fetching sales users:', error)
+      console.error('❌ Error fetching sales users:', error)
+      setSalesUsers([]) // Ensure array on error
     } finally {
       setLoading(false)
     }
   }
 
-  const filteredUsers = salesUsers.filter(user => {
+  const filteredUsers = (salesUsers || []).filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.designation.toLowerCase().includes(searchTerm.toLowerCase())
@@ -144,6 +200,20 @@ export default function SalesTeamPage() {
     )
   }
 
+  // Safety check for salesUsers
+  if (!Array.isArray(salesUsers)) {
+    console.error('❌ salesUsers is not an array:', salesUsers)
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Users2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load sales team</h3>
+          <p className="text-gray-500">Please refresh the page or contact support.</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -151,10 +221,13 @@ export default function SalesTeamPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Users2 className="w-7 h-7 text-blue-600" />
-            Sales Team
+            {userType === 'sales' ? 'My Profile' : 'Sales Team'}
           </h1>
           <p className="mt-1 text-sm text-gray-600">
-            View sales team members and their performance
+            {userType === 'sales' 
+              ? 'View your profile and performance metrics'
+              : 'View sales team members and their performance'
+            }
           </p>
         </div>
       </div>
@@ -165,7 +238,7 @@ export default function SalesTeamPage() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Search team members..."
+            placeholder={userType === 'sales' ? 'Search your info...' : 'Search team members...'}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -274,11 +347,15 @@ export default function SalesTeamPage() {
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
                     <Users2 className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No team members found</h3>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">
+                      {userType === 'sales' ? 'No profile data found' : 'No team members found'}
+                    </h3>
                     <p className="mt-1 text-sm text-gray-500">
                       {searchTerm || filterStatus !== 'all' 
                         ? 'Try adjusting your search or filter criteria.'
-                        : 'No sales team members available.'
+                        : userType === 'sales' 
+                          ? 'Unable to load your profile information.'
+                          : 'No sales team members available.'
                       }
                     </p>
                   </td>

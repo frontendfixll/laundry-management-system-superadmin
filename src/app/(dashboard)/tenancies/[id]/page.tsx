@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { superAdminApi } from '@/lib/superAdminApi';
+import { useNotificationsWebSocket } from '@/hooks/useNotificationsWebSocket';
 
 interface TenancyOwner {
   _id: string;
@@ -144,9 +145,117 @@ export default function TenancyDetailPage() {
   const [saving, setSaving] = useState(false);
   const [permissions, setPermissions] = useState<Record<string, Record<string, boolean>>>({});
 
+  // Initialize WebSocket for real-time updates
+  const { isConnected } = useNotificationsWebSocket();
+
   useEffect(() => {
     fetchTenancyDetail();
   }, [tenancyId]);
+
+  // Listen for real-time tenancy updates
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleTenancyUpdate = (event: any) => {
+        const { tenancyId: updatedTenancyId, type, tenancyName } = event.detail || event;
+        
+        // Only refresh if this is the tenancy we're viewing
+        if (updatedTenancyId === tenancyId) {
+          console.log('🔄 Received real-time tenancy update:', type);
+          
+          // Show slide notification
+          if ((window as any).__addSlideNotification) {
+            if (type === 'tenancyFeaturesUpdated') {
+              (window as any).__addSlideNotification({
+                title: 'Features Updated',
+                message: `Features have been updated for ${tenancyName || 'this tenancy'}`,
+                type: 'system_alert',
+                duration: 5000,
+                actionText: 'View Changes',
+                onAction: () => {
+                  // Scroll to features tab
+                  const featuresTab = document.querySelector('[data-value="features"]');
+                  if (featuresTab) {
+                    (featuresTab as HTMLElement).click();
+                  }
+                }
+              });
+            } else if (type === 'tenancyPermissionsUpdated') {
+              (window as any).__addSlideNotification({
+                title: 'Permissions Updated',
+                message: `Owner permissions have been updated for ${tenancyName || 'this tenancy'}`,
+                type: 'permission_update',
+                duration: 5000,
+                actionText: 'View Changes',
+                onAction: () => {
+                  // Scroll to permissions tab
+                  const permissionsTab = document.querySelector('[data-value="permissions"]');
+                  if (permissionsTab) {
+                    (permissionsTab as HTMLElement).click();
+                  }
+                }
+              });
+            }
+          }
+          
+          // Also show toast notification as backup
+          if (type === 'tenancyFeaturesUpdated') {
+            toast.success('Tenancy features updated - refreshing data');
+          } else if (type === 'tenancyPermissionsUpdated') {
+            toast.success('Owner permissions updated - refreshing data');
+          }
+          
+          // Refresh tenancy data
+          fetchTenancyDetail();
+        }
+      };
+
+      // Listen for WebSocket events via global socket
+      const checkForSocket = () => {
+        const socket = (window as any).__notificationSocket;
+        if (socket && socket.connected) {
+          console.log('🔌 Setting up tenancy update listeners');
+          
+          // Listen for tenancy feature updates
+          socket.on('tenancyFeaturesUpdated', (data: any) => {
+            console.log('📡 Received tenancyFeaturesUpdated:', data);
+            handleTenancyUpdate({ ...data, type: 'tenancyFeaturesUpdated' });
+          });
+          
+          // Listen for tenancy permission updates
+          socket.on('tenancyPermissionsUpdated', (data: any) => {
+            console.log('📡 Received tenancyPermissionsUpdated:', data);
+            handleTenancyUpdate({ ...data, type: 'tenancyPermissionsUpdated' });
+          });
+          
+          return true;
+        }
+        return false;
+      };
+
+      // Try to set up listeners immediately
+      if (!checkForSocket()) {
+        // If socket not ready, retry every second for up to 10 seconds
+        let retries = 0;
+        const interval = setInterval(() => {
+          retries++;
+          if (checkForSocket() || retries >= 10) {
+            clearInterval(interval);
+          }
+        }, 1000);
+        
+        return () => clearInterval(interval);
+      }
+
+      // Cleanup function
+      return () => {
+        const socket = (window as any).__notificationSocket;
+        if (socket) {
+          socket.off('tenancyFeaturesUpdated');
+          socket.off('tenancyPermissionsUpdated');
+        }
+      };
+    }
+  }, [tenancyId, isConnected]);
 
   const fetchTenancyDetail = async () => {
     try {
@@ -369,9 +478,30 @@ export default function TenancyDetailPage() {
             <p className="text-gray-600">Tenancy Management</p>
           </div>
         </div>
-        <Badge variant={tenancy.status === 'active' ? 'default' : 'secondary'}>
-          {tenancy.status}
-        </Badge>
+        <div className="flex items-center space-x-2">
+          {/* Real-time connection indicator */}
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-400'}`} />
+            <span className="text-xs text-gray-500">
+              {isConnected ? 'Live updates' : 'Offline'}
+            </span>
+          </div>
+          
+          {/* Manual refresh button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={fetchTenancyDetail}
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          
+          <Badge variant={tenancy.status === 'active' ? 'default' : 'secondary'}>
+            {tenancy.status}
+          </Badge>
+        </div>
       </div>
 
       {/* Tenancy Overview */}
@@ -415,9 +545,9 @@ export default function TenancyDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="permissions" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="permissions">Owner Permissions</TabsTrigger>
-          <TabsTrigger value="features">Features</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="permissions" data-value="permissions">Owner Permissions</TabsTrigger>
+          <TabsTrigger value="features" data-value="features">Features</TabsTrigger>
+          <TabsTrigger value="settings" data-value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="permissions" className="space-y-4">

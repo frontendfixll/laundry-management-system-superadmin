@@ -35,13 +35,40 @@ export default function SalesLayout({
   const [notifications, setNotifications] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Wait for Zustand to hydrate from localStorage
   useEffect(() => {
-    if (!isValidating && !isAuthenticated) {
-      router.push('/auth/login')
-    } else if (!isValidating && userType !== 'sales' && userType !== 'superadmin') {
-      router.push('/dashboard') // Redirect non-sales/non-superadmin users to dashboard
-    }
-  }, [isAuthenticated, userType, router, isValidating])
+    setIsHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    // Only run auth checks after hydration with extra delay
+    if (!isHydrated) return
+    
+    // Add extra delay to ensure auth store is fully loaded
+    const timer = setTimeout(() => {
+      const currentState = useAuthStore.getState()
+      
+      console.log('🔐 Sales Layout Auth Check:', {
+        isAuthenticated: currentState.isAuthenticated,
+        userType: currentState.userType,
+        isValidating,
+        hasToken: !!currentState.token,
+        hasUser: !!currentState.user
+      })
+      
+      if (!isValidating && !currentState.isAuthenticated && !currentState.token) {
+        console.log('🔐 Not authenticated, redirecting to login')
+        router.push('/auth/login')
+      } else if (!isValidating && currentState.userType !== 'sales' && currentState.userType !== 'superadmin') {
+        console.log('🔐 Wrong user type, redirecting to dashboard')
+        router.push('/dashboard')
+      }
+    }, 200) // Extra delay for safety
+    
+    return () => clearTimeout(timer)
+  }, [isAuthenticated, userType, router, isValidating, isHydrated])
 
   const handleLogout = () => {
     logout()
@@ -57,13 +84,15 @@ export default function SalesLayout({
     { name: 'Payments', href: '/payments', icon: DollarSign },
   ]
 
-  // Show loading while validating auth
-  if (isValidating) {
+  // Show loading while hydrating or validating auth
+  if (!isHydrated || isValidating) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Validating session...</p>
+          <p className="mt-4 text-gray-600">
+            {!isHydrated ? 'Loading sales portal...' : 'Validating session...'}
+          </p>
         </div>
       </div>
     )

@@ -25,6 +25,8 @@ const NotificationManager: React.FC<NotificationManagerProps> = ({
 
   // Add notification function
   const addNotification = useCallback((notification: Omit<NotificationData, 'id' | 'timestamp'>) => {
+    console.log('📢 NotificationManager: Adding slide notification:', notification);
+    
     const newNotification: NotificationData = {
       ...notification,
       id: `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -34,6 +36,7 @@ const NotificationManager: React.FC<NotificationManagerProps> = ({
     setNotifications(prev => {
       // Remove oldest if exceeding max
       const updated = [newNotification, ...prev].slice(0, maxNotifications)
+      console.log('📢 NotificationManager: Updated notifications list, count:', updated.length);
       return updated
     })
 
@@ -92,11 +95,36 @@ const NotificationManager: React.FC<NotificationManagerProps> = ({
   // Expose addNotification globally for WebSocket integration
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      console.log('📢 NotificationManager: Exposing __addSlideNotification globally');
       (window as any).__addSlideNotification = addNotification
+      
+      // Listen for test messages
+      const handleTestMessage = (event: MessageEvent) => {
+        if (event.data.type === 'TEST_SLIDE_NOTIFICATION' && event.data.config) {
+          console.log('📨 Received test slide notification:', event.data.config);
+          addNotification(event.data.config);
+          
+          // Send confirmation back
+          event.source?.postMessage({
+            type: 'SLIDE_NOTIFICATION_RESULT',
+            success: true,
+            message: 'Slide notification displayed successfully'
+          }, event.origin);
+        }
+      };
+      
+      window.addEventListener('message', handleTestMessage);
+      
+      return () => {
+        window.removeEventListener('message', handleTestMessage);
+        console.log('📢 NotificationManager: Cleaning up __addSlideNotification');
+        delete (window as any).__addSlideNotification;
+      };
     }
     
     return () => {
       if (typeof window !== 'undefined') {
+        console.log('📢 NotificationManager: Cleaning up __addSlideNotification');
         delete (window as any).__addSlideNotification
       }
     }
