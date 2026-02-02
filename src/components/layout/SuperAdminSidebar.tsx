@@ -488,7 +488,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
             {/* Version Info */}
             <div className={`px-6 py-3 border-t border-gray-100 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
               <div className="text-xs text-gray-400 font-light">
-                v2.1.0
+                v1.0.0
               </div>
             </div>
 
