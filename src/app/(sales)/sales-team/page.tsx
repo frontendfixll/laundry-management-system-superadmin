@@ -78,13 +78,13 @@ export default function SalesTeamPage() {
             department: user.department || 'Sales',
             isActive: user.isActive !== false,
             performance: user.performance || {
-              leadsAssigned: 15,
-              leadsConverted: 3,
-              conversionRate: 20,
-              totalRevenue: 52485,
-              currentMonthRevenue: 3498,
-              target: 100000,
-              targetAchieved: 52.5
+              leadsAssigned: 0,
+              leadsConverted: 0,
+              conversionRate: 0,
+              totalRevenue: 0,
+              currentMonthRevenue: 0,
+              target: 0,
+              targetAchieved: 0
             },
             createdAt: user.createdAt || new Date().toISOString(),
             lastLogin: user.lastLogin || new Date().toISOString()

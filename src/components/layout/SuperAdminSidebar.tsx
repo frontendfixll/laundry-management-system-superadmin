@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuthStore, useSuperAdmin } from '@/store/authStore'
-import { 
+import { useAuthStore, useAuthInfo } from '@/store/authStore'
+import {
   LayoutDashboard,
   Building2,
   Users,
@@ -36,54 +36,165 @@ import {
   UserPlus,
   IndianRupee,
   TrendingUp,
-  Globe
+  Globe,
+  AlertTriangle,
+  CheckCircle,
+  RotateCcw,
+  Timer,
+  MessageSquare,
+  AlertCircle,
+  RefreshCw,
+  Activity,
+  ArrowUpRight,
+  Download,
+  Clock,
+  Monitor,
+  Headphones,
+  Bell
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'analytics' },
-  { 
-    name: 'Sales Management', 
-    icon: Target, 
-    permission: 'settings',
-    isExpandable: true,
-    subItems: [
-      { name: 'Sales Dashboard', href: '/sales-dashboard', icon: BarChart3, permission: 'analytics' },
-      { name: 'Leads', href: '/sales-leads', icon: UserPlus, permission: 'settings', showBadge: true },
-      { name: 'Upgrades', href: '/upgrades', icon: TrendingUp, permission: 'settings' },
-      { name: 'Sales Users', href: '/sales-users', icon: Users2, permission: 'users' },
-      { name: 'Subscriptions', href: '/subscriptions', icon: Receipt, permission: 'settings' },
-      { name: 'Payments', href: '/payments', icon: IndianRupee, permission: 'finances' },
-    ]
-  },
-  { name: 'Tenancies', href: '/tenancies', icon: Crown, permission: 'settings' },
-  { name: 'Subdomains', href: '/subdomains', icon: Globe, permission: 'settings' },
-  { name: 'Tenancy Analytics', href: '/tenancy-analytics', icon: PieChart, permission: 'analytics' },
-  { name: 'Billing Plans', href: '/billing/plans', icon: Tag, permission: 'settings' },
-  { name: 'Logistics Partners', href: '/logistics', icon: Truck, permission: 'branches' },
-  { name: 'Branch Admins', href: '/admins', icon: Shield, permission: 'users' },
-  { name: 'Support Users', href: '/support-users', icon: UserCircle, permission: 'users' },
-  { name: 'Users', href: '/users', icon: Users, permission: 'users' },
-  { name: 'Services', href: '/services', icon: Sparkles, permission: 'settings' },
-  { 
-    name: 'Global Programs', 
-    icon: Gift, 
-    permission: 'settings',
-    isExpandable: true,
-    subItems: [
-      { name: 'Overview', href: '/promotional/overview', icon: BarChart3, permission: 'analytics' },
-      { name: 'Campaigns', href: '/campaigns', icon: Target, permission: 'settings' },
-      { name: 'Banners', href: '/banners', icon: Image, permission: 'settings' },
-      { name: 'Coupons', href: '/promotional/coupons', icon: Tag, permission: 'settings' },
-      { name: 'Discounts', href: '/promotional/discounts', icon: Percent, permission: 'settings' },
-      { name: 'Referrals', href: '/promotional/referrals', icon: Users2, permission: 'settings' },
-      { name: 'Loyalty', href: '/promotional/loyalty', icon: Star, permission: 'settings' },
-    ]
-  },
-  { name: 'Financial', href: '/financial', icon: DollarSign, permission: 'finances' },
-  { name: 'Audit Logs', href: '/audit', icon: FileText, permission: 'settings' },
-  { name: 'Settings', href: '/settings', icon: Settings, permission: 'settings' }
-]
+const getSidebarNavigationByRole = (
+  userRoles: string[],
+  legacyRole?: string,
+  userType?: string,
+  permissions: any = {},
+  hasPermission: (module: string, action?: string) => boolean = () => true
+) => {
+  // Check if user has specific roles (new RBAC system)
+  const isSuperAdmin = userRoles.includes('super_admin') || userRoles.includes('Super Admin') || userRoles.includes('super-admin')
+
+  const fullNavigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    {
+      name: 'Role Dashboards',
+      icon: Monitor,
+      isExpandable: true,
+      subItems: [
+        { name: 'Sales Portal', href: '/sales-dashboard', icon: BarChart3, permission: 'platform_settings' },
+        { name: 'Support Portal', href: '/support-dashboard', icon: Headphones, permission: 'view_all_orders' },
+        { name: 'Finance Portal', href: '/finance-dashboard', icon: IndianRupee, permission: 'payments_revenue' },
+        { name: 'Auditor Portal', href: '/audit-dashboard', icon: Shield, permission: 'audit_logs' },
+      ].filter(item => hasPermission(item.permission))
+    },
+    {
+      name: 'Tenancy Management',
+      icon: Crown,
+      isExpandable: true,
+      permission: 'tenant_crud',
+      subItems: [
+        { name: 'Tenancies', href: '/tenancies', icon: Crown },
+        { name: 'Tenancy Analytics', href: '/tenancy-analytics', icon: PieChart },
+      ]
+    },
+    {
+      name: 'User Management',
+      icon: Users,
+      isExpandable: true,
+      permission: 'platform_settings',
+      subItems: [
+        { name: 'Branch Admins', href: '/admins', icon: Shield },
+        { name: 'Platform Users', href: '/users', icon: Users },
+      ]
+    },
+    {
+      name: 'RBAC & Security',
+      icon: Shield,
+      isExpandable: true,
+      permission: 'platform_settings',
+      subItems: [
+        { name: 'Role Management', href: '/rbac/roles', icon: Shield },
+        { name: 'Create Platform User', href: '/users/create', icon: UserCircle },
+      ]
+    },
+    {
+      name: 'Platform Management',
+      icon: Settings,
+      isExpandable: true,
+      permission: 'marketplace_control',
+      subItems: [
+        { name: 'Subdomains', href: '/subdomains', icon: Globe },
+        { name: 'Services', href: '/services', icon: Sparkles },
+        { name: 'Logistics Partners', href: '/logistics', icon: Truck },
+      ]
+    },
+    {
+      name: 'Content Management',
+      icon: FileText,
+      isExpandable: true,
+      permission: 'platform_settings',
+      subItems: [
+        { name: 'Blog Posts', href: '/blog/posts', icon: FileText },
+        { name: 'Categories', href: '/blog/categories', icon: Tag },
+        { name: 'Analytics', href: '/blog/analytics', icon: BarChart3 },
+      ]
+    },
+    {
+      name: 'Global Programs',
+      icon: Gift,
+      isExpandable: true,
+      permission: 'platform_coupons',
+      subItems: [
+        { name: 'Overview', href: '/promotional/overview', icon: BarChart3 },
+        { name: 'Campaigns', href: '/campaigns', icon: Target },
+        { name: 'Banners', href: '/banners', icon: Image },
+        { name: 'Coupons', href: '/promotional/coupons', icon: Tag },
+        { name: 'Discounts', href: '/promotional/discounts', icon: Percent },
+        { name: 'Referrals', href: '/promotional/referrals', icon: Users2 },
+        { name: 'Loyalty', href: '/promotional/loyalty', icon: Star },
+      ]
+    },
+    {
+      name: 'Financial',
+      icon: DollarSign,
+      isExpandable: true,
+      permission: 'subscription_plans',
+      subItems: [
+        { name: 'Overview', href: '/financial/overview', icon: BarChart3 },
+        { name: 'Billing Plans', href: '/billing/plans', icon: Tag },
+        { name: 'Add-ons', href: '/addons', icon: Package },
+      ]
+    },
+    {
+      name: 'Notifications',
+      icon: Bell,
+      isExpandable: true,
+      permission: 'audit_logs',
+      subItems: [
+        { name: 'Priority Management', href: '/notifications/priorities', icon: AlertTriangle },
+        { name: 'System Notifications', href: '/notifications/system', icon: Bell },
+        { name: 'Notification Logs', href: '/notifications/logs', icon: FileText },
+        { name: 'Performance Stats', href: '/notifications/stats', icon: BarChart3 },
+      ]
+    },
+    { name: 'Settings', href: '/settings', icon: Settings, permission: 'platform_settings' }
+  ];
+
+  // If SuperAdmin, return everything (after consolidating duplicates)
+  if (isSuperAdmin) {
+    return fullNavigation;
+  }
+
+  // Otherwise, filter based on permissions
+  const filteredNavigation = fullNavigation.filter(item => {
+    // If item has no permission defined, show it (e.g. Dashboard)
+    if (!item.permission) return true;
+
+    // Check module permission
+    const hasAccess = hasPermission(item.permission);
+    return hasAccess;
+  }).filter(item => {
+    // Final check: if it's expandable but has no sub-items left, hide it
+    // Except if it has a direct href (like Settings)
+    if (item.isExpandable && item.subItems && item.subItems.length === 0 && !item.href) return false;
+    return true;
+  });
+
+  return filteredNavigation.length > 0 ? filteredNavigation : [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Profile', href: '/profile', icon: UserCircle }
+  ];
+}
 
 interface SuperAdminSidebarProps {
   mobileOpen?: boolean
@@ -92,9 +203,70 @@ interface SuperAdminSidebarProps {
 
 export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }: SuperAdminSidebarProps) {
   const pathname = usePathname()
-  const admin = useSuperAdmin()
-  const { logout, sidebarCollapsed, setSidebarCollapsed, newLeadsCount, setNewLeadsCount } = useAuthStore()
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Global Programs']) // Programs expanded by default
+  const { user, userType, logout, sidebarCollapsed, setSidebarCollapsed, newLeadsCount, setNewLeadsCount } = useAuthStore()
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Support', 'Ticket Management', 'Order Investigation']) // Default expanded items
+
+  // Get user roles from user object (works for all user types)
+  const userRoles = (user as any)?.roles?.flatMap((role: any) => [role.name, role.slug].filter(Boolean)) || []
+  const legacyRole = user?.role // Legacy role field
+
+  // Debug logging
+  console.log('🔍 SuperAdmin Sidebar Debug:')
+  console.log('- User Email:', user?.email)
+  console.log('- User Type:', userType)
+  console.log('- Legacy Role:', legacyRole)
+  console.log('- User Roles:', userRoles)
+  console.log('- Is SuperAdmin (new):', userRoles.includes('super_admin') || userRoles.includes('Super Admin'))
+  console.log('- Is SuperAdmin (legacy):', legacyRole === 'superadmin')
+  console.log('- Is Platform Support:', userRoles.includes('platform-support') || userRoles.includes('Platform Support'))
+  console.log('- Is Platform Finance:', userRoles.includes('platform-finance-admin') || userRoles.includes('Platform Finance Admin'))
+  console.log('- Is Platform Auditor:', userRoles.includes('platform-read-only-auditor') || userRoles.includes('Platform Auditor') || userRoles.includes('Platform Read-Only Auditor'))
+  console.log('- Is SuperAdmin (new):', userRoles.includes('super_admin') || userRoles.includes('Super Admin'))
+  console.log('- Is SuperAdmin (legacy):', legacyRole === 'superadmin')
+  console.log('- Is Platform Support:', userRoles.includes('platform-support') || userRoles.includes('Platform Support'))
+  console.log('- Is Platform Finance:', userRoles.includes('platform-finance-admin') || userRoles.includes('Platform Finance Admin'))
+  console.log('- Is Platform Auditor:', userRoles.includes('platform-read-only-auditor') || userRoles.includes('Platform Auditor'))
+
+  // Determine which sidebar to show
+  const isPlatformSupport = userRoles.includes('platform-support') || userRoles.includes('Platform Support')
+  const isPlatformFinance = userRoles.includes('platform-finance-admin') || userRoles.includes('Platform Finance Admin')
+  const isPlatformAuditor = userRoles.includes('platform-read-only-auditor') || userRoles.includes('Platform Auditor')
+
+  if (isPlatformSupport) {
+    console.log('🎯 SIDEBAR: Showing Platform Support sidebar (RBAC role takes priority)')
+  } else if (isPlatformFinance) {
+    console.log('🎯 SIDEBAR: Showing Platform Finance sidebar (RBAC role takes priority)')
+  } else if (isPlatformAuditor) {
+    console.log('🎯 SIDEBAR: Showing Platform Auditor sidebar (RBAC role takes priority)')
+  } else {
+    console.log('🎯 SIDEBAR: Showing SuperAdmin sidebar (legacy or SuperAdmin RBAC role)')
+  }
+
+  // Get information from unified auth helper
+  const { roleName, email: authEmail, hasPermission } = useAuthInfo()
+  const permissions = (user as any)?.permissions || {}
+
+  // Navigation filtering logic
+  const navigation = getSidebarNavigationByRole(userRoles, legacyRole, userType, permissions, hasPermission)
+
+  // Check if any sub-item is active - FIXED to prevent multiple highlights
+  const isParentActive = (item: any) => {
+    // For expandable items with sub-items, only highlight if a sub-item is active
+    if (item.isExpandable && item.subItems) {
+      return item.subItems.some((subItem: any) => {
+        // Exact match for sub-items to prevent conflicts
+        return pathname === subItem.href
+      })
+    }
+
+    // For regular navigation items with href
+    if (item.href) {
+      // Exact match only to prevent multiple highlights
+      return pathname === item.href
+    }
+
+    return false
+  }
 
   // Fetch new leads count on mount and periodically
   useEffect(() => {
@@ -102,7 +274,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
       try {
         const token = localStorage.getItem('auth-storage')
         if (!token) return
-        
+
         const parsed = JSON.parse(token)
         const authToken = parsed.state?.token
         if (!authToken) return
@@ -114,7 +286,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
             'Authorization': `Bearer ${authToken}`
           }
         })
-        
+
         if (response.ok) {
           const data = await response.json()
           if (data.success && data.data?.stats?.new !== undefined) {
@@ -143,7 +315,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
     const newExpanded = expandedItems.includes(itemName)
       ? expandedItems.filter(item => item !== itemName)
       : [...expandedItems, itemName]
-    
+
     setExpandedItems(newExpanded)
     localStorage.setItem('superadmin-sidebar-expanded', JSON.stringify(newExpanded))
   }
@@ -160,38 +332,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
     }
   }
 
-  const hasPermission = (permission: string) => {
-    return admin?.permissions[permission as keyof typeof admin.permissions] || false
-  }
-
-  // Check if any sub-item is active
-  const isParentActive = (item: any) => {
-    if (item.href) {
-      // For items that have child routes (like /billing has /billing/plans),
-      // only match exact path to avoid parent highlighting when child is active
-      const hasChildInNavigation = navigation.some(navItem => 
-        navItem.href !== item.href && navItem.href?.startsWith(item.href + '/')
-      )
-      
-      if (hasChildInNavigation) {
-        // Exact match only for parent items that have children
-        return pathname === item.href
-      }
-      
-      // For items without children, allow prefix matching
-      return pathname === item.href || pathname.startsWith(item.href + '/')
-    }
-    if (item.subItems) {
-      return item.subItems.some((subItem: any) => 
-        pathname === subItem.href || pathname.startsWith(subItem.href + '/')
-      )
-    }
-    return false
-  }
-
   const renderNavItem = (item: any) => {
-    if (!hasPermission(item.permission)) return null
-    
     const isActive = isParentActive(item)
     const Icon = item.icon
     const isExpanded = expandedItems.includes(item.name)
@@ -202,21 +343,20 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
           {/* Parent Item */}
           <button
             onClick={() => toggleExpanded(item.name)}
-            className={`group flex items-center w-full px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-              isActive
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
+            className={`group flex items-center w-full px-4 py-3 text-sm font-light rounded-lg transition-colors ${isActive
+              ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
           >
-            <Icon className={`flex-shrink-0 w-5 h-5 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} />
+            <Icon className={`flex-shrink-0 w-4 h-4 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
             {/* Always show text on mobile, conditionally on desktop */}
             <span className={`flex-1 text-left ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{item.name}</span>
             {!sidebarCollapsed && (
               <span className="lg:block hidden">
                 {isExpanded ? (
-                  <ChevronUp className="w-4 h-4 ml-2" />
+                  <ChevronUp className={`w-3 h-3 ml-2 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
                 ) : (
-                  <ChevronDown className="w-4 h-4 ml-2" />
+                  <ChevronDown className={`w-3 h-3 ml-2 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
                 )}
               </span>
             )}
@@ -224,11 +364,10 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
 
           {/* Sub Items */}
           {!sidebarCollapsed && isExpanded && (
-            <div className="ml-6 mt-1 space-y-1">
-              {item.subItems
-                .filter((subItem: any) => hasPermission(subItem.permission))
-                .map((subItem: any) => {
-                const isSubActive = pathname === subItem.href || pathname.startsWith(subItem.href + '/')
+            <div className="ml-8 mt-1 space-y-0">
+              {item.subItems.map((subItem: any) => {
+                // Exact match only for sub-items to prevent multiple highlights
+                const isSubActive = pathname === subItem.href
                 const SubIcon = subItem.icon
 
                 return (
@@ -236,14 +375,20 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
                     key={subItem.name}
                     href={subItem.href}
                     onClick={onMobileClose}
-                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      isSubActive
-                        ? 'bg-purple-100 text-purple-700 border-l-2 border-purple-500'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                    className={`group flex items-center px-4 py-2 text-sm font-light rounded-md transition-colors ${isSubActive
+                      ? 'text-blue-700 bg-blue-50 border-r-2 border-blue-600'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
-                    <SubIcon className={`flex-shrink-0 w-4 h-4 mr-3 ${isSubActive ? 'text-purple-500' : 'text-gray-400 group-hover:text-gray-500'}`} />
+                    <SubIcon className={`flex-shrink-0 w-3 h-3 mr-3 ${isSubActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
                     <span>{subItem.name}</span>
+                    {/* Badge for new leads */}
+                    {subItem.showBadge && newLeadsCount > 0 && (
+                      <span className={`ml-auto px-1.5 py-0.5 text-xs font-light rounded-md ${isSubActive ? 'bg-blue-100 text-blue-700' : 'bg-blue-600 text-white'
+                        }`}>
+                        {newLeadsCount > 99 ? '99+' : newLeadsCount}
+                      </span>
+                    )}
                   </Link>
                 )
               })}
@@ -253,26 +398,24 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
       )
     }
 
-    // Regular navigation item
+    // Regular navigation item - exact match only
     return (
       <Link
         key={item.name}
         href={item.href}
         onClick={onMobileClose}
-        className={`group flex items-center px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-          isActive
-            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-            : 'text-gray-700 hover:bg-gray-100'
-        }`}
+        className={`group flex items-center px-4 py-3 text-sm font-light rounded-lg transition-colors ${isActive
+          ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+          }`}
       >
-        <Icon className={`flex-shrink-0 w-5 h-5 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} />
+        <Icon className={`flex-shrink-0 w-4 h-4 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
         {/* Always show text on mobile, conditionally on desktop */}
         <span className={`flex-1 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{item.name}</span>
         {/* Badge for new leads */}
         {item.showBadge && newLeadsCount > 0 && !sidebarCollapsed && (
-          <span className={`ml-auto px-2 py-0.5 text-xs font-medium rounded-full ${
-            isActive ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-700'
-          }`}>
+          <span className={`ml-auto px-1.5 py-0.5 text-xs font-light rounded-md ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-blue-600 text-white'
+            }`}>
             {newLeadsCount > 99 ? '99+' : newLeadsCount}
           </span>
         )}
@@ -287,90 +430,79 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
     <>
       {/* Mobile Overlay */}
       {mobileOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={onMobileClose}
         />
       )}
-      
+
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 bg-white shadow-xl transition-all duration-300 flex flex-col w-64 ${sidebarWidth} ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-        
-        {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between h-16 px-4 border-b border-gray-200">
+      <div className={`lg:relative fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-100 transition-all duration-300 flex flex-col w-64 ${sidebarWidth} ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 flex items-center justify-between h-16 px-6 border-b border-gray-100 bg-white">
           {/* Logo - always show on mobile, conditionally on desktop */}
           <div className={`flex items-center space-x-3 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-              <Crown className="w-5 h-5 text-white" />
+            <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
+              <Crown className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Super Admin</h1>
-              <p className="text-xs text-gray-500">LaundryLobby</p>
+              <h1 className="text-lg font-light text-gray-900">LaundryLobby</h1>
+              <p className="text-xs text-gray-500 font-light">Management Portal</p>
             </div>
           </div>
-          
+
           {/* Buttons */}
           <div className="flex items-center">
             {/* Mobile close button */}
             <button
               onClick={onMobileClose}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors lg:hidden"
+              className="p-1.5 rounded-md hover:bg-gray-50 transition-colors lg:hidden"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-gray-400" />
             </button>
-            
+
             {/* Desktop collapse toggle */}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors hidden lg:block"
+              className="p-1.5 rounded-md hover:bg-gray-50 transition-colors hidden lg:block"
             >
               {sidebarCollapsed ? (
-                <ChevronRight className="w-5 h-5 text-gray-500" />
+                <ChevronRight className="w-5 h-5 text-gray-400" />
               ) : (
-                <ChevronLeft className="w-5 h-5 text-gray-500" />
+                <ChevronLeft className="w-5 h-5 text-gray-400" />
               )}
             </button>
           </div>
         </div>
 
-        {/* Admin Info - always show on mobile, conditionally on desktop */}
-        {admin && (
-          <div className={`flex-shrink-0 p-4 border-b border-gray-200 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-sm">
-                  {admin.name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{admin.name}</p>
-                <p className="text-xs text-gray-500 truncate">{admin.email}</p>
+        {/* Scrollable Content Area */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Navigation - Scrollable */}
+          <nav className="flex-1 px-0 py-6 space-y-0 overflow-y-auto">
+            {navigation.map(renderNavItem)}
+          </nav>
+
+          {/* Fixed Footer Elements */}
+          <div className="flex-shrink-0">
+            {/* Version Info */}
+            <div className={`px-6 py-3 border-t border-gray-100 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
+              <div className="text-xs text-gray-400 font-light">
+                v2.1.0
               </div>
             </div>
+
+            {/* Logout Button */}
+            <div className="border-t border-gray-100 p-4">
+              <button
+                onClick={handleLogout}
+                className={`group flex items-center w-full px-4 py-3 text-sm font-light text-gray-600 hover:text-red-600 transition-colors ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
+              >
+                <LogOut className={`flex-shrink-0 w-4 h-4 mr-3 ${sidebarCollapsed ? 'lg:mr-0' : ''} text-gray-400 group-hover:text-red-500`} />
+                <span className={sidebarCollapsed ? 'lg:hidden' : ''}>Sign Out</span>
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* Navigation */}
-        <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto min-h-0">
-          {navigation.map(renderNavItem)}
-        </nav>
-
-        {/* Version Info */}
-        <div className={`flex-shrink-0 px-4 py-2 border-t border-gray-200 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
-          <div className="text-xs text-gray-400 text-center">
-            v2.1.0
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex-shrink-0 border-t border-gray-200 p-2">
-          <button
-            onClick={handleLogout}
-            className={`group flex items-center w-full px-2 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
-          >
-            <LogOut className={`flex-shrink-0 w-5 h-5 mr-3 ${sidebarCollapsed ? 'lg:mr-0' : ''} text-gray-400 group-hover:text-red-500`} />
-            <span className={sidebarCollapsed ? 'lg:hidden' : ''}>Sign Out</span>
-          </button>
         </div>
       </div>
     </>

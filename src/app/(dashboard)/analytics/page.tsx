@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  DollarSign,
   Building2,
   Calendar,
   Filter,
@@ -109,8 +109,8 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics & Growth</h1>
-          <p className="text-gray-600">Advanced analytics and business intelligence</p>
+          <h1 className="text-xl font-light text-gray-900">Analytics & Growth</h1>
+          <p className="text-gray-500 text-xs mt-0.5">Advanced analytics and business intelligence</p>
         </div>
         <div className="flex items-center space-x-3">
           <select
@@ -148,85 +148,83 @@ export default function AnalyticsPage() {
       ) : overview && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Customer Metrics */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-blue-600" />
               </div>
-              <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                overview.customerMetrics.growth >= 0 
-                  ? 'text-green-700 bg-green-100' 
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${overview.customerMetrics.growth >= 0
+                  ? 'text-green-700 bg-green-100'
                   : 'text-red-700 bg-red-100'
-              }`}>
+                }`}>
                 {formatPercentage(overview.customerMetrics.growth)}
               </span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            <h3 className="text-xl font-semibold text-gray-900 mb-0.5">
               {overview.customerMetrics.totalCustomers.toLocaleString()}
             </h3>
-            <p className="text-gray-600 text-sm">Total Customers</p>
-            <div className="mt-3 text-xs text-gray-500">
+            <p className="text-gray-500 text-xs">Total Customers</p>
+            <div className="mt-2 text-[10px] text-gray-400 font-medium">
               {overview.customerMetrics.newCustomers} new • {overview.customerMetrics.retentionRate.toFixed(1)}% retention
             </div>
           </div>
 
           {/* Revenue Metrics */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-green-600" />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-green-600" />
               </div>
-              <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                overview.revenueMetrics.growth >= 0 
-                  ? 'text-green-700 bg-green-100' 
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${overview.revenueMetrics.growth >= 0
+                  ? 'text-green-700 bg-green-100'
                   : 'text-red-700 bg-red-100'
-              }`}>
+                }`}>
                 {formatPercentage(overview.revenueMetrics.growth)}
               </span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            <h3 className="text-xl font-semibold text-gray-900 mb-0.5">
               {formatCurrency(overview.revenueMetrics.totalRevenue)}
             </h3>
-            <p className="text-gray-600 text-sm">Total Revenue</p>
-            <div className="mt-3 text-xs text-gray-500">
+            <p className="text-gray-500 text-xs">Total Revenue</p>
+            <div className="mt-2 text-[10px] text-gray-400 font-medium">
               {formatCurrency(overview.revenueMetrics.averageOrderValue)} avg order
             </div>
           </div>
 
           {/* Order Metrics */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-purple-600" />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-purple-600" />
               </div>
-              <span className="text-sm font-medium px-2 py-1 rounded-full text-blue-700 bg-blue-100">
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full text-blue-700 bg-blue-100">
                 {overview.orderMetrics.completionRate.toFixed(1)}%
               </span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            <h3 className="text-xl font-semibold text-gray-900 mb-0.5">
               {overview.orderMetrics.totalOrders.toLocaleString()}
             </h3>
-            <p className="text-gray-600 text-sm">Total Orders</p>
-            <div className="mt-3 text-xs text-gray-500">
+            <p className="text-gray-500 text-xs">Total Orders</p>
+            <div className="mt-2 text-[10px] text-gray-400 font-medium">
               {overview.orderMetrics.completedOrders} completed • {overview.orderMetrics.cancelledOrders} cancelled
             </div>
           </div>
 
           {/* Branch Metrics */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-orange-600" />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-orange-600" />
               </div>
-              <span className="text-sm font-medium px-2 py-1 rounded-full text-gray-700 bg-gray-100">
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full text-gray-700 bg-gray-100">
                 {overview.branchMetrics.activeBranches}/{overview.branchMetrics.totalBranches}
               </span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            <h3 className="text-xl font-semibold text-gray-900 mb-0.5">
               {formatCurrency(overview.branchMetrics.averageRevenuePerBranch)}
             </h3>
-            <p className="text-gray-600 text-sm">Avg Revenue/Branch</p>
-            <div className="mt-3 text-xs text-gray-500">
+            <p className="text-gray-500 text-xs">Avg Revenue/Branch</p>
+            <div className="mt-2 text-[10px] text-gray-400 font-medium">
               {formatCurrency(overview.branchMetrics.totalBranchRevenue)} total
             </div>
           </div>
@@ -235,9 +233,9 @@ export default function AnalyticsPage() {
 
       {/* Analytics List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Analytics Reports</h2>
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-light text-gray-900">Analytics Reports</h2>
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
                 <Filter className="w-4 h-4 text-gray-400" />
@@ -465,7 +463,7 @@ function GenerateAnalysisModal({ onClose, onGenerated }: {
     }
   })
 
-  const { 
+  const {
     loading,
     generateCustomerRetentionAnalysis,
     generateBranchPerformanceAnalysis,
@@ -475,7 +473,7 @@ function GenerateAnalysisModal({ onClose, onGenerated }: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
       switch (analysisType) {
         case 'customer_retention':
@@ -774,7 +772,7 @@ function AnalyticsDetailModal({ analyticsId, onClose }: {
           <div>
             <h2 className="text-xl font-semibold text-gray-900">{analytics.analyticsId}</h2>
             <p className="text-gray-600 mt-1">
-              {analytics.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} • 
+              {analytics.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} •
               {new Date(analytics.startDate).toLocaleDateString()} - {new Date(analytics.endDate).toLocaleDateString()}
             </p>
           </div>
@@ -798,10 +796,9 @@ function AnalyticsDetailModal({ analyticsId, onClose }: {
                 {analytics.insights.map((insight, index) => (
                   <div key={index} className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-start space-x-3">
-                      <div className={`w-2 h-2 rounded-full mt-2 ${
-                        insight.impact === 'high' ? 'bg-red-500' :
-                        insight.impact === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
-                      }`}></div>
+                      <div className={`w-2 h-2 rounded-full mt-2 ${insight.impact === 'high' ? 'bg-red-500' :
+                          insight.impact === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}></div>
                       <div className="flex-1">
                         <p className="text-gray-900 font-medium">{insight.insight}</p>
                         {insight.recommendedActions.length > 0 && (

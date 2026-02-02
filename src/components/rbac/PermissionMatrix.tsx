@@ -3,28 +3,37 @@
 import { useState, useEffect } from 'react'
 import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 
-// Permission modules and actions matching backend
+// Permission modules and actions matching backend User model exactly
 const MODULES = [
   { key: 'orders', label: 'Orders', icon: '📦' },
   { key: 'customers', label: 'Customers', icon: '👥' },
-  { key: 'branches', label: 'Branches', icon: '🏢' },
+  { key: 'inventory', label: 'Inventory', icon: '📋' },
   { key: 'services', label: 'Services', icon: '🧺' },
-  { key: 'support', label: 'Support Tickets', icon: '🎫' },
-  { key: 'financial', label: 'Financial', icon: '💰' },
-  { key: 'reports', label: 'Reports', icon: '📊' },
-  { key: 'users', label: 'Users', icon: '👤' },
-  { key: 'settings', label: 'Settings', icon: '⚙️' }
+  { key: 'staff', label: 'Staff Management', icon: '👨‍💼' },
+  { key: 'logistics', label: 'Logistics', icon: '🚚' },
+  { key: 'tickets', label: 'Support Tickets', icon: '🎫' },
+  { key: 'performance', label: 'Performance & Analytics', icon: '📊' },
+  { key: 'analytics', label: 'Analytics', icon: '📈' },
+  { key: 'settings', label: 'Settings', icon: '⚙️' },
+  { key: 'coupons', label: 'Coupons & Promotions', icon: '🎟️' },
+  { key: 'branches', label: 'Branches', icon: '🏢' },
+  { key: 'branchAdmins', label: 'Branch Admins', icon: '👤' }
 ]
 
 const COMMON_ACTIONS = ['view', 'create', 'update', 'delete']
 
 const ADVANCED_ACTIONS: Record<string, string[]> = {
-  orders: ['assign', 'cancel', 'refund'],
-  support: ['respond', 'resolve', 'escalate', 'assign'],
-  financial: ['approve', 'export'],
-  reports: ['export'],
-  users: ['assignRole'],
-  services: ['approveChanges']
+  orders: ['assign', 'cancel', 'process'],
+  staff: ['assignShift', 'manageAttendance'],
+  inventory: ['restock', 'writeOff'],
+  services: ['toggle', 'updatePricing'],
+  logistics: ['assign', 'track'],
+  tickets: ['assign', 'resolve', 'escalate'],
+  performance: ['export'],
+  analytics: [], // Only has view
+  coupons: [],
+  branches: [],
+  branchAdmins: []
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -34,14 +43,17 @@ const ACTION_LABELS: Record<string, string> = {
   delete: 'Delete',
   assign: 'Assign',
   cancel: 'Cancel',
-  refund: 'Refund',
-  approve: 'Approve',
-  export: 'Export',
-  assignRole: 'Assign Role',
-  approveChanges: 'Approve Changes',
-  respond: 'Respond',
+  process: 'Process',
+  assignShift: 'Assign Shift',
+  manageAttendance: 'Manage Attendance',
+  restock: 'Restock',
+  writeOff: 'Write Off',
+  toggle: 'Toggle Status',
+  updatePricing: 'Update Pricing',
+  track: 'Track',
   resolve: 'Resolve',
-  escalate: 'Escalate'
+  escalate: 'Escalate',
+  export: 'Export'
 }
 
 interface Permissions {

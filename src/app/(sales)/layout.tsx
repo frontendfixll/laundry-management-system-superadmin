@@ -5,19 +5,19 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore, useSalesUser } from '@/store/authStore'
 import { useAuthValidation } from '@/hooks/useAuthValidation'
 import Link from 'next/link'
-import { 
-  LayoutDashboard, 
-  Users, 
-  CreditCard, 
-  DollarSign, 
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  DollarSign,
   LogOut,
   Menu,
   X,
-  Bell,
-  User,
   TrendingUp,
   Users2
 } from 'lucide-react'
+import NotificationContainer from '@/components/NotificationContainer'
+import NotificationBell from '@/components/layout/NotificationBell'
 
 export default function SalesLayout({
   children,
@@ -31,9 +31,6 @@ export default function SalesLayout({
   const user = useAuthStore(state => state.user)
   const { isValidating } = useAuthValidation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [showNotifications, setShowNotifications] = useState(false)
-  const [notifications, setNotifications] = useState<any[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
 
   const [isHydrated, setIsHydrated] = useState(false)
 
@@ -45,11 +42,11 @@ export default function SalesLayout({
   useEffect(() => {
     // Only run auth checks after hydration with extra delay
     if (!isHydrated) return
-    
+
     // Add extra delay to ensure auth store is fully loaded
     const timer = setTimeout(() => {
       const currentState = useAuthStore.getState()
-      
+
       console.log('🔐 Sales Layout Auth Check:', {
         isAuthenticated: currentState.isAuthenticated,
         userType: currentState.userType,
@@ -57,7 +54,7 @@ export default function SalesLayout({
         hasToken: !!currentState.token,
         hasUser: !!currentState.user
       })
-      
+
       if (!isValidating && !currentState.isAuthenticated && !currentState.token) {
         console.log('🔐 Not authenticated, redirecting to login')
         router.push('/auth/login')
@@ -66,7 +63,7 @@ export default function SalesLayout({
         router.push('/dashboard')
       }
     }, 200) // Extra delay for safety
-    
+
     return () => clearTimeout(timer)
   }, [isAuthenticated, userType, router, isValidating, isHydrated])
 
@@ -108,6 +105,7 @@ export default function SalesLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <NotificationContainer />
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -118,9 +116,8 @@ export default function SalesLayout({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-xl border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-xl border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -128,7 +125,7 @@ export default function SalesLayout({
             <div>
               <h1 className="text-xl font-bold text-gray-900">LaundryLobby</h1>
               <p className="text-xs text-blue-600 font-medium">
-                {userType === 'superadmin' ? 'SuperAdmin - Sales' : 'Sales Portal'}
+                {userType === 'superadmin' ? 'LaundryLobby Admin - Sales' : 'Sales Portal'}
               </p>
             </div>
             <button
@@ -141,7 +138,7 @@ export default function SalesLayout({
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            {/* Back to SuperAdmin button for SuperAdmin users */}
+            {/* Back to LaundryLobby Admin button for SuperAdmin users */}
             {userType === 'superadmin' && (
               <Link
                 href="/dashboard"
@@ -151,7 +148,7 @@ export default function SalesLayout({
                 ← Back to SuperAdmin
               </Link>
             )}
-            
+
             {navigation.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -160,11 +157,10 @@ export default function SalesLayout({
                   key={item.name}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all ${isActive
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <Icon className="w-5 h-5 mr-3" />
                   {item.name}
@@ -179,8 +175,8 @@ export default function SalesLayout({
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center ring-2 ring-blue-100">
                   <span className="text-white font-semibold text-lg">
-                    {userType === 'superadmin' 
-                      ? user?.name?.charAt(0).toUpperCase() 
+                    {userType === 'superadmin'
+                      ? user?.name?.charAt(0).toUpperCase()
                       : salesUser?.name?.charAt(0).toUpperCase()
                     }
                   </span>
@@ -191,7 +187,7 @@ export default function SalesLayout({
                   {userType === 'superadmin' ? user?.name : salesUser?.name}
                 </p>
                 <p className="text-xs text-gray-600 truncate">
-                  {userType === 'superadmin' ? 'SuperAdmin' : salesUser?.designation}
+                  {userType === 'superadmin' ? 'LaundryLobby Admin' : salesUser?.designation}
                 </p>
               </div>
             </div>
@@ -225,12 +221,13 @@ export default function SalesLayout({
 
             {/* Right side - Profile */}
             <div className="flex items-center gap-4">
+              <NotificationBell />
               {/* Profile */}
               <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
                   <span className="text-white font-semibold text-sm">
-                    {userType === 'superadmin' 
-                      ? user?.name?.charAt(0).toUpperCase() 
+                    {userType === 'superadmin'
+                      ? user?.name?.charAt(0).toUpperCase()
                       : salesUser?.name?.charAt(0).toUpperCase()
                     }
                   </span>
@@ -240,7 +237,7 @@ export default function SalesLayout({
                     {userType === 'superadmin' ? user?.name : salesUser?.name}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {userType === 'superadmin' ? 'SuperAdmin' : salesUser?.designation}
+                    {userType === 'superadmin' ? 'LaundryLobby Admin' : salesUser?.designation}
                   </p>
                 </div>
               </div>

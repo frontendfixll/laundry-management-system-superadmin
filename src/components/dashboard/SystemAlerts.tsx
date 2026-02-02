@@ -127,7 +127,7 @@ export default function SystemAlerts({ alerts, loading, onDismiss, onClearAll }:
   
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
           <div className="space-y-3">
@@ -147,13 +147,13 @@ export default function SystemAlerts({ alerts, loading, onDismiss, onClearAll }:
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <h3 className="text-lg font-semibold text-gray-900">System Alerts</h3>
           {safeAlerts.length > 0 && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-200">
               {safeAlerts.length} Active
             </span>
           )}
@@ -175,8 +175,10 @@ export default function SystemAlerts({ alerts, loading, onDismiss, onClearAll }:
       <div className="space-y-3">
         {safeAlerts.length === 0 ? (
           <div className="text-center py-8">
-            <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
-            <h4 className="text-sm font-medium text-gray-900 mb-1">All Systems Normal</h4>
+            <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center mx-auto mb-3">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <h4 className="text-sm font-medium text-gray-900 mb-1">All Systems Operational</h4>
             <p className="text-sm text-gray-500">No active alerts or issues detected</p>
           </div>
         ) : (
@@ -191,7 +193,7 @@ export default function SystemAlerts({ alerts, loading, onDismiss, onClearAll }:
                 className={`flex items-start space-x-3 p-4 border rounded-lg ${alertStyle.bgColor} ${alertStyle.borderColor} hover:shadow-sm transition-shadow`}
               >
                 {/* Alert Icon */}
-                <div className={`flex-shrink-0 w-8 h-8 rounded-lg bg-white flex items-center justify-center`}>
+                <div className={`flex-shrink-0 w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-gray-200`}>
                   <AlertIcon className={`w-4 h-4 ${alertStyle.iconColor}`} />
                 </div>
 
@@ -212,7 +214,7 @@ export default function SystemAlerts({ alerts, loading, onDismiss, onClearAll }:
                   
                   <button 
                     onClick={() => handleAction(alert)}
-                    className="inline-flex items-center text-xs text-purple-600 hover:text-purple-700 font-medium transition-colors"
+                    className="inline-flex items-center text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
                   >
                     {alert.action}
                     <ExternalLink className="w-3 h-3 ml-1" />
@@ -238,25 +240,25 @@ export default function SystemAlerts({ alerts, loading, onDismiss, onClearAll }:
         <div className="mt-6 pt-4 border-t border-gray-200">
           <div className="grid grid-cols-4 gap-4 text-center">
             <div>
-              <div className="text-lg font-bold text-red-600">
+              <div className="text-lg font-semibold text-red-600">
                 {safeAlerts.filter(a => a.level === 'critical').length}
               </div>
               <div className="text-xs text-gray-500">Critical</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-orange-600">
+              <div className="text-lg font-semibold text-orange-600">
                 {safeAlerts.filter(a => a.level === 'high').length}
               </div>
               <div className="text-xs text-gray-500">High</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-yellow-600">
+              <div className="text-lg font-semibold text-yellow-600">
                 {safeAlerts.filter(a => a.level === 'medium').length}
               </div>
               <div className="text-xs text-gray-500">Medium</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-green-600">
+              <div className="text-lg font-semibold text-green-600">
                 {safeAlerts.filter(a => a.level === 'low').length}
               </div>
               <div className="text-xs text-gray-500">Low</div>

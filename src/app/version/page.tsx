@@ -12,7 +12,7 @@ export default function VersionPage() {
             <span className="font-semibold">Version:</span> {APP_VERSION}
           </p>
           <p className="text-gray-600">
-            <span className="font-semibold">Frontend:</span> SuperAdmin Portal
+            <span className="font-semibold">Frontend:</span> LaundryLobby Portal
           </p>
           <p className="text-gray-600">
             <span className="font-semibold">Build:</span> {new Date().toISOString()}

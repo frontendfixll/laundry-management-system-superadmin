@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
+import {
   Search, Loader2, Building2,
   UserX, UserCheck,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
@@ -16,7 +16,7 @@ const getAuthToken = () => {
   try {
     const data = localStorage.getItem('superadmin-storage')
     if (data) { const p = JSON.parse(data); token = p.state?.token || p.token }
-  } catch (e) {}
+  } catch (e) { }
   return token || localStorage.getItem('superadmin-token') || localStorage.getItem('token')
 }
 
@@ -62,7 +62,7 @@ export default function AdminsPage() {
   }
 
   const handleDeactivateAdmin = async (admin: Admin) => {
-    try { 
+    try {
       await apiCall(`/superadmin/admins/${admin._id}`, { method: 'DELETE' })
       toast.success('Admin deactivated')
       setAdmins(prev => prev.map(a => a._id === admin._id ? { ...a, isActive: false } : a))
@@ -70,14 +70,14 @@ export default function AdminsPage() {
   }
 
   const handleReactivateAdmin = async (admin: Admin) => {
-    try { 
+    try {
       await apiCall(`/superadmin/admins/${admin._id}/reactivate`, { method: 'PUT' })
       toast.success('Admin reactivated')
       setAdmins(prev => prev.map(a => a._id === admin._id ? { ...a, isActive: true } : a))
     } catch (e: any) { toast.error(e.message) }
   }
 
-  const filteredAdmins = admins.filter(a => 
+  const filteredAdmins = admins.filter(a =>
     (a.name?.toLowerCase().includes(searchTerm.toLowerCase()) || a.email?.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
@@ -112,41 +112,61 @@ export default function AdminsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Branch Admin Management</h1>
-          <p className="text-gray-600">View branch admins. Permissions are managed through billing plans.</p>
+          <h1 className="text-lg font-semibold text-gray-900">Branch Admin Management</h1>
+          <p className="text-[11px] text-gray-600">View branch admins. Permissions are managed through billing plans.</p>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4">
-          <div className="text-2xl font-bold text-white">{admins.length}</div>
-          <div className="text-sm text-purple-100">Total Admins</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-blue-700">Total Admins</p>
+              <p className="text-lg font-semibold text-gray-900 mt-1">{admins.length}</p>
+            </div>
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-blue-600" />
+            </div>
+          </div>
         </div>
-        <div className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl p-4">
-          <div className="text-2xl font-bold text-white">{admins.filter(a => a.isActive).length}</div>
-          <div className="text-sm text-teal-100">Active</div>
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-lg shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-700">Active</p>
+              <p className="text-2xl lg:text-3xl font-semibold text-gray-900 mt-1 lg:mt-2">{admins.filter(a => a.isActive).length}</p>
+            </div>
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <UserCheck className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
+            </div>
+          </div>
         </div>
-        <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-xl p-4">
-          <div className="text-2xl font-bold text-white">{admins.filter(a => !a.isActive).length}</div>
-          <div className="text-sm text-red-100">Inactive</div>
+        <div className="bg-gradient-to-br from-red-50 to-rose-50 border border-red-100 rounded-lg shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-red-700">Inactive</p>
+              <p className="text-2xl lg:text-3xl font-semibold text-gray-900 mt-1 lg:mt-2">{admins.filter(a => !a.isActive).length}</p>
+            </div>
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <UserX className="w-5 h-5 lg:w-6 lg:h-6 text-red-600" />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <input type="text" placeholder="Search admins..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <input type="text" placeholder="Search admins..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" />
           </div>
         </div>
       </div>
 
       {/* Admins Table */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
-          <div className="flex justify-center items-center py-12"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>
+          <div className="flex justify-center items-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
         ) : paginatedAdmins.length === 0 ? (
           <div className="text-center py-12 text-gray-500">No admins found</div>
         ) : (
@@ -165,7 +185,7 @@ export default function AdminsPage() {
                   <tr key={admin._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-medium">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium">
                           {admin.name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -228,7 +248,7 @@ export default function AdminsPage() {
                     page === '...' ? (
                       <span key={`ellipsis-${index}`} className="px-2 text-gray-500">...</span>
                     ) : (
-                      <button key={page} onClick={() => handlePageChange(page as number)} className={`min-w-[36px] px-3 py-1 border rounded-md text-sm ${currentPage === page ? 'bg-purple-600 text-white border-purple-600' : 'border-gray-300 hover:bg-gray-50'}`}>
+                      <button key={page} onClick={() => handlePageChange(page as number)} className={`min-w-[36px] px-3 py-1 border rounded-md text-sm ${currentPage === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 hover:bg-gray-50'}`}>
                         {page}
                       </button>
                     )

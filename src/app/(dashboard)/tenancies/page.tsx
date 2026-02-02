@@ -77,17 +77,17 @@ const ALL_FEATURES = [
 
 export default function TenanciesPage() {
   const router = useRouter();
-  const { 
-    tenancies, 
-    loading, 
-    error, 
+  const {
+    tenancies,
+    loading,
+    error,
     fetchTenancies,
-    createTenancy, 
-    updateTenancy, 
+    createTenancy,
+    updateTenancy,
     updateTenancyStatus,
     deleteTenancy
   } = useTenancies();
-  
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedTenancy, setSelectedTenancy] = useState<Tenancy | null>(null);
@@ -95,7 +95,7 @@ export default function TenanciesPage() {
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string } | null>(null);
   const [saving, setSaving] = useState(false);
-  
+
   const [createForm, setCreateForm] = useState({
     name: '',
     subdomain: '',
@@ -189,7 +189,7 @@ export default function TenanciesPage() {
 
   const handleEdit = async () => {
     if (!selectedTenancy) return;
-    
+
     setSaving(true);
     try {
       const result = await updateTenancy(selectedTenancy._id, {
@@ -275,15 +275,15 @@ export default function TenanciesPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tenancies</h1>
-          <p className="text-muted-foreground">Manage laundry business tenants on the platform</p>
+          <h1 className="text-lg font-light text-gray-900">Tenancies Management</h1>
+          <p className="text-gray-500 text-[11px] mt-0.5">Manage laundry business tenants on the platform</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="mr-2 h-4 w-4" />
               Add Tenancy
             </Button>
@@ -338,8 +338,8 @@ export default function TenanciesPage() {
                       value={createForm.planId}
                       onValueChange={(value) => {
                         const plan = billingPlans.find(p => p._id === value);
-                        setCreateForm({ 
-                          ...createForm, 
+                        setCreateForm({
+                          ...createForm,
                           planId: value,
                           trialDays: plan?.trialDays || 14
                         });
@@ -425,49 +425,57 @@ export default function TenanciesPage() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tenancies</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{tenancies.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{tenancies.filter(t => t.status === 'active').length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Settings className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{tenancies.filter(t => t.status === 'pending').length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Month</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {tenancies.filter(t => {
-                const created = new Date(t.createdAt);
-                const now = new Date();
-                return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-              }).length}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-medium text-blue-700 uppercase tracking-wider">Total Tenancies</p>
+              <p className="text-xl font-semibold text-gray-900 mt-0.5">{tenancies.length}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Building2 className="w-4 h-4 text-blue-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-lg shadow-sm p-3 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-medium text-green-700 uppercase tracking-wider">Active</p>
+              <p className="text-xl font-semibold text-green-600 mt-0.5">{tenancies.filter(t => t.status === 'active').length}</p>
+            </div>
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-lg shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wider">Pending</p>
+              <p className="text-xl font-semibold text-amber-600 mt-0.5">{tenancies.filter(t => t.status === 'pending').length}</p>
+            </div>
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+              <Settings className="w-5 h-5 lg:w-6 lg:h-6 text-amber-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-100 rounded-lg shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-medium text-purple-700 uppercase tracking-wider">This Month</p>
+              <p className="text-xl font-semibold text-blue-600 mt-0.5">
+                {tenancies.filter(t => {
+                  const created = new Date(t.createdAt);
+                  const now = new Date();
+                  return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+                }).length}
+              </p>
+            </div>
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Tenancies Table */}
@@ -481,35 +489,31 @@ export default function TenanciesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Business Name</TableHead>
-                <TableHead>Subdomain</TableHead>
                 <TableHead>Plan</TableHead>
-                <TableHead>Features</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Owner</TableHead>
-                <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {tenancies.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     No tenancies found. Create your first tenancy to get started.
                   </TableCell>
                 </TableRow>
               ) : (
                 tenancies.map((tenancy) => (
                   <TableRow key={tenancy._id}>
-                    <TableCell className="font-medium">{tenancy.name}</TableCell>
-                    <TableCell>
-                      <code className="bg-muted px-2 py-1 rounded text-sm">{tenancy.subdomain}</code>
+                    <TableCell className="font-medium">
+                      <div>
+                        <div className="font-medium text-sm">{tenancy.name}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          <code className="bg-muted px-2 py-1 rounded text-xs">{tenancy.subdomain}</code>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell>{getPlanBadge(tenancy.subscription?.plan || 'free')}</TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {countEnabledFeatures(tenancy.subscription?.features || {})} enabled
-                      </span>
-                    </TableCell>
                     <TableCell>{getStatusBadge(tenancy.status)}</TableCell>
                     <TableCell>
                       <div className="text-sm">
@@ -517,52 +521,51 @@ export default function TenanciesPage() {
                         {tenancy.owner?.email && <div className="text-muted-foreground text-xs">{tenancy.owner.email}</div>}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {tenancy.createdAt 
-                        ? format(new Date(tenancy.createdAt), 'MMM d, yyyy')
-                        : 'N/A'
-                      }
-                    </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
+                      <div className="flex justify-end gap-0.5">
+                        <Button
+                          variant="ghost"
                           size="icon"
+                          className="h-8 w-8"
                           title="Manage Owner Permissions"
                           onClick={() => router.push(`/tenancies/${tenancy._id}`)}
                         >
                           <Shield className="h-4 w-4 text-purple-500" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
+                          className="h-8 w-8"
                           title="Edit Features"
                           onClick={() => openEditModal(tenancy)}
                         >
                           <Edit className="h-4 w-4 text-blue-500" />
                         </Button>
                         {tenancy.status === 'active' ? (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
+                            className="h-8 w-8"
                             title="Suspend"
                             onClick={() => handleStatusChange(tenancy, 'suspended')}
                           >
                             <RefreshCw className="h-4 w-4 text-orange-500" />
                           </Button>
                         ) : (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
+                            className="h-8 w-8"
                             title="Activate"
                             onClick={() => handleStatusChange(tenancy, 'active')}
                           >
                             <RefreshCw className="h-4 w-4 text-green-500" />
                           </Button>
                         )}
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={() => setDeleteConfirm({ isOpen: true, id: tenancy._id, name: tenancy.name })}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
@@ -620,26 +623,24 @@ export default function TenanciesPage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Enable or disable features for this tenancy. These override the plan defaults.
                 </p>
-                <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto border rounded-lg p-3">
+                <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto no-scrollbar border rounded-lg p-3">
                   {ALL_FEATURES.map((feature) => (
-                    <div 
+                    <div
                       key={feature.key}
-                      className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors ${
-                        editForm.features[feature.key] 
-                          ? 'bg-green-50 border-green-200' 
-                          : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                      }`}
+                      className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors ${editForm.features[feature.key]
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                        }`}
                       onClick={() => toggleFeature(feature.key)}
                     >
                       <div className="flex-1">
                         <div className="font-medium text-sm">{feature.label}</div>
                         <div className="text-xs text-muted-foreground">{feature.description}</div>
                       </div>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        editForm.features[feature.key] 
-                          ? 'bg-green-500 text-white' 
-                          : 'bg-gray-300 text-gray-500'
-                      }`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${editForm.features[feature.key]
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-300 text-gray-500'
+                        }`}>
                         {editForm.features[feature.key] ? (
                           <Check className="h-4 w-4" />
                         ) : (

@@ -285,7 +285,7 @@ export default function SuperAdminCampaignsPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Campaign Management</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Campaign Management</h1>
           <p className="text-gray-600">Manage global campaigns, templates, and tenant campaigns across the platform</p>
         </div>
         <div className="flex items-center gap-2">
@@ -301,7 +301,7 @@ export default function SuperAdminCampaignsPage() {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Create
@@ -310,7 +310,7 @@ export default function SuperAdminCampaignsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -320,7 +320,7 @@ export default function SuperAdminCampaignsPage() {
                 placeholder="Search campaigns..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
@@ -329,7 +329,7 @@ export default function SuperAdminCampaignsPage() {
             <select
               value={scopeFilter}
               onChange={(e) => setScopeFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Scopes</option>
               <option value="GLOBAL">Global</option>
@@ -340,7 +340,7 @@ export default function SuperAdminCampaignsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Status</option>
               {CAMPAIGN_STATUSES.map(status => (
@@ -351,7 +351,7 @@ export default function SuperAdminCampaignsPage() {
             <select
               value={tenancyFilter}
               onChange={(e) => setTenancyFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Tenancies</option>
               {tenancies.map(tenancy => (
@@ -373,10 +373,10 @@ export default function SuperAdminCampaignsPage() {
       </div>
 
       {/* Campaigns Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : filteredCampaigns.length === 0 ? (
           <div className="text-center py-12">
@@ -385,7 +385,7 @@ export default function SuperAdminCampaignsPage() {
             <p className="text-gray-600 mb-4">Create your first campaign to start managing promotional activities</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
             >
               Create Campaign
             </button>

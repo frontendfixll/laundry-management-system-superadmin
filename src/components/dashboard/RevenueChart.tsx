@@ -44,7 +44,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
   // Add null checks for safety
   if (!data || !data.daily || !data.byService) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="h-64 bg-gray-200 rounded"></div>
@@ -84,7 +84,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="h-64 bg-gray-200 rounded"></div>
@@ -94,22 +94,22 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Revenue Analytics</h3>
           <div className="flex items-center space-x-6 text-sm text-gray-600">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
               <span>Revenue: ₹{totalRevenue.toLocaleString()}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               <span>Orders: {totalOrders.toLocaleString()}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <TrendingUp className="w-4 h-4 text-green-500" />
+              <TrendingUp className="w-4 h-4 text-gray-500" />
               <span>Avg: ₹{avgOrderValue.toFixed(0)}</span>
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
               onClick={() => setChartType('area')}
               className={`p-2 rounded-md transition-colors ${
                 chartType === 'area' 
-                  ? 'bg-white text-purple-600 shadow-sm' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -133,7 +133,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
               onClick={() => setChartType('bar')}
               className={`p-2 rounded-md transition-colors ${
                 chartType === 'bar' 
-                  ? 'bg-white text-purple-600 shadow-sm' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -143,7 +143,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
               onClick={() => setChartType('pie')}
               className={`p-2 rounded-md transition-colors ${
                 chartType === 'pie' 
-                  ? 'bg-white text-purple-600 shadow-sm' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -155,7 +155,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -165,17 +165,20 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
       </div>
 
       {/* Chart */}
-      <div className="h-80">
+      <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
           {chartType === 'area' && (
-            <AreaChart data={dailyChartData}>
+            <AreaChart 
+              data={dailyChartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            >
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis 
                 dataKey="date" 
                 stroke="#6b7280"
@@ -201,22 +204,19 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#8B5CF6"
-                strokeWidth={2}
+                stroke="#3b82f6"
+                strokeWidth={3}
                 fill="url(#revenueGradient)"
               />
             </AreaChart>
           )}
 
           {chartType === 'bar' && (
-            <BarChart data={dailyChartData}>
-              <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#8B5CF6" />
-                  <stop offset="100%" stopColor="#EC4899" />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <BarChart 
+              data={dailyChartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis 
                 dataKey="date" 
                 stroke="#6b7280"
@@ -238,8 +238,8 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
               />
               <Bar 
                 dataKey="revenue" 
-                fill="url(#barGradient)"
-                radius={[6, 6, 0, 0]}
+                fill="#3b82f6"
+                radius={[4, 4, 0, 0]}
               />
             </BarChart>
           )}
@@ -250,9 +250,9 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
                 data={serviceChartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={120}
-                paddingAngle={5}
+                innerRadius={80}
+                outerRadius={140}
+                paddingAngle={2}
                 dataKey="value"
               >
                 {serviceChartData.map((entry, index) => (
@@ -275,7 +275,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
 
       {/* Service Legend for Pie Chart */}
       {chartType === 'pie' && (
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 border-t border-gray-100">
           {serviceChartData.map((service, index) => (
             <div key={service.name} className="flex items-center space-x-2">
               <div 

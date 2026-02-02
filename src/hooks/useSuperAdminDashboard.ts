@@ -29,8 +29,16 @@ interface DashboardOverview {
   recentOrders: any[]
   topBranches: any[]
   revenue: {
-    daily: any[]
-    byService: any[]
+    daily: Array<{
+      _id: { year: number; month: number; day: number }
+      revenue: number
+      orders: number
+    }>
+    byService: Array<{
+      _id: string
+      revenue: number
+      orders: number
+    }>
   }
   customerGrowth: any[]
   orderDistribution: any[]

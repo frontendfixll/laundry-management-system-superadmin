@@ -49,10 +49,16 @@ class SuperAdminAPI {
     if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text()
       console.error('Non-JSON response received:', text)
-      throw new Error(`Server returned non-JSON response. Status: ${response.status}`)
+      throw new Error(`Server returned non-JSON response. Status: ${response.status}. Content: ${text.substring(0, 200)}`)
     }
     
-    const data = await response.json()
+    let data
+    try {
+      data = await response.json()
+    } catch (jsonError) {
+      console.error('Failed to parse JSON response:', jsonError)
+      throw new Error('Server returned invalid JSON response')
+    }
     
     if (!response.ok) {
       // Handle 401 Unauthorized - auto logout
@@ -1377,6 +1383,459 @@ class SuperAdminAPI {
       method: 'DELETE',
       headers: this.getAuthHeaders()
     })
+    return this.handleResponse(response)
+  }
+
+  // Add-On Management
+  async getAddOns(params?: {
+    status?: string
+    category?: string
+    search?: string
+    sortBy?: string
+    sortOrder?: string
+    limit?: number
+    page?: number
+  }) {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString())
+        }
+      })
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/addons?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getAddOn(addOnId: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/addons/${addOnId}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async createAddOn(addOnData: any) {
+    const response = await fetch(`${API_BASE_URL}/superadmin/addons`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(addOnData)
+    })
+    
+    return this.handleResponse(response)
+  }
+
+  async updateAddOn(addOnId: string, addOnData: any) {
+    const response = await fetch(`${API_BASE_URL}/superadmin/addons/${addOnId}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(addOnData)
+    })
+    
+    return this.handleResponse(response)
+  }
+
+  async deleteAddOn(addOnId: string) {
+    const response = await fetch(`${API_BASE_URL}/superadmin/addons/${addOnId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+    
+    return this.handleResponse(response)
+  }
+
+  async getAddOnAnalytics(addOnId: string, period?: string) {
+    const searchParams = new URLSearchParams()
+    if (period) {
+      searchParams.append('period', period)
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/addons/${addOnId}/analytics?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async assignAddOnToTenant(addOnId: string, assignmentData: any) {
+    const response = await fetch(`${API_BASE_URL}/superadmin/addons/${addOnId}/assign`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(assignmentData)
+    })
+    
+    return this.handleResponse(response)
+  }
+
+  async getAddOnSubscribers(addOnId: string, params?: {
+    status?: string
+    sortBy?: string
+    sortOrder?: string
+    limit?: number
+    page?: number
+  }) {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString())
+        }
+      })
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/addons/${addOnId}/subscribers?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getAddOnCategories() {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/addons/categories`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Finance-specific API methods
+  async getPaymentFailures(params?: {
+    page?: number
+    limit?: number
+    gateway?: string
+    reason?: string
+    search?: string
+    range?: string
+  }) {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString())
+        }
+      })
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/finances/failures?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getRefunds(params?: {
+    page?: number
+    limit?: number
+    status?: string
+    reason?: string
+    type?: string
+    search?: string
+    range?: string
+  }) {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString())
+        }
+      })
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/finances/refunds?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getRevenueData(range?: string) {
+    const searchParams = new URLSearchParams()
+    if (range) {
+      searchParams.append('range', range)
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/finances/revenue?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getFinanceTransactions(params?: {
+    page?: number
+    limit?: number
+    status?: string
+    type?: string
+    gateway?: string
+    search?: string
+    range?: string
+  }) {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString())
+        }
+      })
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/finances/transactions?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getRevenueReports(params?: {
+    range?: string
+    type?: string
+    tenant?: string
+    includeRefunds?: boolean
+  }) {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString())
+        }
+      })
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/finances/reports/revenue?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getTaxReports(period?: string) {
+    const searchParams = new URLSearchParams()
+    if (period) {
+      searchParams.append('period', period)
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/finances/reports/tax?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Audit Management API methods
+  async getAuditDashboard(timeframe?: string) {
+    const searchParams = new URLSearchParams()
+    if (timeframe) {
+      searchParams.append('timeframe', timeframe)
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/audit/dashboard?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getAuditCompliance() {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/audit/compliance`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getAuditLogs(params?: {
+    page?: number
+    limit?: number
+    severity?: string
+    action?: string
+    search?: string
+  }) {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString())
+        }
+      })
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/audit/logs?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  async getAuditMetrics(timeframe?: string) {
+    const searchParams = new URLSearchParams()
+    if (timeframe) {
+      searchParams.append('timeframe', timeframe)
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/audit/metrics?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Blog Management Methods
+
+  // Get all blog posts for admin
+  async getBlogPosts(params?: {
+    page?: number
+    limit?: number
+    status?: string
+    category?: string
+    search?: string
+  }) {
+    const searchParams = new URLSearchParams()
+    if (params?.page) searchParams.append('page', params.page.toString())
+    if (params?.limit) searchParams.append('limit', params.limit.toString())
+    if (params?.status) searchParams.append('status', params.status)
+    if (params?.category) searchParams.append('category', params.category)
+    if (params?.search) searchParams.append('search', params.search)
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/posts?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Get single blog post
+  async getBlogPost(id: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/posts/${id}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Create blog post
+  async createBlogPost(postData: any) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/posts`,
+      {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(postData)
+      }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Update blog post
+  async updateBlogPost(id: string, postData: any) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/posts/${id}`,
+      {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(postData)
+      }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Delete blog post
+  async deleteBlogPost(id: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/posts/${id}`,
+      {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Get blog categories
+  async getBlogCategories() {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/categories`,
+      { headers: this.getAuthHeaders() }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Create blog category
+  async createBlogCategory(categoryData: any) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/categories`,
+      {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(categoryData)
+      }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Update blog category
+  async updateBlogCategory(id: string, categoryData: any) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/categories/${id}`,
+      {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(categoryData)
+      }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Delete blog category
+  async deleteBlogCategory(id: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/categories/${id}`,
+      {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      }
+    )
+    
+    return this.handleResponse(response)
+  }
+
+  // Get blog analytics
+  async getBlogAnalytics(timeframe?: string) {
+    const searchParams = new URLSearchParams()
+    if (timeframe) searchParams.append('timeframe', timeframe)
+
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/blog/analytics?${searchParams}`,
+      { headers: this.getAuthHeaders() }
+    )
+    
     return this.handleResponse(response)
   }
 }

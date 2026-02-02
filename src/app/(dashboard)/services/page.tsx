@@ -6,9 +6,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/ui/Pagination'
-import { 
-  Sparkles, 
-  Search, 
+import {
+  Sparkles,
+  Search,
   Plus,
   Edit,
   Trash2,
@@ -40,11 +40,10 @@ const ToastContainer = ({ toasts, removeToast }: { toasts: Toast[], removeToast:
     {toasts.map(toast => (
       <div
         key={toast.id}
-        className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg animate-slide-in ${
-          toast.type === 'success' 
-            ? 'bg-green-500 text-white' 
-            : 'bg-red-500 text-white'
-        }`}
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg animate-slide-in ${toast.type === 'success'
+          ? 'bg-green-500 text-white'
+          : 'bg-red-500 text-white'
+          }`}
       >
         {toast.type === 'success' ? (
           <Check className="w-5 h-5" />
@@ -259,10 +258,10 @@ export default function SuperAdminServicesPage() {
     e.preventDefault()
     try {
       const token = getAuthToken()
-      const url = isEditing 
+      const url = isEditing
         ? `${API_URL}/superadmin/services/${selectedService?._id}`
         : `${API_URL}/superadmin/services`
-      
+
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',
         headers: {
@@ -308,7 +307,7 @@ export default function SuperAdminServicesPage() {
 
   const handleDelete = async () => {
     if (!deleteServiceId) return
-    
+
     try {
       const token = getAuthToken()
       const response = await fetch(`${API_URL}/superadmin/services/${deleteServiceId}`, {
@@ -349,7 +348,7 @@ export default function SuperAdminServicesPage() {
 
       if (response.ok) {
         // Update state locally instead of re-fetching
-        setServices(prev => prev.map(s => 
+        setServices(prev => prev.map(s =>
           s._id === service._id ? { ...s, isActive: !s.isActive } : s
         ))
         showToast(service.isActive ? 'Service disabled successfully!' : 'Service enabled successfully!')
@@ -380,12 +379,12 @@ export default function SuperAdminServicesPage() {
         if (data.data?.service) {
           setSelectedService(data.data.service)
           // Also update in services list locally
-          setServices(prev => prev.map(s => 
+          setServices(prev => prev.map(s =>
             s._id === serviceId ? data.data.service : s
           ))
         }
-        showToast(isActive 
-          ? `Service enabled for ${branch?.name || 'branch'}!` 
+        showToast(isActive
+          ? `Service enabled for ${branch?.name || 'branch'}!`
           : `Service disabled for ${branch?.name || 'branch'}!`
         )
       } else {
@@ -435,7 +434,7 @@ export default function SuperAdminServicesPage() {
 
   const filteredServices = services.filter(service => {
     const matchesSearch = service.name.toLowerCase().includes(search.toLowerCase()) ||
-                         service.code.toLowerCase().includes(search.toLowerCase())
+      service.code.toLowerCase().includes(search.toLowerCase())
     const matchesCategory = !categoryFilter || service.category === categoryFilter
     return matchesSearch && matchesCategory
   })
@@ -443,7 +442,7 @@ export default function SuperAdminServicesPage() {
   // Pagination
   const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE)
   const paginatedServices = filteredServices.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
-  
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
@@ -499,7 +498,7 @@ export default function SuperAdminServicesPage() {
       setAddingItem(true)
       const token = getAuthToken()
       const itemId = `${selectedService.code}_${newItem.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now().toString(36)}`
-      
+
       const response = await fetch(`${API_URL}/service-items`, {
         method: 'POST',
         headers: {
@@ -577,7 +576,7 @@ export default function SuperAdminServicesPage() {
     <div className="space-y-6 mt-16">
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
-      
+
       {/* Animation styles */}
       <style jsx global>{`
         @keyframes slide-in {
@@ -598,8 +597,8 @@ export default function SuperAdminServicesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Services Management</h1>
-          <p className="text-gray-600">Manage laundry services and branch assignments</p>
+          <h1 className="text-lg font-bold text-gray-800">Services Management</h1>
+          <p className="text-[11px] text-gray-600">Manage laundry services and branch assignments</p>
         </div>
         <Button onClick={() => { resetForm(); setShowModal(true) }} className="bg-teal-500 hover:bg-teal-600">
           <Plus className="w-4 h-4 mr-2" />
@@ -609,14 +608,14 @@ export default function SuperAdminServicesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Services</p>
-              <p className="text-2xl font-bold text-gray-800">{services.length}</p>
+              <p className="text-xs text-gray-600">Total Services</p>
+              <p className="text-lg font-bold text-gray-800">{services.length}</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
           </div>
         </div>
@@ -665,7 +664,7 @@ export default function SuperAdminServicesPage() {
               placeholder="Search services..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
             />
           </div>
           <select
@@ -693,8 +692,8 @@ export default function SuperAdminServicesPage() {
 
       {/* Services List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">Services ({filteredServices.length})</h2>
+        <div className="p-3 border-b border-gray-200">
+          <h2 className="text-base font-semibold text-gray-800">Services ({filteredServices.length})</h2>
         </div>
 
         <div className="divide-y divide-gray-200">
@@ -706,50 +705,44 @@ export default function SuperAdminServicesPage() {
             </div>
           ) : (
             paginatedServices.map((service) => (
-              <div key={service._id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex items-start space-x-4">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                      service.isActive ? 'bg-gradient-to-r from-teal-500 to-emerald-600' : 'bg-gray-400'
-                    }`}>
-                      <Sparkles className="w-6 h-6 text-white" />
+              <div key={service._id} className="p-3 hover:bg-gray-50 transition-colors">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                  <div className="flex items-start space-x-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${service.isActive ? 'bg-gradient-to-r from-teal-500 to-emerald-600' : 'bg-gray-400'
+                      }`}>
+                      <Sparkles className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-800">{service.displayName}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryBadgeColor(service.category)}`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-base font-semibold text-gray-800">{service.displayName}</h3>
+                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-medium ${getCategoryBadgeColor(service.category)}`}>
                           {service.category.replace('_', ' ')}
                         </span>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          service.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-medium ${service.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
                           {service.isActive ? 'Active' : 'Inactive'}
                         </span>
                         {service.isExpressAvailable && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                            <Zap className="w-3 h-3 mr-1" />
+                          <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-medium bg-orange-100 text-orange-800">
+                            <Zap className="w-2.5 h-2.5 mr-1" />
                             Express
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{service.description}</p>
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                      <p className="text-[11px] text-gray-600 mb-1 leading-tight">{service.description}</p>
+                      <div className="flex flex-wrap gap-3 text-[10px] text-gray-500">
                         <span>Code: <strong>{service.code}</strong></span>
                         <span className="flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {service.turnaroundTime.standard}h standard / {service.turnaroundTime.express}h express
-                        </span>
-                        <span>
-                          <Building2 className="w-4 h-4 inline mr-1" />
-                          {service.branches?.length || 0} branches assigned
+                          <Clock className="w-3 h-3 mr-0.5" />
+                          {service.turnaroundTime.standard}h / {service.turnaroundTime.express}h
                         </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleOpenItemsModal(service)}
                       className="text-blue-600 hover:bg-blue-50"
@@ -757,24 +750,24 @@ export default function SuperAdminServicesPage() {
                       <Package className="w-4 h-4 mr-1" />
                       Items
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => { setSelectedService(service); setShowBranchModal(true) }}
                     >
                       <Building2 className="w-4 h-4 mr-1" />
                       Branches
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => openEditModal(service)}
                     >
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleToggleStatus(service)}
                       className={service.isActive ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}
@@ -782,8 +775,8 @@ export default function SuperAdminServicesPage() {
                       {service.isActive ? <XCircle className="w-4 h-4 mr-1" /> : <CheckCircle className="w-4 h-4 mr-1" />}
                       {service.isActive ? 'Disable' : 'Enable'}
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => openDeleteModal(service)}
                       className="text-red-600 hover:bg-red-50"
@@ -796,7 +789,7 @@ export default function SuperAdminServicesPage() {
             ))
           )}
         </div>
-        
+
         {/* Pagination */}
         {filteredServices.length > ITEMS_PER_PAGE && (
           <Pagination
@@ -1037,14 +1030,14 @@ export default function SuperAdminServicesPage() {
                 Are you sure you want to delete <strong>{deleteServiceName}</strong>? This action cannot be undone.
               </p>
               <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="flex-1"
                   onClick={() => { setShowDeleteModal(false); setDeleteServiceId(null); setDeleteServiceName('') }}
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   className="flex-1 bg-red-500 hover:bg-red-600 text-white"
                   onClick={handleDelete}
                 >

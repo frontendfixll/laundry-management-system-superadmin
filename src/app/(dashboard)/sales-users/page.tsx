@@ -168,7 +168,7 @@ export default function SalesUsersPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sales Team</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Sales Team</h1>
           <p className="text-gray-600 mt-1">Manage your sales department</p>
         </div>
         <Button
@@ -183,62 +183,62 @@ export default function SalesUsersPage() {
       {/* Statistics Cards */}
       {stats && stats.performance && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Sales Users</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-sm font-medium text-gray-600">Total Sales Users</p>
+                <p className="text-3xl font-semibold text-gray-900 mt-2">
                   {stats.totalSalesUsers || 0}
                 </p>
                 <p className="text-sm text-green-600 mt-1">
                   {stats.activeSalesUsers || 0} active
                 </p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-full">
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                <p className="text-3xl font-semibold text-gray-900 mt-2">
                   {formatCurrency(stats.performance?.totalRevenue || 0)}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
                   {formatCurrency(stats.performance?.currentMonthRevenue || 0)} this month
                 </p>
               </div>
-              <div className="bg-green-100 p-3 rounded-full">
+              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Leads Converted</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-sm font-medium text-gray-600">Leads Converted</p>
+                <p className="text-3xl font-semibold text-gray-900 mt-2">
                   {stats.performance?.totalLeadsConverted || 0}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
                   of {stats.performance?.totalLeadsAssigned || 0} assigned
                 </p>
               </div>
-              <div className="bg-purple-100 p-3 rounded-full">
-                <Target className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Target className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Avg Conversion Rate</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-sm font-medium text-gray-600">Avg Conversion Rate</p>
+                <p className="text-3xl font-semibold text-gray-900 mt-2">
                   {(stats.performance?.avgConversionRate || 0).toFixed(1)}%
                 </p>
                 <p className="text-sm text-green-600 mt-1">
@@ -246,8 +246,8 @@ export default function SalesUsersPage() {
                   Performance
                 </p>
               </div>
-              <div className="bg-orange-100 p-3 rounded-full">
-                <TrendingUp className="w-6 h-6 text-orange-600" />
+              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </div>
@@ -255,7 +255,7 @@ export default function SalesUsersPage() {
       )}
 
       {/* Search */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -273,7 +273,7 @@ export default function SalesUsersPage() {
       </div>
 
       {/* Sales Users Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -402,7 +402,7 @@ export default function SalesUsersPage() {
 
       {/* Top Performers */}
       {stats && stats.topPerformers && stats.topPerformers.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Performers</h2>
           <div className="space-y-4">
             {stats.topPerformers.map((performer, index) => (

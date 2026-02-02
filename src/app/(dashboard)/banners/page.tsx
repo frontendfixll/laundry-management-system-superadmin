@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Eye, Edit, Trash2, BarChart3, Power, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, BarChart3, Power, CheckCircle, XCircle, AlertTriangle, Globe, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   useAllBanners,
@@ -128,13 +128,13 @@ export default function SuperAdminBannersPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Banner Management</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Banner Management</h1>
           <p className="text-gray-600 mt-1">Manage global and tenant banners across the platform</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowAnalytics(true)}
-            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
           >
             <BarChart3 size={20} />
             Platform Analytics
@@ -150,33 +150,61 @@ export default function SuperAdminBannersPage() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <p className="text-sm text-gray-600 mb-1">Total Banners</p>
-          <p className="text-2xl font-bold text-gray-900">{banners.length}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6 mb-6">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-lg shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-700 mb-1">Total Banners</p>
+              <p className="text-2xl lg:text-3xl font-semibold text-gray-900 mt-1 lg:mt-2">{banners.length}</p>
+            </div>
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <p className="text-sm text-gray-600 mb-1">Global Banners</p>
-          <p className="text-2xl font-bold text-purple-600">
-            {banners.filter(b => b.bannerScope === 'GLOBAL').length}
-          </p>
+        <div className="bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-100 rounded-lg shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-purple-700 mb-1">Global Banners</p>
+              <p className="text-2xl lg:text-3xl font-semibold text-blue-600 mt-1 lg:mt-2">
+                {banners.filter(b => b.bannerScope === 'GLOBAL').length}
+              </p>
+            </div>
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Globe className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <p className="text-sm text-gray-600 mb-1">Active Banners</p>
-          <p className="text-2xl font-bold text-green-600">
-            {banners.filter(b => b.state === 'ACTIVE').length}
-          </p>
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-lg shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-700 mb-1">Active Banners</p>
+              <p className="text-2xl lg:text-3xl font-semibold text-green-600 mt-1 lg:mt-2">
+                {banners.filter(b => b.state === 'ACTIVE').length}
+              </p>
+            </div>
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <p className="text-sm text-gray-600 mb-1">Pending Approval</p>
-          <p className="text-2xl font-bold text-yellow-600">
-            {banners.filter(b => b.approval?.required && b.approval?.status === 'PENDING').length}
-          </p>
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-lg shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-amber-700 mb-1">Pending Approval</p>
+              <p className="text-2xl lg:text-3xl font-semibold text-amber-600 mt-1 lg:mt-2">
+                {banners.filter(b => b.approval?.required && b.approval?.status === 'PENDING').length}
+              </p>
+            </div>
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 lg:w-6 lg:h-6 text-amber-600" />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -185,14 +213,14 @@ export default function SuperAdminBannersPage() {
               placeholder="Search banners..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <select
             value={scopeFilter}
             onChange={(e) => setScopeFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="ALL">All Scopes</option>
             <option value="GLOBAL">Global</option>
@@ -202,7 +230,7 @@ export default function SuperAdminBannersPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="ALL">All Status</option>
             <option value="ACTIVE">Active</option>
@@ -215,7 +243,7 @@ export default function SuperAdminBannersPage() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="ALL">All Types</option>
             <option value="PROMOTIONAL">Promotional</option>

@@ -43,23 +43,32 @@ export default function SubscriptionsPage() {
       const subscriptionsData = response.data?.data?.subscriptions
       
       if (subscriptionsData && subscriptionsData.length > 0) {
+        console.log('First tenancy data:', subscriptionsData[0])
+        console.log('Plan data:', subscriptionsData[0]?.subscription?.planId)
+        console.log('Price data:', subscriptionsData[0]?.subscription?.planId?.price)
         // Map tenancy data to subscription format
-        const mappedSubscriptions = subscriptionsData.map((tenancy: any) => ({
-          _id: tenancy._id,
-          tenancyName: tenancy.name || tenancy.businessName || 'Unknown Business',
-          plan: {
-            name: tenancy.subscription?.planId?.displayName || tenancy.subscription?.planId?.name || 'No Plan',
-            price: tenancy.subscription?.planId?.price || 0,
-            billingCycle: tenancy.subscription?.billingCycle || 'monthly'
-          },
-          status: tenancy.subscription?.status || 'inactive',
-          trial: {
-            isActive: tenancy.subscription?.trial?.isActive || false,
-            daysRemaining: tenancy.subscription?.trial?.daysRemaining || 0
-          },
-          nextBillingDate: tenancy.subscription?.nextBillingDate || new Date().toISOString(),
-          createdAt: tenancy.createdAt
-        }))
+        const mappedSubscriptions = subscriptionsData.map((tenancy: any) => {
+          const billingCycle = tenancy.subscription?.billingCycle || 'monthly'
+          const planPrice = tenancy.subscription?.planId?.price
+          const price = planPrice ? (planPrice[billingCycle] || planPrice.monthly || 0) : 0
+          
+          return {
+            _id: tenancy._id,
+            tenancyName: tenancy.name || tenancy.businessName || 'Unknown Business',
+            plan: {
+              name: tenancy.subscription?.planId?.displayName || tenancy.subscription?.planId?.name || 'No Plan',
+              price: price,
+              billingCycle: billingCycle
+            },
+            status: tenancy.subscription?.status || 'inactive',
+            trial: {
+              isActive: tenancy.subscription?.trial?.isActive || false,
+              daysRemaining: tenancy.subscription?.trial?.daysRemaining || 0
+            },
+            nextBillingDate: tenancy.subscription?.nextBillingDate || new Date().toISOString(),
+            createdAt: tenancy.createdAt
+          }
+        })
         
         console.log('Mapped Subscriptions:', mappedSubscriptions)
         setSubscriptions(mappedSubscriptions)

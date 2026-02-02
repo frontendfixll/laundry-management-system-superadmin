@@ -7,6 +7,7 @@ import SuperAdminSidebar from '@/components/layout/SuperAdminSidebar'
 import SuperAdminHeader from '@/components/layout/SuperAdminHeader'
 import NotificationContainer from '@/components/NotificationContainer'
 import { useSessionTimeout } from '@/hooks/useSessionTimeout'
+import { useNotificationsWebSocket } from '@/hooks/useNotificationsWebSocket'
 import { SessionTimeoutModal } from '@/components/SessionTimeoutModal'
 import toast from 'react-hot-toast'
 
@@ -24,6 +25,9 @@ export default function DashboardLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isValidating, setIsValidating] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
+
+  // Connect to live notification engine
+  useNotificationsWebSocket()
 
   // Wait for Zustand to hydrate from localStorage
   useEffect(() => {
@@ -50,9 +54,12 @@ export default function DashboardLayout({
 
       // Redirect sales users to their dashboard
       if (userType === 'sales') {
+        console.log('🔄 Layout - Redirecting sales user to /sales-dashboard')
         router.push('/sales-dashboard')
         return
       }
+
+      console.log('🔄 Layout - User type is:', userType, '- proceeding with token validation')
 
       try {
         // Verify token by calling profile API
@@ -101,7 +108,7 @@ export default function DashboardLayout({
   useEffect(() => {
     // Only check after hydration
     if (!isHydrated) return
-    
+
     // Check if user is authenticated
     if (!isAuthenticated) {
       router.push('/auth/login')
@@ -122,7 +129,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
       {/* Session Timeout Warning Modal */}
       <SessionTimeoutModal
         isOpen={showWarning}
@@ -130,27 +137,34 @@ export default function DashboardLayout({
         onStayLoggedIn={stayLoggedIn}
         onLogout={sessionLogout}
       />
-      
+
       {/* Real-time notification toasts */}
       <NotificationContainer />
-      
-      {/* Sidebar */}
-      <SuperAdminSidebar 
-        mobileOpen={mobileMenuOpen} 
-        onMobileClose={() => setMobileMenuOpen(false)} 
-      />
-      
-      {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        {/* Header - Fixed at top */}
-        <SuperAdminHeader onMenuClick={() => setMobileMenuOpen(true)} sidebarCollapsed={sidebarCollapsed} />
-        
-        {/* Page Content - With top padding for fixed header */}
-        <main className="pt-20 py-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {children}
-          </div>
-        </main>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - Fixed width, independent scroll if needed */}
+        <SuperAdminSidebar
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={() => setMobileMenuOpen(false)}
+        />
+
+        {/* Right Side - Content Area (Header + Main) */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Header - Stays at top of the right container */}
+          <SuperAdminHeader
+            onMenuClick={() => setMobileMenuOpen(true)}
+            sidebarCollapsed={sidebarCollapsed}
+          />
+
+          {/* Page Content - Independent Scroll Area */}
+          <main className="flex-1 overflow-y-auto outline-none">
+            <div className="max-w-7xl mx-auto p-1 sm:p-1.5 lg:p-2">
+              <div className="px-0.5 sm:px-1 lg:px-1.5">
+                {children}
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   )

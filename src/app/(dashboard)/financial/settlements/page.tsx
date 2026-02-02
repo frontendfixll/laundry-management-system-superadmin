@@ -129,7 +129,7 @@ export default function SettlementsPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Settlements</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Settlements</h1>
             <p className="text-gray-600">Manage branch and partner settlements</p>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function SettlementsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -151,13 +151,13 @@ export default function SettlementsPage() {
               placeholder="Search settlements..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <select
             value={filters.type}
             onChange={(e) => setFilters({ ...filters, type: e.target.value, page: 1 })}
-            className="px-3 py-2 border border-gray-300 rounded-lg"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">All Types</option>
             <option value="branch_payout">Branch Payout</option>
@@ -167,7 +167,7 @@ export default function SettlementsPage() {
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-            className="px-3 py-2 border border-gray-300 rounded-lg"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -184,10 +184,10 @@ export default function SettlementsPage() {
       )}
 
       {/* Settlements Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : settlements.length === 0 ? (
           <div className="text-center py-12">
@@ -253,7 +253,7 @@ export default function SettlementsPage() {
                         <button
                           onClick={() => handleApprove(settlement._id)}
                           disabled={actionLoading === settlement._id}
-                          className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+                          className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
                         >
                           <Check className="w-4 h-4" />
                           Approve

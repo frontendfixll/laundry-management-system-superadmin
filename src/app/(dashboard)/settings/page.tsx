@@ -140,7 +140,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
           <p className="text-gray-600">Manage system settings and preferences</p>
         </div>
         {systemInfo && (
@@ -167,7 +167,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center space-x-3 px-3 py-2 text-left rounded-lg transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                      ? 'bg-blue-100 text-blue-700 border border-blue-200'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -181,7 +181,7 @@ export default function SettingsPage() {
 
         {/* Content */}
         <div className="col-span-5">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             {renderTabContent()}
           </div>
         </div>
@@ -216,7 +216,7 @@ function GeneralSettings({ settings, onUpdate }: { settings: any, onUpdate: (dat
               type="text"
               value={formData.systemName || ''}
               onChange={(e) => setFormData({ ...formData, systemName: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
@@ -226,7 +226,7 @@ function GeneralSettings({ settings, onUpdate }: { settings: any, onUpdate: (dat
             <select
               value={formData.timezone || ''}
               onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
               <option value="UTC">UTC</option>
@@ -240,7 +240,7 @@ function GeneralSettings({ settings, onUpdate }: { settings: any, onUpdate: (dat
             <select
               value={formData.currency || ''}
               onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="INR">INR (₹)</option>
               <option value="USD">USD ($)</option>
@@ -254,7 +254,7 @@ function GeneralSettings({ settings, onUpdate }: { settings: any, onUpdate: (dat
             <select
               value={formData.language || ''}
               onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="en">English</option>
               <option value="hi">Hindi</option>
@@ -266,7 +266,7 @@ function GeneralSettings({ settings, onUpdate }: { settings: any, onUpdate: (dat
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center space-x-2"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
           >
             <Save className="w-4 h-4" />
             <span>Save Changes</span>
@@ -305,7 +305,7 @@ function SecuritySettings({ settings, onUpdate }: { settings: any, onUpdate: (da
               max="168"
               value={formData.sessionTimeout || ''}
               onChange={(e) => setFormData({ ...formData, sessionTimeout: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
@@ -318,7 +318,7 @@ function SecuritySettings({ settings, onUpdate }: { settings: any, onUpdate: (da
               max="10"
               value={formData.maxLoginAttempts || ''}
               onChange={(e) => setFormData({ ...formData, maxLoginAttempts: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
@@ -336,7 +336,7 @@ function SecuritySettings({ settings, onUpdate }: { settings: any, onUpdate: (da
                 onChange={(e) => setFormData({ ...formData, requireMFA: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
@@ -352,7 +352,7 @@ function SecuritySettings({ settings, onUpdate }: { settings: any, onUpdate: (da
                 onChange={(e) => setFormData({ ...formData, allowMultipleSessions: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
         </div>
@@ -360,7 +360,7 @@ function SecuritySettings({ settings, onUpdate }: { settings: any, onUpdate: (da
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center space-x-2"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
           >
             <Save className="w-4 h-4" />
             <span>Save Changes</span>
@@ -409,7 +409,7 @@ function NotificationSettings({ settings, onUpdate }: { settings: any, onUpdate:
                   onChange={(e) => setFormData({ ...formData, [item.key]: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
           ))}
@@ -418,7 +418,7 @@ function NotificationSettings({ settings, onUpdate }: { settings: any, onUpdate:
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center space-x-2"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
           >
             <Save className="w-4 h-4" />
             <span>Save Changes</span>
@@ -458,7 +458,7 @@ function BusinessSettings({ settings, onUpdate }: { settings: any, onUpdate: (da
                 ...formData, 
                 operatingHours: { ...formData.operatingHours, start: e.target.value }
               })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
@@ -472,7 +472,7 @@ function BusinessSettings({ settings, onUpdate }: { settings: any, onUpdate: (da
                 ...formData, 
                 operatingHours: { ...formData.operatingHours, end: e.target.value }
               })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
@@ -485,7 +485,7 @@ function BusinessSettings({ settings, onUpdate }: { settings: any, onUpdate: (da
               max="168"
               value={formData.defaultPickupTime || ''}
               onChange={(e) => setFormData({ ...formData, defaultPickupTime: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
@@ -498,7 +498,7 @@ function BusinessSettings({ settings, onUpdate }: { settings: any, onUpdate: (da
               max="168"
               value={formData.defaultDeliveryTime || ''}
               onChange={(e) => setFormData({ ...formData, defaultDeliveryTime: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
@@ -506,7 +506,7 @@ function BusinessSettings({ settings, onUpdate }: { settings: any, onUpdate: (da
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center space-x-2"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
           >
             <Save className="w-4 h-4" />
             <span>Save Changes</span>
@@ -549,7 +549,7 @@ function IntegrationSettings({ settings, onUpdate }: { settings: any, onUpdate: 
                   })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -561,7 +561,7 @@ function IntegrationSettings({ settings, onUpdate }: { settings: any, onUpdate: 
                     ...formData, 
                     paymentGateway: { ...formData.paymentGateway, provider: e.target.value }
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="razorpay">Razorpay</option>
                   <option value="stripe">Stripe</option>
@@ -577,7 +577,7 @@ function IntegrationSettings({ settings, onUpdate }: { settings: any, onUpdate: 
                       ...formData, 
                       paymentGateway: { ...formData.paymentGateway, testMode: e.target.checked }
                     })}
-                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700">Test Mode</span>
                 </label>
@@ -599,7 +599,7 @@ function IntegrationSettings({ settings, onUpdate }: { settings: any, onUpdate: 
                   })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
             <div>
@@ -610,7 +610,7 @@ function IntegrationSettings({ settings, onUpdate }: { settings: any, onUpdate: 
                   ...formData, 
                   emailService: { ...formData.emailService, provider: e.target.value }
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="smtp">SMTP</option>
                 <option value="sendgrid">SendGrid</option>
@@ -623,7 +623,7 @@ function IntegrationSettings({ settings, onUpdate }: { settings: any, onUpdate: 
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center space-x-2"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
           >
             <Save className="w-4 h-4" />
             <span>Save Changes</span>
@@ -670,7 +670,7 @@ function ProfileSettings({
                 type="text"
                 value={profileData.name || ''}
                 onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>
@@ -692,7 +692,7 @@ function ProfileSettings({
                 type="tel"
                 value={profileData.phone || ''}
                 onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>
@@ -711,7 +711,7 @@ function ProfileSettings({
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center space-x-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
             >
               <Save className="w-4 h-4" />
               <span>Update Profile</span>
@@ -738,7 +738,7 @@ function ProfileSettings({
                   type={showPassword ? 'text' : 'password'}
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
                 <button
@@ -762,7 +762,7 @@ function ProfileSettings({
                 type={showPassword ? 'text' : 'password'}
                 value={passwordData.newPassword}
                 onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
@@ -774,7 +774,7 @@ function ProfileSettings({
                 type={showPassword ? 'text' : 'password'}
                 value={passwordData.confirmPassword}
                 onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
@@ -783,7 +783,7 @@ function ProfileSettings({
           <div className="flex justify-start">
             <button
               type="submit"
-              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center space-x-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
             >
               <Key className="w-4 h-4" />
               <span>Change Password</span>

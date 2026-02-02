@@ -16,8 +16,8 @@ const roboto = Roboto({
 })
 
 export const metadata: Metadata = {
-  title: 'SuperAdmin - Laundry Management System',
-  description: 'SuperAdmin panel for Laundry Management System',
+  title: 'LaundryLobby - Management Portal',
+  description: 'LaundryLobby management portal for laundry services',
 }
 
 export default function RootLayout({

@@ -37,9 +37,9 @@ export default function StatsCards({ data, loading }: StatsCardsProps) {
   // Add null checks for safety
   if (!data || !data.growth || !data.periodStats) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-36 bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl animate-pulse"></div>
+          <div key={index} className="h-32 bg-gray-200 rounded-lg animate-pulse"></div>
         ))}
       </div>
     )
@@ -47,97 +47,100 @@ export default function StatsCards({ data, loading }: StatsCardsProps) {
 
   const stats = [
     {
-      name: 'Total Orders',
+      name: 'Orders',
       value: (data.totalOrders || 0).toLocaleString(),
       change: data.growth?.orders || 0,
       changeText: `+${data.periodStats?.orders || 0} this period`,
       icon: ShoppingBag,
-      gradient: 'from-blue-500 to-indigo-600',
-      shadow: 'shadow-blue-500/30'
+      bgColor: 'bg-blue-50/50',
+      borderColor: 'border-blue-100/50',
+      hoverBg: 'hover:bg-blue-50'
     },
     {
-      name: 'Total Revenue',
+      name: 'Revenue',
       value: `₹${(data.totalRevenue || 0).toLocaleString()}`,
       change: data.growth?.revenue || 0,
       changeText: `+₹${(data.periodStats?.revenue || 0).toLocaleString()}`,
       icon: DollarSign,
-      gradient: 'from-emerald-500 to-teal-600',
-      shadow: 'shadow-emerald-500/30'
+      bgColor: 'bg-green-50/50',
+      borderColor: 'border-green-100/50',
+      hoverBg: 'hover:bg-green-50'
     },
     {
-      name: 'Total Customers',
+      name: 'Customers',
       value: (data.totalCustomers || 0).toLocaleString(),
       change: data.growth?.customers || 0,
       changeText: `+${data.periodStats?.customers || 0} new`,
       icon: Users,
-      gradient: 'from-purple-500 to-pink-600',
-      shadow: 'shadow-purple-500/30'
+      bgColor: 'bg-purple-50/50',
+      borderColor: 'border-purple-100/50',
+      hoverBg: 'hover:bg-purple-50'
     },
     {
-      name: 'Active Branches',
+      name: 'Branches',
       value: (data.activeBranches || 0).toString(),
       change: 0,
-      changeText: 'Operational',
+      changeText: 'Active',
       icon: Building2,
-      gradient: 'from-amber-500 to-orange-600',
-      shadow: 'shadow-amber-500/30'
+      bgColor: 'bg-gray-50/50',
+      borderColor: 'border-gray-100/50',
+      hoverBg: 'hover:bg-gray-50'
     }
   ]
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-36 bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl animate-pulse"></div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        {Array.from({ length: 4 }).map((_, index) => {
+          const colors = ['bg-blue-50/30', 'bg-green-50/30', 'bg-purple-50/30', 'bg-gray-50/30']
+          return (
+            <div key={index} className={`h-16 ${colors[index]} rounded-lg animate-pulse`}></div>
+          )
+        })}
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
       {stats.map((stat) => {
         const Icon = stat.icon
         
         return (
           <div
             key={stat.name}
-            className={`group relative overflow-hidden bg-gradient-to-br ${stat.gradient} rounded-2xl p-6 text-white hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${stat.shadow}`}
+            className={`${stat.bgColor} ${stat.borderColor} backdrop-blur-sm border rounded-lg p-3 ${stat.hoverBg} hover:border-opacity-75 transition-all duration-200 shadow-sm`}
           >
-            {/* Background decoration */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
-            
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Icon className="w-7 h-7 text-white" />
+            <div className="flex items-center justify-between mb-1">
+              <Icon className="w-3 h-3 text-gray-400" />
+              {stat.change !== 0 && (
+                <div className={`flex items-center gap-1 text-xs font-light ${
+                  stat.change > 0 
+                    ? 'text-green-600' 
+                    : 'text-red-600'
+                }`}>
+                  {stat.change > 0 ? (
+                    <TrendingUp className="w-2 h-2" />
+                  ) : (
+                    <TrendingDown className="w-2 h-2" />
+                  )}
+                  <span>
+                    {stat.change > 0 ? '+' : ''}{stat.change.toFixed(1)}%
+                  </span>
                 </div>
-                {stat.change !== 0 && (
-                  <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg">
-                    {stat.change > 0 ? (
-                      <TrendingUp className="w-4 h-4" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4" />
-                    )}
-                    <span className="text-sm font-medium">
-                      {stat.change > 0 ? '+' : ''}{stat.change.toFixed(1)}%
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-              <div className="text-3xl font-bold mb-1">
-                {stat.value}
-              </div>
-              
-              <div className="text-sm font-medium text-white/90 mb-1">
-                {stat.name}
-              </div>
-              
-              <div className="text-xs text-white/70">
-                {stat.changeText}
-              </div>
+              )}
+            </div>
+            
+            <div className="text-lg font-light text-gray-900 mb-1">
+              {stat.value}
+            </div>
+            
+            <div className="text-xs font-light text-gray-500 mb-1">
+              {stat.name}
+            </div>
+            
+            <div className="text-xs text-gray-400 font-light">
+              {stat.changeText}
             </div>
           </div>
         )

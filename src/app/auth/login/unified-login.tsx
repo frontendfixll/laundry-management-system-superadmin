@@ -15,7 +15,8 @@ import {
   CheckCircle,
   Loader2,
   KeyRound,
-  Users
+  Users,
+  DollarSign
 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
@@ -32,13 +33,13 @@ export default function UnifiedLogin() {
     rememberMe: false
   })
   const [mfaToken, setMfaToken] = useState('')
-  const [userType, setUserType] = useState<'superadmin' | 'sales' | null>(null)
+  const [userType, setUserType] = useState<'superadmin' | 'sales' | 'support' | 'auditor' | 'finance' | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [useBackupCode, setUseBackupCode] = useState(false)
-  const [selectedQuickLogin, setSelectedQuickLogin] = useState<'superadmin' | 'sales' | null>(null)
+  const [selectedQuickLogin, setSelectedQuickLogin] = useState<'superadmin' | 'sales' | 'support' | 'finance' | 'auditor' | null>(null)
 
   // Quick login credentials
   const quickLoginOptions = {
@@ -55,10 +56,31 @@ export default function UnifiedLogin() {
       label: 'Sales Login',
       icon: Users,
       color: 'blue'
+    },
+    support: {
+      email: 'support@gmail.com',
+      password: 'deep2025',
+      label: 'Support Login',
+      icon: KeyRound,
+      color: 'green'
+    },
+    finance: {
+      email: 'finance@gmail.com',
+      password: 'finance2025',
+      label: 'Finance Admin',
+      icon: DollarSign,
+      color: 'emerald'
+    },
+    auditor: {
+      email: 'auditor@gmail.com',
+      password: 'auditor2025',
+      label: 'Platform Auditor',
+      icon: Eye,
+      color: 'orange'
     }
   }
 
-  const handleQuickLogin = (type: 'superadmin' | 'sales') => {
+  const handleQuickLogin = (type: 'superadmin' | 'sales' | 'support' | 'finance' | 'auditor') => {
     const credentials = quickLoginOptions[type]
     setFormData({
       ...formData,
@@ -77,7 +99,7 @@ export default function UnifiedLogin() {
     setSelectedQuickLogin(null)
   }
 
-  const handleCheckboxChange = (type: 'superadmin' | 'sales', checked: boolean) => {
+  const handleCheckboxChange = (type: 'superadmin' | 'sales' | 'support' | 'finance' | 'auditor', checked: boolean) => {
     if (checked) {
       // If checking this box, uncheck the other and fill credentials
       handleQuickLogin(type)
@@ -105,22 +127,67 @@ export default function UnifiedLogin() {
         })
       })
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('Non-JSON response from SuperAdmin login:', text)
+        throw new Error('Server returned invalid response format')
+      }
+
       const data = await response.json()
 
       if (response.ok && data.success) {
-        setUserType('superadmin')
-        return { success: true, data, type: 'superadmin' }
+        // Check user type by examining the roles array first, then legacy role field
+        const admin = data.admin || data.data?.admin || data.data?.user
+        
+        if (admin) {
+          // Check roles array first (new RBAC system)
+          if (admin.roles && admin.roles.length > 0) {
+            const primaryRole = admin.roles[0]
+            if (primaryRole.slug === 'platform-support' || primaryRole.name === 'Platform Support') {
+              setUserType('support')
+              return { success: true, data, type: 'support' }
+            } else if (primaryRole.slug === 'super-admin' || primaryRole.slug === 'super_admin' || primaryRole.name === 'Super Admin') {
+              setUserType('superadmin')
+              return { success: true, data, type: 'superadmin' }
+            } else if (primaryRole.slug === 'platform-read-only-auditor' || primaryRole.name === 'Platform Read-Only Auditor' || primaryRole.name === 'Platform Auditor') {
+              setUserType('auditor')
+              return { success: true, data, type: 'auditor' }
+            } else if (primaryRole.slug === 'platform-finance-admin' || primaryRole.name === 'Platform Finance Admin') {
+              setUserType('finance')
+              return { success: true, data, type: 'finance' }
+            }
+          }
+          
+          // Fallback to legacy role field
+          const legacyRole = admin.role
+          if (legacyRole === 'support') {
+            setUserType('support')
+            return { success: true, data, type: 'support' }
+          } else if (legacyRole === 'auditor') {
+            setUserType('auditor')
+            return { success: true, data, type: 'auditor' }
+          } else if (legacyRole === 'finance') {
+            setUserType('finance')
+            return { success: true, data, type: 'finance' }
+          } else {
+            // Default to superadmin for SuperAdmin endpoint
+            setUserType('superadmin')
+            return { success: true, data, type: 'superadmin' }
+          }
+        }
       }
       
       // Store error for later
       lastError = data.message || 'SuperAdmin login failed'
     } catch (error: any) {
-      // SuperAdmin login failed, try Sales login
-      console.log('SuperAdmin login failed, trying Sales...')
+      // SuperAdmin login failed, try regular auth for support users
+      console.log('SuperAdmin login failed, trying regular auth...', error.message)
       lastError = error.message
     }
 
-    // Try Sales login
+    // Try Sales login (skip regular auth since SuperAdmin should handle support users)
     try {
       const response = await fetch(`${API_URL}/sales/auth/login`, {
         method: 'POST',
@@ -133,6 +200,14 @@ export default function UnifiedLogin() {
           password: formData.password
         })
       })
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('Non-JSON response from Sales login:', text)
+        throw new Error('Server returned invalid response format')
+      }
 
       const data = await response.json()
 
@@ -170,14 +245,15 @@ export default function UnifiedLogin() {
         // Handle different response structures
         let userData, token, session
         
-        if (result.type === 'superadmin') {
-          // SuperAdmin response: { admin, token, session }
-          userData = result.data.admin
+        if (result.type === 'superadmin' || result.type === 'support' || result.type === 'auditor' || result.type === 'finance') {
+          // SuperAdmin/Support/Auditor/Finance response: { admin, token, session } (direct structure)
+          userData = result.data.admin || result.data.data?.admin
           token = result.data.token
           session = result.data.session
         } else {
           // Sales response: { data: { salesUser, token, session } }
-          userData = result.data.data?.salesUser || result.data.salesUser
+          // Also handle nested token structure
+          userData = result.data.data?.salesUser || result.data.salesUser || result.data.data
           token = result.data.data?.token || result.data.token
           session = result.data.data?.session || result.data.session
         }
@@ -199,14 +275,21 @@ export default function UnifiedLogin() {
         
         setSuccess('Login successful! Redirecting...')
         
-        // Redirect based on user type
+        // Redirect based on user type and role
         setTimeout(() => {
-          if (result.type === 'superadmin') {
-            router.push('/dashboard')
+          if (result.type === 'superadmin' || result.type === 'support' || result.type === 'auditor' || result.type === 'finance') {
+            // Use role-based dashboard routing for SuperAdmin, Support, Auditor, and Finance users
+            console.log('🔄 Login - Importing dashboard router for user type:', result.type)
+            import('@/utils/dashboardRouter').then(({ getDashboardRoute }) => {
+              const dashboardRoute = getDashboardRoute(userData)
+              console.log('🎯 Login - Routing user to dashboard:', dashboardRoute, 'based on role:', userData.role || userData.roles?.[0]?.name)
+              router.push(dashboardRoute)
+            })
           } else {
+            console.log('🔄 Login - Routing sales user to /sales-dashboard')
             router.push('/sales-dashboard')
           }
-        }, 1000)
+        }, 2000) // Increased delay to ensure token is properly stored
       }
     } catch (error: any) {
       console.error('Login error:', error)
@@ -235,6 +318,14 @@ export default function UnifiedLogin() {
         })
       })
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('Non-JSON response from MFA verification:', text)
+        throw new Error('Server returned invalid response format')
+      }
+
       const data = await response.json()
 
       if (!response.ok) {
@@ -250,7 +341,12 @@ export default function UnifiedLogin() {
       
       setSuccess('Verification successful! Redirecting...')
       setTimeout(() => {
-        router.push('/dashboard')
+        // Use role-based dashboard routing for MFA verified users
+        import('@/utils/dashboardRouter').then(({ getDashboardRoute }) => {
+          const dashboardRoute = getDashboardRoute(data.admin)
+          console.log('🎯 Routing MFA user to dashboard:', dashboardRoute, 'based on role:', data.admin.roles?.[0]?.name)
+          router.push(dashboardRoute)
+        })
       }, 1000)
     } catch (error: any) {
       setError(error.message)
@@ -375,31 +471,65 @@ export default function UnifiedLogin() {
                 )}
               </Button>
 
-              {/* Quick Login Checkboxes - Compact */}
+              {/* Quick Login Checkboxes - Smart 5-item Layout */}
               <div className="mt-4 pt-4 border-t border-white/20">
                 <p className="text-xs text-gray-400 text-center mb-3">Quick Login</p>
-                <div className="flex justify-center space-x-6">
-                  {/* SuperAdmin Checkbox */}
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedQuickLogin === 'superadmin'}
-                      onChange={(e) => handleCheckboxChange('superadmin', e.target.checked)}
-                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
-                    />
-                    <span className="text-sm text-gray-300">SuperAdmin</span>
-                  </label>
+                <div className="space-y-2">
+                  {/* First row: 3 items */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedQuickLogin === 'superadmin'}
+                        onChange={(e) => handleCheckboxChange('superadmin', e.target.checked)}
+                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
+                      />
+                      <span className="text-xs text-gray-300">SuperAdmin</span>
+                    </label>
 
-                  {/* Sales Checkbox */}
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedQuickLogin === 'sales'}
-                      onChange={(e) => handleCheckboxChange('sales', e.target.checked)}
-                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
-                    />
-                    <span className="text-sm text-gray-300">Sales</span>
-                  </label>
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedQuickLogin === 'sales'}
+                        onChange={(e) => handleCheckboxChange('sales', e.target.checked)}
+                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                      />
+                      <span className="text-xs text-gray-300">Sales</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedQuickLogin === 'support'}
+                        onChange={(e) => handleCheckboxChange('support', e.target.checked)}
+                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-green-500 focus:ring-green-500 focus:ring-offset-0"
+                      />
+                      <span className="text-xs text-gray-300">Support</span>
+                    </label>
+                  </div>
+
+                  {/* Second row: 2 items centered */}
+                  <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedQuickLogin === 'finance'}
+                        onChange={(e) => handleCheckboxChange('finance', e.target.checked)}
+                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
+                      />
+                      <span className="text-xs text-gray-300">Finance</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedQuickLogin === 'auditor'}
+                        onChange={(e) => handleCheckboxChange('auditor', e.target.checked)}
+                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-orange-500 focus:ring-orange-500 focus:ring-offset-0"
+                      />
+                      <span className="text-xs text-gray-300">Auditor</span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </form>
