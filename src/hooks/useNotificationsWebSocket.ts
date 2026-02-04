@@ -41,7 +41,7 @@ export const useNotificationsWebSocket = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const socketRef = useRef<Socket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -91,7 +91,7 @@ export const useNotificationsWebSocket = () => {
 
       browserNotif.onclick = () => {
         window.focus();
-        
+
         // Handle different notification types
         if (notification.type === 'permission_update') {
           // For permission updates, just refresh the current page
@@ -139,13 +139,13 @@ export const useNotificationsWebSocket = () => {
     socket.on('connect', () => {
       console.log('✅ WebSocket connected successfully!');
       setIsConnected(true);
-      
+
       // Expose socket globally for permission sync
       if (typeof window !== 'undefined') {
         (window as any).__notificationSocket = socket;
         console.log('🌐 Socket exposed for permission sync');
       }
-      
+
       // Request unread count on connect
       socket.emit('getUnreadCount');
     });
@@ -166,19 +166,19 @@ export const useNotificationsWebSocket = () => {
     socket.on('notification', (notification: Notification) => {
       // Add to notifications list
       setNotifications(prev => [notification, ...prev]);
-      
+
       // Update unread count
       if (!notification.isRead) {
         setUnreadCount(prev => prev + 1);
       }
-      
+
       // Show slide notification for important notifications
       if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
         // Map notification severity to slide notification type
         const slideType = notification.severity === 'error' ? 'error' :
-                         notification.severity === 'warning' ? 'warning' :
-                         notification.severity === 'success' ? 'success' : 'info';
-        
+          notification.severity === 'warning' ? 'warning' :
+            notification.severity === 'success' ? 'success' : 'info';
+
         (window as any).__addSlideNotification({
           title: notification.title,
           message: notification.message,
@@ -190,13 +190,13 @@ export const useNotificationsWebSocket = () => {
           } : undefined
         });
       }
-      
+
       // Play sound
       playSound(notification.severity);
-      
+
       // Show browser notification
       showBrowserNotification(notification);
-      
+
       // Vibrate on mobile
       if ('vibrate' in navigator) {
         navigator.vibrate([200, 100, 200]);
@@ -228,7 +228,7 @@ export const useNotificationsWebSocket = () => {
     // Permission sync events
     socket.on('permissionsUpdated', (data) => {
       console.log('🔄 Permissions updated via WebSocket:', data);
-      
+
       // Show slide notification instead of toast
       if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
         console.log('📢 Calling __addSlideNotification for permission update');
@@ -246,7 +246,7 @@ export const useNotificationsWebSocket = () => {
       } else {
         console.log('⚠️ __addSlideNotification not available, slide notification skipped');
       }
-      
+
       // Show notification to user (for notification center)
       const permissionNotification: Notification = {
         _id: `perm-${Date.now()}`,
@@ -258,14 +258,14 @@ export const useNotificationsWebSocket = () => {
         createdAt: new Date().toISOString(),
         data: data
       };
-      
+
       // Add to notifications list
       setNotifications(prev => [permissionNotification, ...prev]);
       setUnreadCount(prev => prev + 1);
-      
+
       // Show browser notification
       showBrowserNotification(permissionNotification);
-      
+
       // Handle permission refresh (prevent multiple refreshes)
       if (typeof window !== 'undefined') {
         // Check if refresh is already in progress
@@ -273,13 +273,13 @@ export const useNotificationsWebSocket = () => {
           console.log('⚠️ Permission refresh already in progress, skipping');
           return;
         }
-        
+
         // Mark refresh as in progress
         (window as any).__permissionRefreshInProgress = true;
-        
+
         // Emit custom event for permission refresh
         window.dispatchEvent(new CustomEvent('permissionsUpdated', { detail: data }));
-        
+
         // Auto-refresh after 5 seconds if user doesn't interact
         setTimeout(() => {
           if ((window as any).__permissionRefreshInProgress) {
@@ -287,7 +287,7 @@ export const useNotificationsWebSocket = () => {
             window.location.reload();
           }
         }, 5000);
-        
+
         // Clear the flag after timeout
         setTimeout(() => {
           (window as any).__permissionRefreshInProgress = false;
@@ -298,7 +298,7 @@ export const useNotificationsWebSocket = () => {
     // Tenancy update events for real-time updates
     socket.on('tenancyFeaturesUpdated', (data) => {
       console.log('🔄 Tenancy features updated via WebSocket:', data);
-      
+
       // Show slide notification
       if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
         (window as any).__addSlideNotification({
@@ -316,7 +316,7 @@ export const useNotificationsWebSocket = () => {
           }
         });
       }
-      
+
       // Also add to notification center
       const tenancyNotification: Notification = {
         _id: `tenancy-features-${Date.now()}`,
@@ -328,7 +328,7 @@ export const useNotificationsWebSocket = () => {
         createdAt: new Date().toISOString(),
         data: data
       };
-      
+
       setNotifications(prev => [tenancyNotification, ...prev]);
       setUnreadCount(prev => prev + 1);
       showBrowserNotification(tenancyNotification);
@@ -336,7 +336,7 @@ export const useNotificationsWebSocket = () => {
 
     socket.on('tenancyPermissionsUpdated', (data) => {
       console.log('🔄 Tenancy permissions updated via WebSocket:', data);
-      
+
       // Show slide notification
       if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
         (window as any).__addSlideNotification({
@@ -354,7 +354,7 @@ export const useNotificationsWebSocket = () => {
           }
         });
       }
-      
+
       // Also add to notification center
       const permissionNotification: Notification = {
         _id: `tenancy-permissions-${Date.now()}`,
@@ -366,7 +366,7 @@ export const useNotificationsWebSocket = () => {
         createdAt: new Date().toISOString(),
         data: data
       };
-      
+
       setNotifications(prev => [permissionNotification, ...prev]);
       setUnreadCount(prev => prev + 1);
       showBrowserNotification(permissionNotification);
@@ -385,18 +385,56 @@ export const useNotificationsWebSocket = () => {
   }, []);
 
   // Mark notification as read
-  const markAsRead = useCallback((notificationId: string) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit('markNotificationRead', { notificationId });
+  const markAsRead = useCallback(async (notificationId: string) => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/superadmin/notifications/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ notificationIds: [notificationId] })
+      });
+
+      if (response.ok) {
+        setNotifications(prev =>
+          prev.map(n => n._id === notificationId ? { ...n, isRead: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
     }
-  }, []);
+  }, [getToken]);
 
   // Mark multiple notifications as read
-  const markMultipleAsRead = useCallback((notificationIds: string[]) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit('markMultipleAsRead', { notificationIds });
+  const markMultipleAsRead = useCallback(async (notificationIds: string[]) => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/superadmin/notifications/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ notificationIds })
+      });
+
+      if (response.ok) {
+        setNotifications(prev =>
+          prev.map(n => notificationIds.includes(n._id) ? { ...n, isRead: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - notificationIds.length));
+      }
+    } catch (error) {
+      console.error('Error marking multiple notifications as read:', error);
     }
-  }, []);
+  }, [getToken]);
 
   // Join a room (for order tracking, etc.)
   const joinRoom = useCallback((room: string) => {
@@ -422,7 +460,7 @@ export const useNotificationsWebSocket = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/notifications?limit=50`, {
+      const response = await fetch(`${API_BASE_URL}/superadmin/notifications?limit=50`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -447,22 +485,22 @@ export const useNotificationsWebSocket = () => {
   // Initialize
   useEffect(() => {
     const token = getToken();
-    
+
     // Only initialize if token exists
     if (!token) {
       console.log('⏭️ No token, skipping WebSocket initialization');
       return;
     }
-    
+
     // Create audio element
     audioRef.current = new Audio();
-    
+
     // Request notification permission
     requestNotificationPermission();
-    
+
     // Connect to WebSocket
     connect();
-    
+
     // Fetch initial notifications
     fetchNotifications();
 

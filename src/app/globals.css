@@ -56,6 +56,10 @@
 
   html {
     font-size: 13px;
+    
+    /* Mac-only font smoothing improvements */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html,
@@ -91,6 +95,47 @@
   textarea,
   label {
     font-family: var(--font-roboto), sans-serif;
+  }
+}
+
+/* Mac-Only Font Readability Improvements - Minimal Impact */
+
+/* Only target Mac Safari/Chrome - very subtle font size boost */
+@supports (-webkit-appearance: none) {
+  /* Only increase font size by 1px on Mac systems */
+  html {
+    font-size: 14px !important;
+  }
+  
+  /* Slightly better letter spacing for Mac font rendering */
+  body {
+    letter-spacing: 0.005em;
+  }
+  
+  /* Improve font weight only for headings on Mac */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 400 !important;
+  }
+  
+  /* Minimal button text improvement */
+  button, .btn, [type="button"], [type="submit"] {
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+}
+
+/* Only for high-DPI Mac displays - very conservative */
+@media (-webkit-min-device-pixel-ratio: 2) and (max-width: 2560px) {
+  @supports (-webkit-appearance: none) {
+    /* Only 1px increase for Retina Mac displays */
+    html {
+      font-size: 14.5px !important;
+    }
+    
+    /* Better font smoothing for Retina */
+    body {
+      -webkit-font-smoothing: subpixel-antialiased;
+    }
   }
 }
 
@@ -170,6 +215,35 @@
     transform: scale(1);
     opacity: 1;
   }
+}
+
+@keyframes logo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-logo-in {
+  animation: logo-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* Custom scrollbar and utility classes */

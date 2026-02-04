@@ -140,6 +140,13 @@ export default function NotificationBell() {
                 return <MessageSquare className="w-4 h-4 text-red-600" />
             case 'security':
                 return <AlertTriangle className="w-4 h-4 text-red-600" />
+            case 'new_tenancy_signup':
+            case 'subscription_purchased':
+                return <Package className="w-4 h-4 text-green-600" />
+            case 'payment_received':
+                return <DollarSign className="w-4 h-4 text-green-600" />
+            case 'new_lead':
+                return <MessageSquare className="w-4 h-4 text-blue-500" />
             default:
                 return <Bell className="w-4 h-4 text-purple-600" />
         }
@@ -155,6 +162,12 @@ export default function NotificationBell() {
             case 'NEW_COMPLAINT':
             case 'security':
                 return 'bg-red-100'
+            case 'new_tenancy_signup':
+            case 'subscription_purchased':
+            case 'payment_received':
+                return 'bg-green-100'
+            case 'new_lead':
+                return 'bg-blue-50'
             default:
                 return 'bg-purple-100'
         }
@@ -241,7 +254,7 @@ export default function NotificationBell() {
                     </div>
                     <div className="p-4 border-t border-gray-200">
                         <Link
-                            href="/superadmin/notifications"
+                            href="/notifications"
                             onClick={() => setShowNotifications(false)}
                             className="block w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium"
                         >

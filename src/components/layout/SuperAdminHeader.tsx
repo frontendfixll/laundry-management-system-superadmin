@@ -12,7 +12,7 @@ import {
   Search,
   Mail
 } from 'lucide-react'
-import NotificationBell from './NotificationBell'
+import { SuperAdminNotificationBell } from '../notifications/SuperAdminNotificationBell'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 
@@ -76,8 +76,8 @@ export default function SuperAdminHeader({ onMenuClick, sidebarCollapsed = false
           {/* Right side */}
           <div className="flex items-center space-x-4">
 
-            {/* Notifications */}
-            <NotificationBell />
+            {/* SuperAdmin Notifications */}
+            <SuperAdminNotificationBell />
 
             {/* Profile Menu */}
             <div className="relative" ref={profileRef}>

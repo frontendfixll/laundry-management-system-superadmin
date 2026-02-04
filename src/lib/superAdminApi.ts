@@ -3,7 +3,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/a
 class SuperAdminAPI {
   private getAuthHeaders() {
     let token = null
-    
+
     // Try unified auth-storage (new unified store)
     const authData = localStorage.getItem('auth-storage')
     console.log('🔍 auth-storage:', authData ? 'found' : 'not found')
@@ -16,7 +16,7 @@ class SuperAdminAPI {
         console.error('Error parsing auth-storage:', e)
       }
     }
-    
+
     // Fallback to legacy superadmin-storage
     if (!token) {
       const superAdminData = localStorage.getItem('superadmin-storage')
@@ -29,14 +29,14 @@ class SuperAdminAPI {
         }
       }
     }
-    
+
     // Fallback to legacy token keys
     if (!token) {
       token = localStorage.getItem('superadmin-token') || localStorage.getItem('superAdminToken') || localStorage.getItem('token')
     }
-    
+
     console.log('🔑 Final token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN')
-    
+
     return {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` })
@@ -45,13 +45,13 @@ class SuperAdminAPI {
 
   private async handleResponse(response: Response) {
     const contentType = response.headers.get('content-type')
-    
+
     if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text()
       console.error('Non-JSON response received:', text)
       throw new Error(`Server returned non-JSON response. Status: ${response.status}. Content: ${text.substring(0, 200)}`)
     }
-    
+
     let data
     try {
       data = await response.json()
@@ -59,7 +59,7 @@ class SuperAdminAPI {
       console.error('Failed to parse JSON response:', jsonError)
       throw new Error('Server returned invalid JSON response')
     }
-    
+
     if (!response.ok) {
       // Handle 401 Unauthorized - auto logout
       if (response.status === 401) {
@@ -71,7 +71,7 @@ class SuperAdminAPI {
         }
         throw new Error('Session expired. Please login again.')
       }
-      
+
       // Show validation errors if available
       if (data.errors && Array.isArray(data.errors)) {
         const errorMessages = data.errors.map((e: any) => e.msg || e.message).join(', ')
@@ -79,14 +79,14 @@ class SuperAdminAPI {
       }
       throw new Error(data.message || 'API request failed')
     }
-    
+
     return data
   }
-  
+
   // Clear all auth data from localStorage
   private clearAuthData() {
     if (typeof window === 'undefined') return
-    
+
     // Clear unified auth storage
     const authData = localStorage.getItem('auth-storage')
     if (authData) {
@@ -106,7 +106,7 @@ class SuperAdminAPI {
         localStorage.removeItem('auth-storage')
       }
     }
-    
+
     // Clear legacy superadmin storage
     const superAdminData = localStorage.getItem('superadmin-storage')
     if (superAdminData) {
@@ -124,7 +124,7 @@ class SuperAdminAPI {
         localStorage.removeItem('superadmin-storage')
       }
     }
-    
+
     // Clear legacy keys
     localStorage.removeItem('superadmin-token')
     localStorage.removeItem('superAdminToken')
@@ -137,7 +137,7 @@ class SuperAdminAPI {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -147,7 +147,7 @@ class SuperAdminAPI {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mfaToken, otp, backupCode })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -156,7 +156,7 @@ class SuperAdminAPI {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -165,7 +165,7 @@ class SuperAdminAPI {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -173,7 +173,7 @@ class SuperAdminAPI {
     const response = await fetch(`${API_BASE_URL}/superadmin/auth/profile`, {
       headers: this.getAuthHeaders()
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -182,7 +182,7 @@ class SuperAdminAPI {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -192,7 +192,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ password })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -202,7 +202,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/dashboard/overview?timeframe=${timeframe}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -223,7 +223,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/dashboard/analytics?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -250,7 +250,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/branches?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -259,7 +259,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/branches/${branchId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -269,7 +269,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(branchData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -279,7 +279,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(branchData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -291,7 +291,7 @@ class SuperAdminAPI {
         headers: this.getAuthHeaders()
       }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -301,7 +301,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ managerId })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -311,7 +311,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(staffData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -320,7 +320,7 @@ class SuperAdminAPI {
       method: 'DELETE',
       headers: this.getAuthHeaders()
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -339,7 +339,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/branches/${branchId}/analytics?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -365,7 +365,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/roles?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -374,7 +374,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/roles/${roleId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -384,7 +384,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(roleData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -394,7 +394,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(roleData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -403,7 +403,7 @@ class SuperAdminAPI {
       method: 'DELETE',
       headers: this.getAuthHeaders()
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -413,7 +413,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(permissionData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -423,7 +423,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ module, action })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -433,7 +433,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ userId, roleId })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -442,7 +442,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/roles/hierarchy`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -451,7 +451,7 @@ class SuperAdminAPI {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -477,7 +477,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/pricing?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -486,7 +486,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/pricing/${pricingId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -495,7 +495,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/pricing/active`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -505,7 +505,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(pricingData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -515,7 +515,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(pricingData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -525,7 +525,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ makeActive })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -534,7 +534,7 @@ class SuperAdminAPI {
       method: 'POST',
       headers: this.getAuthHeaders()
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -544,7 +544,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ newVersion, newName })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -554,7 +554,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ items, options })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -568,7 +568,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/pricing/service-items?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -577,7 +577,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/pricing/discount-policies?active=${active}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -587,7 +587,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ code, orderValue, customerInfo })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -597,7 +597,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/financial/overview?timeframe=${timeframe}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -630,7 +630,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/financial/transactions?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -639,7 +639,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/financial/transactions/${transactionId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -649,7 +649,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ notes })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -659,7 +659,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ reason })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -690,7 +690,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/financial/settlements?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -700,7 +700,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(settlementData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -710,7 +710,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ comments })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -738,7 +738,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/financial/reports?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -753,7 +753,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(reportData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -762,7 +762,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/financial/reports/${reportId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -772,7 +772,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/risk/overview?timeframe=${timeframe}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -808,7 +808,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/risk/complaints?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -817,7 +817,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/risk/complaints/${complaintId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -827,7 +827,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ reason, level })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -837,7 +837,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ assignedTo, assignedToModel })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -847,7 +847,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ resolution, resolutionType, amount })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -876,7 +876,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/risk/blacklist?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -886,7 +886,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(entryData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -896,7 +896,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(entryData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -906,7 +906,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ entityType, identifiers })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -932,7 +932,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/risk/sla-configs?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -942,7 +942,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(configData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -952,7 +952,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/analytics/overview?timeframe=${timeframe}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -966,7 +966,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -980,7 +980,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -996,7 +996,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1024,7 +1024,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1052,7 +1052,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/analytics?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1061,7 +1061,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/analytics/${analyticsId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1071,7 +1071,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/settings/system`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1081,7 +1081,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ category, settings })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1090,7 +1090,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/settings/profile`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1104,7 +1104,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(profileData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1117,7 +1117,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(passwordData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1126,7 +1126,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/settings/system-info`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1158,7 +1158,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/audit?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1167,7 +1167,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/audit/${logId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1176,7 +1176,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/audit/stats?timeframe=${timeframe}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1200,7 +1200,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/audit/export?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1209,7 +1209,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/audit/activity-summary`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1218,19 +1218,32 @@ class SuperAdminAPI {
     page?: number
     limit?: number
     unreadOnly?: boolean
+    priority?: string
+    type?: string
   }) {
     const searchParams = new URLSearchParams()
     if (params) {
       if (params.page) searchParams.append('page', params.page.toString())
       if (params.limit) searchParams.append('limit', params.limit.toString())
       if (params.unreadOnly) searchParams.append('unreadOnly', 'true')
+      if (params.priority) searchParams.append('priority', params.priority)
+      if (params.type) searchParams.append('type', params.type)
     }
 
     const response = await fetch(
       `${API_BASE_URL}/superadmin/notifications?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
+    return this.handleResponse(response)
+  }
+
+  async getNotification(notificationId: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/superadmin/notifications/${notificationId}`,
+      { headers: this.getAuthHeaders() }
+    )
+
     return this.handleResponse(response)
   }
 
@@ -1239,7 +1252,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/notifications/unread-count`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1249,7 +1262,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ notificationIds })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1258,7 +1271,35 @@ class SuperAdminAPI {
       method: 'PUT',
       headers: this.getAuthHeaders()
     })
-    
+
+    return this.handleResponse(response)
+  }
+
+  async markNotificationAsRead(notificationId: string) {
+    const response = await fetch(`${API_BASE_URL}/superadmin/notifications/${notificationId}/read`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders()
+    })
+
+    return this.handleResponse(response)
+  }
+
+  async clearAllNotifications() {
+    const response = await fetch(`${API_BASE_URL}/superadmin/notifications/clear-all`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    })
+
+    return this.handleResponse(response)
+  }
+
+  /** Send a test platform alert to verify live notifications (SuperAdmin only) */
+  async sendTestAlert(params?: { title?: string; message?: string; priority?: string }) {
+    const response = await fetch(`${API_BASE_URL}/superadmin/notifications/test-alert`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(params ?? {})
+    })
     return this.handleResponse(response)
   }
 
@@ -1282,7 +1323,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/customers?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1291,7 +1332,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/customers/${customerId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1301,7 +1342,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ isActive })
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1322,7 +1363,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/customers/${customerId}/orders?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1409,7 +1450,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/addons?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1418,7 +1459,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/addons/${addOnId}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1428,7 +1469,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(addOnData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1438,7 +1479,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(addOnData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1447,7 +1488,7 @@ class SuperAdminAPI {
       method: 'DELETE',
       headers: this.getAuthHeaders()
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1461,7 +1502,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/addons/${addOnId}/analytics?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1471,7 +1512,7 @@ class SuperAdminAPI {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(assignmentData)
     })
-    
+
     return this.handleResponse(response)
   }
 
@@ -1495,7 +1536,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/addons/${addOnId}/subscribers?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1504,7 +1545,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/addons/categories`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1530,7 +1571,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/finances/failures?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1556,7 +1597,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/finances/refunds?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1570,7 +1611,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/finances/revenue?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1596,7 +1637,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/finances/transactions?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1619,7 +1660,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/finances/reports/revenue?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1633,7 +1674,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/finances/reports/tax?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1648,7 +1689,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/audit/dashboard?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1657,15 +1698,15 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/audit/compliance`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
-  async getAuditLogs(params?: {
-    page?: number
-    limit?: number
-    severity?: string
-    action?: string
+  async getAuditLogsDeep(params?: {
+    page?: number,
+    limit?: number,
+    severity?: string,
+    action?: string,
     search?: string
   }) {
     const searchParams = new URLSearchParams()
@@ -1681,7 +1722,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/audit/logs?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1695,7 +1736,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/audit/metrics?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1720,7 +1761,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/blog/posts?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1730,7 +1771,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/blog/posts/${id}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1744,7 +1785,7 @@ class SuperAdminAPI {
         body: JSON.stringify(postData)
       }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1758,7 +1799,7 @@ class SuperAdminAPI {
         body: JSON.stringify(postData)
       }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1771,7 +1812,7 @@ class SuperAdminAPI {
         headers: this.getAuthHeaders()
       }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1781,7 +1822,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/blog/categories`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1795,7 +1836,7 @@ class SuperAdminAPI {
         body: JSON.stringify(categoryData)
       }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1809,7 +1850,7 @@ class SuperAdminAPI {
         body: JSON.stringify(categoryData)
       }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1822,7 +1863,7 @@ class SuperAdminAPI {
         headers: this.getAuthHeaders()
       }
     )
-    
+
     return this.handleResponse(response)
   }
 
@@ -1835,7 +1876,7 @@ class SuperAdminAPI {
       `${API_BASE_URL}/superadmin/blog/analytics?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
-    
+
     return this.handleResponse(response)
   }
 }

@@ -6,9 +6,13 @@ import { useAuthStore } from '@/store/authStore'
 import SuperAdminSidebar from '@/components/layout/SuperAdminSidebar'
 import SuperAdminHeader from '@/components/layout/SuperAdminHeader'
 import NotificationContainer from '@/components/NotificationContainer'
+import { PriorityNotificationHandler } from '@/components/notifications/PriorityNotificationHandler'
 import { useSessionTimeout } from '@/hooks/useSessionTimeout'
 import { useNotificationsWebSocket } from '@/hooks/useNotificationsWebSocket'
+import { useSocketIONotifications } from '@/hooks/useSocketIONotifications'
 import { SessionTimeoutModal } from '@/components/SessionTimeoutModal'
+import ProgressLoader from '@/components/ui/ProgressLoader'
+import { useLoadingProgress } from '@/hooks/useLoadingProgress'
 import toast from 'react-hot-toast'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
@@ -28,6 +32,9 @@ export default function DashboardLayout({
 
   // Connect to live notification engine
   useNotificationsWebSocket()
+
+  // SuperAdmin-specific Socket.IO notifications
+  const { notifications, acknowledgeNotification } = useSocketIONotifications()
 
   // Wait for Zustand to hydrate from localStorage
   useEffect(() => {
@@ -116,15 +123,16 @@ export default function DashboardLayout({
     }
   }, [isHydrated, isAuthenticated, router])
 
+  const { progress, message, subMessage } = useLoadingProgress(!isValidating && isHydrated && isAuthenticated)
+
   // Show loading while hydrating or validating token
-  if (!isHydrated || isValidating || !isAuthenticated) {
+  if (!isHydrated || isValidating || !isAuthenticated || progress < 100) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying session...</p>
-        </div>
-      </div>
+      <ProgressLoader
+        progress={progress}
+        message={message}
+        subMessage={subMessage}
+      />
     )
   }
 
@@ -140,6 +148,12 @@ export default function DashboardLayout({
 
       {/* Real-time notification toasts */}
       <NotificationContainer />
+
+      {/* SuperAdmin Priority Notification Handler */}
+      <PriorityNotificationHandler
+        notifications={notifications}
+        onAcknowledge={acknowledgeNotification}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Fixed width, independent scroll if needed */}

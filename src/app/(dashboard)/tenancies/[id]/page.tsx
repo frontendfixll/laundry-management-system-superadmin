@@ -38,7 +38,7 @@ interface TenancyDetail {
   businessName: string;
   subdomain: string;
   status: string;
-  owner: TenancyOwner;
+  owner: TenancyOwner | null;
   subscription: {
     plan: string;
     status: string;
@@ -525,8 +525,8 @@ export default function TenancyDetailPage() {
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{tenancy.owner.name}</div>
-            <p className="text-xs text-muted-foreground">{tenancy.owner.email}</p>
+            <div className="text-2xl font-bold">{tenancy.owner?.name || 'No Owner'}</div>
+            <p className="text-xs text-muted-foreground">{tenancy.owner?.email || 'No email available'}</p>
           </CardContent>
         </Card>
 

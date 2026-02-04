@@ -22,6 +22,8 @@ import {
 } from 'lucide-react'
 import NotificationContainer from '@/components/NotificationContainer'
 import NotificationBell from '@/components/layout/NotificationBell'
+import ProgressLoader from '@/components/ui/ProgressLoader'
+import { useLoadingProgress } from '@/hooks/useLoadingProgress'
 
 export default function FinanceLayout({
   children,
@@ -119,24 +121,16 @@ export default function FinanceLayout({
   })
 
   // Show loading while hydrating or validating auth
-  if (!isHydrated || isValidating) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">
-            {!isHydrated ? 'Loading finance portal...' : 'Validating session...'}
-          </p>
-        </div>
-      </div>
-    )
-  }
+  const isReady = !isValidating && isHydrated && isAuthenticated && (userType === 'finance' || userType === 'superadmin')
+  const { progress, message, subMessage } = useLoadingProgress(isReady)
 
-  if (!isAuthenticated || (userType !== 'finance' && userType !== 'superadmin')) {
+  if (!isReady || progress < 100) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <ProgressLoader
+        progress={progress}
+        message={message}
+        subMessage={subMessage}
+      />
     )
   }
 

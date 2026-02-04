@@ -50,7 +50,8 @@ import {
   Clock,
   Monitor,
   Headphones,
-  Bell
+  Bell,
+  Zap
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
@@ -104,6 +105,7 @@ const getSidebarNavigationByRole = (
       permission: 'platform_settings',
       subItems: [
         { name: 'Role Management', href: '/rbac/roles', icon: Shield },
+        { name: 'ABAC Policies', href: '/abac', icon: AlertTriangle },
         { name: 'Create Platform User', href: '/users/create', icon: UserCircle },
       ]
     },
@@ -167,7 +169,8 @@ const getSidebarNavigationByRole = (
         { name: 'Performance Stats', href: '/notifications/stats', icon: BarChart3 },
       ]
     },
-    { name: 'Settings', href: '/settings', icon: Settings, permission: 'platform_settings' }
+    { name: 'Settings', href: '/settings', icon: Settings, permission: 'platform_settings' },
+    { name: 'Automation', href: '/automation', icon: Zap, permission: 'platform_settings' }
   ];
 
   // If SuperAdmin, return everything (after consolidating duplicates)
@@ -339,20 +342,30 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
 
     if (item.isExpandable && item.subItems) {
       return (
-        <div key={item.name}>
+        <div key={item.name} className="relative group/sidebar-item">
           {/* Parent Item */}
           <button
             onClick={() => toggleExpanded(item.name)}
-            className={`group flex items-center w-full px-4 py-3 text-sm font-light rounded-lg transition-colors ${isActive
-              ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+            className={`group flex items-center w-full px-4 py-3 text-sm font-light rounded-lg transition-all duration-200 relative ${isActive
+              ? 'bg-blue-50 text-blue-700 shadow-sm'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
+            title={sidebarCollapsed ? item.name : undefined}
           >
-            <Icon className={`flex-shrink-0 w-4 h-4 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
-            {/* Always show text on mobile, conditionally on desktop */}
-            <span className={`flex-1 text-left ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{item.name}</span>
+            {/* Active Indicator Bar */}
+            {isActive && sidebarCollapsed && (
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 rounded-r-full" />
+            )}
+
+            <Icon className={`flex-shrink-0 w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} ${isActive ? 'text-blue-600 scale-110' : 'text-gray-400 group-hover:text-gray-600 group-hover:scale-110'}`} />
+
+            {/* Smooth Text Transition */}
+            <span className={`text-left whitespace-nowrap transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0 invisible overflow-hidden flex-none' : 'flex-1 w-auto opacity-100 visible'}`}>
+              {item.name}
+            </span>
+
             {!sidebarCollapsed && (
-              <span className="lg:block hidden">
+              <span className="lg:block hidden transition-transform duration-200">
                 {isExpanded ? (
                   <ChevronUp className={`w-3 h-3 ml-2 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
                 ) : (
@@ -360,9 +373,14 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
                 )}
               </span>
             )}
+
+            {/* Collapsed State Badge Indicator */}
+            {sidebarCollapsed && item.subItems.some((si: any) => si.showBadge && newLeadsCount > 0) && (
+              <div className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full border-2 border-white" />
+            )}
           </button>
 
-          {/* Sub Items */}
+          {/* Sub Items - Only show when not collapsed */}
           {!sidebarCollapsed && isExpanded && (
             <div className="ml-8 mt-1 space-y-0">
               {item.subItems.map((subItem: any) => {
@@ -374,7 +392,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
                   <Link
                     key={subItem.name}
                     href={subItem.href}
-                    onClick={onMobileClose}
+                    onClick={handleLinkClick}
                     className={`group flex items-center px-4 py-2 text-sm font-light rounded-md transition-colors ${isSubActive
                       ? 'text-blue-700 bg-blue-50 border-r-2 border-blue-600'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -394,6 +412,45 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
               })}
             </div>
           )}
+
+          {/* Collapsed state: Show dropdown on hover */}
+          {sidebarCollapsed && (
+            <div className="lg:invisible lg:opacity-0 absolute left-full top-0 pl-2 z-[100] group-hover/sidebar-item:lg:visible group-hover/sidebar-item:lg:opacity-100 translate-x-2 group-hover/sidebar-item:translate-x-0 transition-all duration-300">
+              <div className="bg-white/95 backdrop-blur-sm border border-gray-100 rounded-xl shadow-2xl py-2 min-w-[200px] overflow-hidden">
+                <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50 border-b border-gray-50 mb-1">
+                  {item.name}
+                </div>
+                {/* Scrollable Sub-items */}
+                <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
+                  {item.subItems.map((subItem: any) => {
+                    const isSubActive = pathname === subItem.href
+                    const SubIcon = subItem.icon
+
+                    return (
+                      <Link
+                        key={subItem.name}
+                        href={subItem.href}
+                        onClick={handleLinkClick}
+                        className={`group/sub flex items-center px-4 py-2.5 text-sm transition-all duration-200 ${isSubActive
+                          ? 'text-blue-700 bg-blue-50/80 font-medium'
+                          : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50/30'
+                          }`}
+                      >
+                        <SubIcon className={`flex-shrink-0 w-3.5 h-3.5 mr-3 transition-colors ${isSubActive ? 'text-blue-600' : 'text-gray-400 group-hover/sub:text-blue-500'}`} />
+                        <span className="flex-1">{subItem.name}</span>
+                        {subItem.showBadge && newLeadsCount > 0 && (
+                          <span className={`ml-2 px-1.5 py-0.5 text-[10px] font-medium rounded-full ${isSubActive ? 'bg-blue-100 text-blue-700' : 'bg-blue-600 text-white'
+                            }`}>
+                            {newLeadsCount > 99 ? '99+' : newLeadsCount}
+                          </span>
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )
     }
@@ -403,21 +460,37 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
       <Link
         key={item.name}
         href={item.href}
-        onClick={onMobileClose}
-        className={`group flex items-center px-4 py-3 text-sm font-light rounded-lg transition-colors ${isActive
-          ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+        onClick={handleLinkClick}
+        className={`group flex items-center px-4 py-3 text-sm font-light rounded-lg transition-all duration-200 relative ${isActive
+          ? 'bg-blue-50 text-blue-700 shadow-sm'
           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
           }`}
+        title={sidebarCollapsed ? item.name : undefined}
       >
-        <Icon className={`flex-shrink-0 w-4 h-4 mr-3 ${sidebarCollapsed ? 'lg:mx-auto lg:mr-0' : ''} ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
-        {/* Always show text on mobile, conditionally on desktop */}
-        <span className={`flex-1 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{item.name}</span>
+        {/* Active Indicator Bar */}
+        {isActive && sidebarCollapsed && (
+          <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 rounded-r-full" />
+        )}
+
+        <Icon className={`flex-shrink-0 w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} ${isActive ? 'text-blue-600 scale-110' : 'text-gray-400 group-hover:text-gray-600 group-hover:scale-110'}`} />
+
+        {/* Smooth Text Transition */}
+        <span className={`whitespace-nowrap transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0 invisible overflow-hidden flex-none ml-0' : 'flex-1 w-auto opacity-100 visible ml-0'}`}>
+          {item.name}
+        </span>
+
         {/* Badge for new leads */}
-        {item.showBadge && newLeadsCount > 0 && !sidebarCollapsed && (
-          <span className={`ml-auto px-1.5 py-0.5 text-xs font-light rounded-md ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-blue-600 text-white'
-            }`}>
-            {newLeadsCount > 99 ? '99+' : newLeadsCount}
-          </span>
+        {item.showBadge && newLeadsCount > 0 && (
+          <>
+            {!sidebarCollapsed ? (
+              <span className={`ml-auto px-1.5 py-0.5 text-[10px] font-medium rounded-full ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-blue-600 text-white'
+                }`}>
+                {newLeadsCount > 99 ? '99+' : newLeadsCount}
+              </span>
+            ) : (
+              <div className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full border-2 border-white" />
+            )}
+          </>
         )}
       </Link>
     )
@@ -442,15 +515,24 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
         {/* Fixed Header */}
         <div className="flex-shrink-0 flex items-center justify-between h-16 px-6 border-b border-gray-100 bg-white">
           {/* Logo - always show on mobile, conditionally on desktop */}
-          <div className={`flex items-center space-x-3 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
-            <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
+          <div className={`flex items-center space-x-3 transition-all duration-300 overflow-hidden ${sidebarCollapsed ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>
+            <div className="w-6 h-6 bg-blue-600 rounded-md flex-shrink-0 flex items-center justify-center">
               <Crown className="w-4 h-4 text-white" />
             </div>
-            <div>
+            <div className="whitespace-nowrap">
               <h1 className="text-lg font-light text-gray-900">LaundryLobby</h1>
               <p className="text-xs text-gray-500 font-light">Management Portal</p>
             </div>
           </div>
+
+          {/* Collapsed Logo Icon */}
+          {sidebarCollapsed && (
+            <div className="hidden lg:flex items-center justify-center w-full opacity-0 scale-75 animate-logo-in">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-100/50">
+                <Crown className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          )}
 
           {/* Buttons */}
           <div className="flex items-center">
@@ -478,28 +560,31 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
 
         {/* Scrollable Content Area */}
         <div className="flex-1 flex flex-col min-h-0">
-          {/* Navigation - Scrollable */}
-          <nav className="flex-1 px-0 py-6 space-y-0 overflow-y-auto">
+          {/* Navigation - Conditional Scrollable to prevent clipping of popovers */}
+          <nav className={`flex-1 px-0 py-6 space-y-0 ${sidebarCollapsed ? 'overflow-visible' : 'overflow-y-auto custom-scrollbar'}`}>
             {navigation.map(renderNavItem)}
           </nav>
 
           {/* Fixed Footer Elements */}
           <div className="flex-shrink-0">
             {/* Version Info */}
-            <div className={`px-6 py-3 border-t border-gray-100 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
-              <div className="text-xs text-gray-400 font-light">
+            <div className={`px-6 py-3 border-t border-gray-100 transition-all duration-300 overflow-hidden ${sidebarCollapsed ? 'lg:h-0 lg:p-0 lg:opacity-0' : 'lg:h-auto lg:opacity-100'}`}>
+              <div className="text-xs text-gray-400 font-light whitespace-nowrap">
                 v1.0.0
               </div>
             </div>
 
             {/* Logout Button */}
-            <div className="border-t border-gray-100 p-4">
+            <div className="border-t border-gray-100 p-2 lg:p-4">
               <button
                 onClick={handleLogout}
-                className={`group flex items-center w-full px-4 py-3 text-sm font-light text-gray-600 hover:text-red-600 transition-colors ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
+                className={`group flex items-center w-full px-4 py-3 text-sm font-light text-gray-600 hover:text-red-600 transition-all duration-200 rounded-lg hover:bg-red-50/50 ${sidebarCollapsed ? 'lg:justify-center' : ''}`}
+                title={sidebarCollapsed ? "Sign Out" : undefined}
               >
-                <LogOut className={`flex-shrink-0 w-4 h-4 mr-3 ${sidebarCollapsed ? 'lg:mr-0' : ''} text-gray-400 group-hover:text-red-500`} />
-                <span className={sidebarCollapsed ? 'lg:hidden' : ''}>Sign Out</span>
+                <LogOut className={`flex-shrink-0 w-4 h-4 transition-all duration-200 ${sidebarCollapsed ? 'lg:mr-0' : 'mr-3'} text-gray-400 group-hover:text-red-500 group-hover:scale-110`} />
+                <span className={`whitespace-nowrap transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0 invisible overflow-hidden' : 'w-auto opacity-100 visible'}`}>
+                  Sign Out
+                </span>
               </button>
             </div>
           </div>

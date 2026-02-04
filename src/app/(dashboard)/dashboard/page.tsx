@@ -220,20 +220,20 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="space-y-2 pb-1">
+    <div className="space-y-6 pb-6">
       {/* Minimal Header */}
-      <div className="border-b border-gray-100 pb-1">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-1 lg:space-y-0">
+      <div className="border-b border-gray-100 pb-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-3 lg:space-y-0">
           <div>
-            <h1 className="text-xl font-light text-gray-900 tracking-tight">Dashboard</h1>
-            <p className="text-gray-500 mt-0 font-light">Platform overview and analytics</p>
+            <h1 className="text-2xl font-light text-gray-900 tracking-tight">Dashboard</h1>
+            <p className="text-gray-500 mt-1 font-light">Platform overview and analytics</p>
           </div>
 
           {/* Minimal Controls */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-3">
             {dashboardData && (
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <div className={`w-1.5 h-1.5 rounded-full ${isDataStale ? 'bg-amber-400' : 'bg-green-500'}`} />
+              <div className="flex items-center space-x-3 text-sm text-gray-500">
+                <div className={`w-2 h-2 rounded-full ${isDataStale ? 'bg-amber-400' : 'bg-green-500'}`} />
                 <span className="font-light">
                   {new Date(dashboardData.generatedAt).toLocaleTimeString()}
                 </span>
@@ -243,7 +243,7 @@ export default function SuperAdminDashboard() {
             <select
               value={timeframe}
               onChange={(e) => handleTimeframeChange(e.target.value)}
-              className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-gray-400 font-light"
+              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-gray-400 font-light"
             >
               <option value="24h">24 hours</option>
               <option value="7d">7 days</option>
@@ -253,7 +253,7 @@ export default function SuperAdminDashboard() {
 
             <button
               onClick={handleExport}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 font-light"
+              className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 font-light"
             >
               <Download className="w-4 h-4" />
               <span>Export</span>
@@ -269,63 +269,63 @@ export default function SuperAdminDashboard() {
 
       {/* Tenancy Stats */}
       {dashboardData?.tenancies && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-1 mb-1.5">
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-lg shadow-sm p-1 hover:shadow-md transition-shadow">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-blue-700">Total Tenancies</p>
-                <p className="text-lg font-semibold text-gray-900 mt-1">{dashboardData.tenancies.total}</p>
+                <p className="text-sm font-medium text-blue-700">Total Tenancies</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-2">{dashboardData.tenancies.total}</p>
               </div>
-              <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Building2 className="w-3 h-3 text-blue-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-blue-600" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-lg shadow-sm p-1 hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-green-700">Active Tenancies</p>
-                <p className="text-lg font-semibold text-green-600 mt-1">{dashboardData.tenancies.active}</p>
+                <p className="text-sm font-medium text-green-700">Active Tenancies</p>
+                <p className="text-2xl font-semibold text-green-600 mt-2">{dashboardData.tenancies.active}</p>
               </div>
-              <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-3 h-3 text-green-600" />
+              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-lg shadow-sm p-1 hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-amber-700">New This Period</p>
-                <p className="text-lg font-semibold text-blue-600 mt-1">{dashboardData.tenancies.new}</p>
+                <p className="text-sm font-medium text-amber-700">New This Period</p>
+                <p className="text-2xl font-semibold text-blue-600 mt-2">{dashboardData.tenancies.new}</p>
               </div>
-              <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-3 h-3 text-blue-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-100 rounded-lg shadow-sm p-1 hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-100 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-gray-700">Platform Revenue</p>
-                <p className="text-lg font-semibold text-gray-900 mt-1">₹{(dashboardData.tenancies.platformRevenue || 0).toLocaleString()}</p>
+                <p className="text-sm font-medium text-gray-700">Platform Revenue</p>
+                <p className="text-2xl font-semibold text-gray-900 mt-2">₹{(dashboardData.tenancies.platformRevenue || 0).toLocaleString()}</p>
               </div>
-              <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Shield className="w-3 h-3 text-gray-600" />
+              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <Shield className="w-5 h-5 text-gray-600" />
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Charts Row - Minimal Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-1 mb-1.5">
+      {/* Charts Row - Professional Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Order Status Pie Chart */}
-        <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-lg p-1 shadow-sm hover:bg-white transition-all duration-200">
-          <div className="mb-1">
-            <h3 className="text-sm font-light text-gray-900">Order Status</h3>
-            <p className="text-xs text-gray-500 font-light">Current breakdown</p>
+        <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-xl p-6 shadow-sm hover:bg-white transition-all duration-200">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Order Status</h3>
+            <p className="text-sm text-gray-500 font-light">Current breakdown</p>
           </div>
-          <div className="h-20">
+          <div className="h-48">
             {dashboardData?.orderDistribution && dashboardData.orderDistribution.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -337,9 +337,9 @@ export default function SuperAdminDashboard() {
                     }))}
                     cx="50%"
                     cy="50%"
-                    innerRadius={15}
-                    outerRadius={35}
-                    paddingAngle={1}
+                    innerRadius={40}
+                    outerRadius={80}
+                    paddingAngle={2}
                     dataKey="value"
                   >
                     {dashboardData.orderDistribution.map((_: any, index: number) => (
@@ -350,9 +350,9 @@ export default function SuperAdminDashboard() {
                     contentStyle={{
                       backgroundColor: '#fff',
                       border: '1px solid #e5e7eb',
-                      borderRadius: '4px',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                      fontSize: '10px'
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      fontSize: '12px'
                     }}
                   />
                 </PieChart>
@@ -360,41 +360,41 @@ export default function SuperAdminDashboard() {
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">
                 <div className="text-center">
-                  <TrendingUp className="w-3 h-3 mx-auto mb-1" />
-                  <p className="text-xs font-light">No data</p>
+                  <TrendingUp className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm font-light">No data available</p>
                 </div>
               </div>
             )}
           </div>
-          {/* Compact Legend */}
+          {/* Enhanced Legend */}
           {dashboardData?.orderDistribution && (
-            <div className="grid grid-cols-1 gap-0.5 mt-0.5 pt-0.5 border-t border-gray-100">
-              {dashboardData.orderDistribution.slice(0, 2).map((item: any, idx: number) => (
-                <div key={idx} className="flex items-center gap-0.5">
+            <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100">
+              {dashboardData.orderDistribution.slice(0, 4).map((item: any, idx: number) => (
+                <div key={idx} className="flex items-center gap-2">
                   <div
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: ['#3b82f6', '#10b981'][idx % 2] }}
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'][idx % 4] }}
                   ></div>
-                  <span className="text-xs text-gray-600 truncate flex-1">
+                  <span className="text-sm text-gray-600 truncate flex-1">
                     {item._id?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Unknown'}
                   </span>
-                  <span className="text-xs font-semibold text-gray-900">{item.count}</span>
+                  <span className="text-sm font-semibold text-gray-900">{item.count}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Plan Distribution Curve */}
-        <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-lg p-1 shadow-sm hover:bg-white transition-all duration-200">
-          <div className="mb-1">
-            <h3 className="text-sm font-light text-gray-900">Plan Distribution</h3>
-            <p className="text-xs text-gray-500 font-light">Subscription plans</p>
+        {/* Plan Distribution Bar Chart */}
+        <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-xl p-6 shadow-sm hover:bg-white transition-all duration-200">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Plan Distribution</h3>
+            <p className="text-sm text-gray-500 font-light">Subscription plans breakdown</p>
           </div>
-          <div className="h-20">
+          <div className="h-48">
             {dashboardData?.tenancies?.byPlan && Object.keys(dashboardData.tenancies.byPlan).length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
+                <BarChart
                   data={Object.entries(dashboardData.tenancies.byPlan)
                     .map(([planName, count]) => ({
                       name: planName.replace(/Plan|Subscription/gi, '').trim() || 'Basic',
@@ -403,28 +403,28 @@ export default function SuperAdminDashboard() {
                     }))
                     .sort((a, b) => b.count - a.count)
                   }
-                  margin={{ top: 2, right: 2, left: 2, bottom: 15 }}
+                  margin={{ top: 10, right: 10, left: 10, bottom: 40 }}
                 >
                   <defs>
-                    <linearGradient id="planGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
+                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.6} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="1 1" stroke="#f3f4f6" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                   <XAxis
                     dataKey="name"
-                    stroke="#9ca3af"
-                    fontSize={8}
+                    stroke="#6b7280"
+                    fontSize={12}
                     angle={-45}
                     textAnchor="end"
-                    height={20}
+                    height={60}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    stroke="#9ca3af"
-                    fontSize={8}
+                    stroke="#6b7280"
+                    fontSize={12}
                     tickFormatter={(v) => `${v}`}
                     axisLine={false}
                     tickLine={false}
@@ -433,29 +433,27 @@ export default function SuperAdminDashboard() {
                     contentStyle={{
                       backgroundColor: '#fff',
                       border: '1px solid #e5e7eb',
-                      borderRadius: '4px',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                      fontSize: '10px'
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      fontSize: '12px'
                     }}
                     formatter={(value: number, name: string, props: any) => [
                       `${value} tenancies (${props.payload.percentage}%)`,
                       'Count'
                     ]}
                   />
-                  <Area
-                    type="monotone"
+                  <Bar
                     dataKey="count"
-                    stroke="#3b82f6"
-                    strokeWidth={1}
-                    fill="url(#planGradient)"
+                    fill="url(#barGradient)"
+                    radius={[4, 4, 0, 0]}
                   />
-                </AreaChart>
+                </BarChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">
                 <div className="text-center">
-                  <BarChart3 className="w-3 h-3 mx-auto mb-1" />
-                  <p className="text-xs font-light">No plan data</p>
+                  <BarChart3 className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm font-light">No plan data available</p>
                 </div>
               </div>
             )}
@@ -463,22 +461,22 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* System Alerts */}
-        <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-lg p-1 shadow-sm hover:bg-white transition-all duration-200">
-          <div className="mb-1">
-            <h3 className="text-sm font-semibold text-gray-900">System Alerts</h3>
-            <p className="text-xs text-gray-600">Active notifications</p>
+        <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-xl p-6 shadow-sm hover:bg-white transition-all duration-200">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">System Alerts</h3>
+            <p className="text-sm text-gray-500">Active notifications</p>
           </div>
-          <div className="h-20">
+          <div className="h-48">
             {dashboardData?.alerts && dashboardData.alerts.length > 0 ? (
-              <div className="space-y-0.5 h-full overflow-y-auto no-scrollbar">
-                {dashboardData.alerts.slice(0, 2).map((alert: any, index: number) => (
-                  <div key={index} className="flex items-start space-x-0.5 p-0.5 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="w-4 h-4 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0">
-                      <AlertTriangle className="w-2 h-2 text-red-600" />
+              <div className="space-y-3 h-full overflow-y-auto no-scrollbar">
+                {dashboardData.alerts.slice(0, 4).map((alert: any, index: number) => (
+                  <div key={index} className="flex items-start space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="w-4 h-4 text-red-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-red-800 truncate">{alert.message || 'System Alert'}</p>
-                      <p className="text-xs text-red-600">{alert.type || 'Warning'}</p>
+                      <p className="text-sm font-medium text-red-800 truncate">{alert.message || 'System Alert'}</p>
+                      <p className="text-xs text-red-600 mt-1">{alert.type || 'Warning'}</p>
                     </div>
                   </div>
                 ))}
@@ -486,10 +484,11 @@ export default function SuperAdminDashboard() {
             ) : (
               <div className="h-full flex items-center justify-center text-gray-500">
                 <div className="text-center">
-                  <div className="w-5 h-5 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-1">
-                    <CheckCircle className="w-2 h-2 text-green-600" />
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
                   </div>
-                  <p className="text-xs">All systems operational</p>
+                  <p className="text-sm font-medium text-gray-900 mb-1">All Systems Operational</p>
+                  <p className="text-xs text-gray-500">No alerts in the last 24 hours</p>
                 </div>
               </div>
             )}
@@ -498,15 +497,15 @@ export default function SuperAdminDashboard() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           {/* Revenue Trend Chart - Large Version */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-lg p-1 shadow-sm hover:bg-white transition-all duration-200">
-            <div className="mb-1">
-              <h3 className="text-sm font-semibold text-gray-900">Revenue Trend</h3>
-              <p className="text-xs text-gray-600 mt-1">Revenue analysis over time</p>
+          <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-xl p-6 shadow-sm hover:bg-white transition-all duration-200">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
+              <p className="text-sm text-gray-600 mt-1">Revenue analysis over time</p>
             </div>
-            <div className="h-28">
+            <div className="h-64">
               {dashboardData?.revenue && dashboardData.revenue.daily && Array.isArray(dashboardData.revenue.daily) && dashboardData.revenue.daily.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
@@ -515,7 +514,7 @@ export default function SuperAdminDashboard() {
                       revenue: item.revenue || 0,
                       orders: item.orders || 0
                     }))}
-                    margin={{ top: 5, right: 10, left: 5, bottom: 5 }}
+                    margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
                   >
                     <defs>
                       <linearGradient id="revenueGradientLarge" x1="0" y1="0" x2="0" y2="1">
@@ -527,11 +526,11 @@ export default function SuperAdminDashboard() {
                     <XAxis
                       dataKey="date"
                       stroke="#6b7280"
-                      fontSize={8}
+                      fontSize={12}
                     />
                     <YAxis
                       stroke="#6b7280"
-                      fontSize={8}
+                      fontSize={12}
                       tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
                     />
                     <Tooltip
@@ -540,7 +539,7 @@ export default function SuperAdminDashboard() {
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                        fontSize: '10px'
+                        fontSize: '12px'
                       }}
                       formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Revenue']}
                     />
@@ -548,7 +547,7 @@ export default function SuperAdminDashboard() {
                       type="monotone"
                       dataKey="revenue"
                       stroke="#3b82f6"
-                      strokeWidth={1}
+                      strokeWidth={2}
                       fill="url(#revenueGradientLarge)"
                     />
                   </AreaChart>
@@ -556,10 +555,10 @@ export default function SuperAdminDashboard() {
               ) : (
                 <div className="h-full flex items-center justify-center text-gray-500">
                   <div className="text-center">
-                    <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-1">
-                      <TrendingUp className="w-3 h-3 text-gray-400" />
+                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                      <TrendingUp className="w-6 h-6 text-gray-400" />
                     </div>
-                    <p className="text-xs font-medium text-gray-900 mb-1">No Revenue Data</p>
+                    <p className="text-sm font-medium text-gray-900 mb-1">No Revenue Data</p>
                     <p className="text-xs text-gray-600">Data will appear once orders are processed</p>
                   </div>
                 </div>
@@ -575,16 +574,16 @@ export default function SuperAdminDashboard() {
       </div>
 
       {/* Footer Info - System Status */}
-      <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-lg shadow-sm p-1 hover:bg-white transition-all duration-200">
+      <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-xl shadow-sm p-6 hover:bg-white transition-all duration-200">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${(dashboardData?.systemHealth?.uptime || 99.9) >= 99
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${(dashboardData?.systemHealth?.uptime || 99.9) >= 99
               ? 'bg-green-50'
               : (dashboardData?.systemHealth?.uptime || 99.9) >= 95
                 ? 'bg-amber-50'
                 : 'bg-red-50'
               }`}>
-              <CheckCircle className={`w-3 h-3 ${(dashboardData?.systemHealth?.uptime || 99.9) >= 99
+              <CheckCircle className={`w-6 h-6 ${(dashboardData?.systemHealth?.uptime || 99.9) >= 99
                 ? 'text-green-600'
                 : (dashboardData?.systemHealth?.uptime || 99.9) >= 95
                   ? 'text-amber-600'
@@ -592,10 +591,10 @@ export default function SuperAdminDashboard() {
                 }`} />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-gray-900">
+              <h4 className="text-lg font-semibold text-gray-900">
                 System Status: {(dashboardData?.systemHealth?.uptime || 99.9) >= 99 ? 'Operational' : (dashboardData?.systemHealth?.uptime || 99.9) >= 95 ? 'Minor Issues' : 'Issues Detected'}
               </h4>
-              <p className="text-gray-600 text-xs">
+              <p className="text-gray-600 text-sm mt-1">
                 {(dashboardData?.systemHealth?.uptime || 99.9) >= 99
                   ? 'All services running smoothly'
                   : 'Some services may have issues'} • Last check: {new Date().toLocaleTimeString()}
@@ -603,7 +602,7 @@ export default function SuperAdminDashboard() {
             </div>
           </div>
           <div className="text-right">
-            <div className={`text-lg font-bold ${(dashboardData?.systemHealth?.uptime || 99.9) >= 99
+            <div className={`text-2xl font-bold ${(dashboardData?.systemHealth?.uptime || 99.9) >= 99
               ? 'text-green-600'
               : (dashboardData?.systemHealth?.uptime || 99.9) >= 95
                 ? 'text-amber-600'
@@ -611,7 +610,7 @@ export default function SuperAdminDashboard() {
               }`}>
               {(dashboardData?.systemHealth?.uptime || 99.9).toFixed(1)}%
             </div>
-            <div className="text-xs text-gray-600 font-medium">System Uptime</div>
+            <div className="text-sm text-gray-600 font-medium">System Uptime</div>
           </div>
         </div>
       </div>
