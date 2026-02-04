@@ -1,5 +1,5 @@
 // Frontend version management
-export const APP_VERSION = '2.0.0';
+export const APP_VERSION = '1.0.2';
 
 export function getVersion(): string {
   return APP_VERSION;
