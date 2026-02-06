@@ -81,11 +81,11 @@ const TRIGGER_TYPES = [
   { value: 'BEHAVIOR_BASED', label: 'Behavior Based' }
 ]
 
-export default function CreateCampaignModal({ 
-  isOpen, 
-  onClose, 
+export default function CreateCampaignModal({
+  isOpen,
+  onClose,
   initialScope = 'GLOBAL',
-  onSuccess 
+  onSuccess
 }: CreateCampaignModalProps) {
   const { token } = useSuperAdminStore()
   const [step, setStep] = useState<'scope' | 'form'>('scope')
@@ -112,34 +112,34 @@ export default function CreateCampaignModal({
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
     priority: 0,
-    
+
     // Triggers
     triggers: [{ type: 'ORDER_CHECKOUT', conditions: {} }],
-    
+
     // Audience
     audience: {
       targetType: 'ALL_USERS',
       userSegments: [],
       customFilters: {}
     },
-    
+
     // Promotions
     promotions: [],
-    
+
     // Budget
     budget: {
       type: 'UNLIMITED',
       totalAmount: 1000,
       budgetSource: 'PLATFORM_BUDGET'
     },
-    
+
     // Limits
     limits: {
       totalUsageLimit: 0,
       perUserLimit: 1,
       dailyLimit: 0
     },
-    
+
     // Stacking
     stacking: {
       allowStackingWithCoupons: false,
@@ -147,10 +147,10 @@ export default function CreateCampaignModal({
       allowStackingWithLoyalty: true,
       stackingPriority: 0
     },
-    
+
     // Applicable tenancies (for global campaigns)
     applicableTenancies: [],
-    
+
     // Auto-approval
     autoApprovalRules: {
       maxBudget: 5000,
@@ -176,20 +176,20 @@ export default function CreateCampaignModal({
         setTenancies(data.data.tenancies || [])
       }
     } catch (error) {
-      console.error('Failed to fetch tenancies:', error)
+      // console.error('Failed to fetch tenancies:', error)
     }
   }
 
   const fetchPromotions = async () => {
     try {
-      console.log('🔍 Fetching all promotions for campaign...');
+      // console.log('🔍 Fetching all promotions for campaign...');
       // Fetch all promotions using the same endpoint as banners
       const res = await fetch(`${API_BASE}/superadmin/banners/promotions/all`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
-      console.log('📦 Promotions response:', data);
-      
+      // console.log('📦 Promotions response:', data);
+
       if (data.success && data.data) {
         setAllPromotions({
           discounts: data.data.discounts || [],
@@ -197,15 +197,15 @@ export default function CreateCampaignModal({
           loyalty: data.data.loyalty || [],
           referrals: data.data.referrals || []
         });
-        console.log('✅ Promotions loaded:', {
-          discounts: data.data.discounts?.length || 0,
-          coupons: data.data.coupons?.length || 0,
-          loyalty: data.data.loyalty?.length || 0,
-          referrals: data.data.referrals?.length || 0
-        });
+        // console.log('✅ Promotions loaded:', {
+        //   discounts: data.data.discounts?.length || 0,
+        //   coupons: data.data.coupons?.length || 0,
+        //   loyalty: data.data.loyalty?.length || 0,
+        //   referrals: data.data.referrals?.length || 0
+        // });
       }
     } catch (error) {
-      console.error('❌ Failed to fetch promotions:', error)
+      // console.error('❌ Failed to fetch promotions:', error)
       toast.error('Failed to load promotions')
     }
   }
@@ -228,7 +228,7 @@ export default function CreateCampaignModal({
   const handleScopeSelect = (scope: 'GLOBAL' | 'TEMPLATE' | 'TENANT') => {
     setSelectedScope(scope)
     setStep('form')
-    
+
     // Update budget source based on scope
     setFormData(prev => ({
       ...prev,
@@ -279,7 +279,7 @@ export default function CreateCampaignModal({
         toast.error(data.message || 'Failed to create campaign')
       }
     } catch (error) {
-      console.error('Create campaign error:', error)
+      // console.error('Create campaign error:', error)
       toast.error('Failed to create campaign')
     } finally {
       setLoading(false)
@@ -358,11 +358,10 @@ export default function CreateCampaignModal({
                     <button
                       key={scope.value}
                       onClick={() => setSelectedScope(scope.value as any)}
-                      className={`p-4 border-2 rounded-lg text-left transition-colors ${
-                        selectedScope === scope.value
+                      className={`p-4 border-2 rounded-lg text-left transition-colors ${selectedScope === scope.value
                           ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Icon className={`w-5 h-5 ${selectedScope === scope.value ? 'text-purple-600' : 'text-gray-400'}`} />
@@ -503,7 +502,7 @@ export default function CreateCampaignModal({
                       />
                       <span className="text-sm font-medium text-green-600">All Tenancies (Global)</span>
                     </label>
-                    
+
                     {tenancies.map(tenancy => (
                       <label key={tenancy._id} className="flex items-center">
                         <input
@@ -539,8 +538,8 @@ export default function CreateCampaignModal({
               </label>
               <select
                 value={formData.audience.targetType}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
+                onChange={(e) => setFormData({
+                  ...formData,
                   audience: { ...formData.audience, targetType: e.target.value as any }
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -561,8 +560,8 @@ export default function CreateCampaignModal({
                   </label>
                   <select
                     value={formData.budget.type}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
+                    onChange={(e) => setFormData({
+                      ...formData,
                       budget: { ...formData.budget, type: e.target.value as any }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -583,8 +582,8 @@ export default function CreateCampaignModal({
                       min="0"
                       step="0.01"
                       value={formData.budget.totalAmount}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         budget: { ...formData.budget, totalAmount: parseFloat(e.target.value) || 0 }
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -606,8 +605,8 @@ export default function CreateCampaignModal({
                     type="number"
                     min="0"
                     value={formData.limits.totalUsageLimit}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
+                    onChange={(e) => setFormData({
+                      ...formData,
                       limits: { ...formData.limits, totalUsageLimit: parseInt(e.target.value) || 0 }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -623,8 +622,8 @@ export default function CreateCampaignModal({
                     type="number"
                     min="1"
                     value={formData.limits.perUserLimit}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
+                    onChange={(e) => setFormData({
+                      ...formData,
                       limits: { ...formData.limits, perUserLimit: parseInt(e.target.value) || 1 }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -639,8 +638,8 @@ export default function CreateCampaignModal({
                     type="number"
                     min="0"
                     value={formData.limits.dailyLimit}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
+                    onChange={(e) => setFormData({
+                      ...formData,
                       limits: { ...formData.limits, dailyLimit: parseInt(e.target.value) || 0 }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -739,7 +738,7 @@ export default function CreateCampaignModal({
               >
                 Back to Scope
               </button>
-              
+
               <div className="flex space-x-4">
                 <button
                   type="button"

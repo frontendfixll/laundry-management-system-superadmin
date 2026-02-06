@@ -6,6 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/ui/Pagination'
+import { RevenueCard } from '@/components/ui/RevenueCard'
 import {
   Sparkles,
   Search,
@@ -1161,7 +1162,12 @@ export default function SuperAdminServicesPage() {
                                 {item.category}
                               </span>
                             </div>
-                            <span className="text-sm text-teal-600 font-medium">₹{item.basePrice}</span>
+                            <RevenueCard
+                              title=""
+                              amount={`₹${item.basePrice}`}
+                              storageKey={`service-base-price-${item._id}`}
+                              className="bg-transparent p-0 inline-block"
+                            />
                           </div>
                           <button
                             onClick={() => handleDeleteItem(item._id)}

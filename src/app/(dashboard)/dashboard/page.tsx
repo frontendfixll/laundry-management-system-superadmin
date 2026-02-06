@@ -8,6 +8,8 @@ import StatsCards from '@/components/dashboard/StatsCards'
 import RevenueChart from '@/components/dashboard/RevenueChart'
 import SystemAlerts from '@/components/dashboard/SystemAlerts'
 import TopBranches from '@/components/dashboard/TopBranches'
+import PrivacyToggle from '@/components/ui/PrivacyToggle'
+import RevenueCard from '@/components/ui/RevenueCard'
 import {
   Download,
   TrendingUp,
@@ -57,7 +59,7 @@ export default function SuperAdminDashboard() {
     if (user) {
       const correctRoute = getDashboardRoute(user as any)
       if (correctRoute !== '/dashboard') {
-        console.log('🔄 Dashboard - Redirecting to correct portal:', correctRoute)
+        // console.log('🔄 Dashboard - Redirecting to correct portal:', correctRoute)
         router.replace(correctRoute)
       }
     }
@@ -303,17 +305,12 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-100 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700">Platform Revenue</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-2">₹{(dashboardData.tenancies.platformRevenue || 0).toLocaleString()}</p>
-              </div>
-              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                <Shield className="w-5 h-5 text-gray-600" />
-              </div>
-            </div>
-          </div>
+          <RevenueCard
+            title="Platform Revenue"
+            amount={`₹${(dashboardData.tenancies.platformRevenue || 0).toLocaleString()}`}
+            storageKey="platform-revenue"
+            icon={<Shield className="w-5 h-5 text-gray-600" />}
+          />
         </div>
       )}
 

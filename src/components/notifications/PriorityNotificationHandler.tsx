@@ -21,17 +21,17 @@ interface PriorityNotificationHandlerProps {
   onAcknowledge: (notificationId: string) => void
 }
 
-export function PriorityNotificationHandler({ 
-  notifications, 
-  onAcknowledge 
+export function PriorityNotificationHandler({
+  notifications,
+  onAcknowledge
 }: PriorityNotificationHandlerProps) {
   const [criticalModal, setCriticalModal] = useState<CriticalNotification | null>(null)
   const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set())
 
   // Handle P0 critical notifications with modal popup
   useEffect(() => {
-    const criticalNotifications = notifications.filter(n => 
-      n.priority === 'P0' && 
+    const criticalNotifications = notifications.filter(n =>
+      n.priority === 'P0' &&
       !acknowledgedIds.has(n.id) &&
       !n.metadata?.isRead &&
       !n.isRead
@@ -40,20 +40,20 @@ export function PriorityNotificationHandler({
     if (criticalNotifications.length > 0 && !criticalModal) {
       const latest = criticalNotifications[0]
       setCriticalModal(latest)
-      
+
       // Play critical alert sound
-      try {
-        const audio = new Audio('/critical-alert.mp3')
-        audio.volume = 0.8
-        audio.play().catch(() => {
-          // Fallback to default sound
-          const fallbackAudio = new Audio('/notification-sound.mp3')
-          fallbackAudio.volume = 0.8
-          fallbackAudio.play().catch(() => {})
-        })
-      } catch (error) {
-        console.warn('Could not play critical alert sound:', error)
-      }
+      // try {
+      //   const audio = new Audio('/critical-alert.mp3')
+      //   audio.volume = 0.8
+      //   audio.play().catch(() => {
+      //     // Fallback to default sound
+      //     const fallbackAudio = new Audio('/notification-sound.mp3')
+      //     fallbackAudio.volume = 0.8
+      //     fallbackAudio.play().catch(() => {})
+      //   })
+      // } catch (error) {
+      //   // console.warn('Could not play critical alert sound:', error)
+      // }
 
       // Browser notification for critical alerts
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -68,7 +68,7 @@ export function PriorityNotificationHandler({
   }, [notifications, acknowledgedIds, criticalModal])
 
   const handleAcknowledge = useCallback((notificationId: string) => {
-    setAcknowledgedIds(prev => new Set([...prev, notificationId]))
+    setAcknowledgedIds(prev => new Set(Array.from(prev).concat(notificationId)))
     onAcknowledge(notificationId)
     setCriticalModal(null)
     toast.success('Critical alert acknowledged')
@@ -76,15 +76,15 @@ export function PriorityNotificationHandler({
 
   const handleDismiss = useCallback(() => {
     if (criticalModal) {
-      setAcknowledgedIds(prev => new Set([...prev, criticalModal.id]))
+      setAcknowledgedIds(prev => new Set(Array.from(prev).concat(criticalModal.id)))
       setCriticalModal(null)
     }
   }, [criticalModal])
 
   // P1 High priority notifications with enhanced toast
   useEffect(() => {
-    const highPriorityNotifications = notifications.filter(n => 
-      n.priority === 'P1' && 
+    const highPriorityNotifications = notifications.filter(n =>
+      n.priority === 'P1' &&
       !acknowledgedIds.has(n.id) &&
       !n.metadata?.isRead &&
       !n.isRead
@@ -92,8 +92,8 @@ export function PriorityNotificationHandler({
 
     highPriorityNotifications.forEach(notification => {
       if (!acknowledgedIds.has(notification.id)) {
-        setAcknowledgedIds(prev => new Set([...prev, notification.id]))
-        
+        setAcknowledgedIds(prev => new Set(Array.from(prev).concat(notification.id)))
+
         toast(
           (t) => (
             <div className="flex flex-col gap-3 p-2">

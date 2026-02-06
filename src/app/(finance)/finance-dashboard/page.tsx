@@ -16,8 +16,11 @@ import {
   Users,
   Target,
   RefreshCw,
-  Search
+  Search,
+  Tag,
+  Package
 } from 'lucide-react'
+import PrivacyToggle from '@/components/ui/PrivacyToggle'
 import {
   BarChart,
   Bar,
@@ -83,16 +86,16 @@ export default function FinanceDashboardPage() {
     try {
       setLoading(true)
       setError('')
-      
+
       console.log('🔄 Fetching financial overview...')
-      
+
       // Fetch financial overview
       const overviewResponse = await superAdminApi.getFinancialOverview(timeframe)
       console.log('📊 Financial overview response:', overviewResponse)
-      
+
       if (overviewResponse.success && overviewResponse.data?.overview) {
         const overview = overviewResponse.data.overview
-        
+
         // Map the API response to our stats structure
         setStats({
           revenue: {
@@ -118,9 +121,9 @@ export default function FinanceDashboardPage() {
         sortBy: 'createdAt',
         sortOrder: 'desc'
       })
-      
+
       console.log('💳 Transactions response:', transactionsResponse)
-      
+
       if (transactionsResponse.success && transactionsResponse.data?.transactions) {
         setRecentTransactions(transactionsResponse.data.transactions)
       }
@@ -128,7 +131,7 @@ export default function FinanceDashboardPage() {
     } catch (error: any) {
       console.error('❌ Error fetching financial data:', error)
       setError(error.message || 'Failed to fetch financial data')
-      
+
       // Set empty state on error
       setStats({
         revenue: { total: 0, thisMonth: 0, lastMonth: 0, growth: 0 },
@@ -209,7 +212,7 @@ export default function FinanceDashboardPage() {
             </p>
           </div>
           <div className="flex items-center space-x-3">
-            <button 
+            <button
               onClick={fetchFinancialData}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
             >
@@ -258,7 +261,7 @@ export default function FinanceDashboardPage() {
             <option value="90d">Last 90 Days</option>
             <option value="1y">This Year</option>
           </select>
-          <button 
+          <button
             onClick={fetchFinancialData}
             disabled={loading}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
@@ -273,9 +276,17 @@ export default function FinanceDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <p className="text-green-100 text-sm">Total Revenue</p>
-              <p className="text-xl font-bold">{formatCurrency(stats?.revenue.total || 0)}</p>
+              <div className="text-xl font-bold">
+                <PrivacyToggle
+                  storageKey="finance-total-revenue"
+                  iconClassName="text-green-100 hover:text-white"
+                  buttonClassName="p-1 hover:bg-green-600 rounded-md transition-colors ml-2"
+                >
+                  {formatCurrency(stats?.revenue.total || 0)}
+                </PrivacyToggle>
+              </div>
               <div className="flex items-center space-x-1 mt-1">
                 <TrendingUp className="w-4 h-4 text-green-200" />
                 <p className="text-green-100 text-xs">+{stats?.revenue.growth?.toFixed(1) || 0}% from last month</p>
@@ -287,9 +298,17 @@ export default function FinanceDashboardPage() {
 
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <p className="text-blue-100 text-xs">Monthly Revenue</p>
-              <p className="text-xl font-bold">{formatCurrency(stats?.revenue.thisMonth || 0)}</p>
+              <div className="text-xl font-bold">
+                <PrivacyToggle
+                  storageKey="finance-monthly-revenue"
+                  iconClassName="text-blue-100 hover:text-white"
+                  buttonClassName="p-1 hover:bg-blue-600 rounded-md transition-colors ml-2"
+                >
+                  {formatCurrency(stats?.revenue.thisMonth || 0)}
+                </PrivacyToggle>
+              </div>
               <div className="flex items-center space-x-1 mt-0.5">
                 <TrendingUp className="w-3.5 h-3.5 text-blue-200" />
                 <p className="text-blue-100 text-[10px]">+{stats?.revenue.growth?.toFixed(1) || 0}% from last month</p>
@@ -301,7 +320,7 @@ export default function FinanceDashboardPage() {
 
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <p className="text-purple-100 text-xs">Transactions</p>
               <p className="text-xl font-bold">{stats?.payments.total?.toLocaleString() || 0}</p>
               <p className="text-purple-100 text-[10px]">Success rate: {stats?.payments.successRate?.toFixed(1) || 0}%</p>
@@ -312,7 +331,7 @@ export default function FinanceDashboardPage() {
 
         <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-4 text-white">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <p className="text-orange-100 text-xs">Pending Refunds</p>
               <p className="text-xl font-bold">{stats?.payments.pendingRefunds || 0}</p>
               <p className="text-orange-100 text-[10px]">Requires attention</p>
@@ -323,9 +342,17 @@ export default function FinanceDashboardPage() {
 
         <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-4 text-white">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <p className="text-indigo-100 text-xs">Avg Transaction</p>
-              <p className="text-xl font-bold">{formatCurrency(stats?.payments.avgTransactionValue || 0)}</p>
+              <div className="text-xl font-bold">
+                <PrivacyToggle
+                  storageKey="finance-avg-transaction"
+                  iconClassName="text-indigo-100 hover:text-white"
+                  buttonClassName="p-1 hover:bg-indigo-600 rounded-md transition-colors ml-2"
+                >
+                  {formatCurrency(stats?.payments.avgTransactionValue || 0)}
+                </PrivacyToggle>
+              </div>
               <p className="text-indigo-100 text-[10px]">Per transaction</p>
             </div>
             <PieChart className="w-8 h-8 text-indigo-200" />
@@ -334,7 +361,7 @@ export default function FinanceDashboardPage() {
 
         <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl p-4 text-white">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <p className="text-pink-100 text-xs">Success Rate</p>
               <p className="text-xl font-bold">{stats?.payments.successRate?.toFixed(1) || 0}%</p>
               <div className="flex items-center space-x-1 mt-0.5">
@@ -353,7 +380,7 @@ export default function FinanceDashboardPage() {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
-              <button 
+              <button
                 onClick={() => window.open('/finances/transactions', '_blank')}
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
@@ -389,11 +416,10 @@ export default function FinanceDashboardPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className={`text-sm font-medium ${
-                            transaction.type === 'refund' || transaction.type === 'penalty' 
-                              ? 'text-red-600' 
-                              : 'text-green-600'
-                          }`}>
+                          <p className={`text-sm font-medium ${transaction.type === 'refund' || transaction.type === 'penalty'
+                            ? 'text-red-600'
+                            : 'text-green-600'
+                            }`}>
                             {transaction.type === 'refund' || transaction.type === 'penalty' ? '-' : '+'}
                             {formatCurrency(transaction.amount)}
                           </p>
@@ -491,7 +517,7 @@ export default function FinanceDashboardPage() {
         <h2 className="text-base font-semibold text-gray-900 mb-3">Quick Actions</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button 
+          <button
             onClick={() => window.open('/finances/reports', '_blank')}
             className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
@@ -502,7 +528,7 @@ export default function FinanceDashboardPage() {
             </div>
           </button>
 
-          <button 
+          <button
             onClick={() => window.open('/finances/transactions?status=refunded', '_blank')}
             className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
@@ -513,7 +539,7 @@ export default function FinanceDashboardPage() {
             </div>
           </button>
 
-          <button 
+          <button
             onClick={() => window.open('/finances/transactions', '_blank')}
             className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
@@ -524,7 +550,7 @@ export default function FinanceDashboardPage() {
             </div>
           </button>
 
-          <button 
+          <button
             onClick={() => window.open('/finances', '_blank')}
             className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
@@ -532,6 +558,39 @@ export default function FinanceDashboardPage() {
             <div className="text-left">
               <p className="text-sm font-medium text-gray-900">Analytics</p>
               <p className="text-xs text-gray-500">Financial analytics</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => window.open('/billing/plans', '_blank')}
+            className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Tag className="w-6 h-6 text-pink-600" />
+            <div className="text-left">
+              <p className="text-sm font-medium text-gray-900">Billing Plans</p>
+              <p className="text-xs text-gray-500">Manage subscription plans</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => window.open('/financial/overview', '_blank')}
+            className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <PieChart className="w-6 h-6 text-indigo-600" />
+            <div className="text-left">
+              <p className="text-sm font-medium text-gray-900">Overview</p>
+              <p className="text-xs text-gray-500">Financial overview</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => window.open('/addons', '_blank')}
+            className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Package className="w-6 h-6 text-orange-600" />
+            <div className="text-left">
+              <p className="text-sm font-medium text-gray-900">Add-ons</p>
+              <p className="text-xs text-gray-500">Manage add-ons</p>
             </div>
           </button>
         </div>

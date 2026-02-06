@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTenancies, Tenancy } from '@/hooks/useTenancies';
+import { RevenueCard } from '@/components/ui/RevenueCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -353,9 +354,12 @@ export default function TenanciesPage() {
                           <SelectItem key={plan._id} value={plan._id}>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{plan.displayName}</span>
-                              <span className="text-muted-foreground text-xs">
-                                (₹{plan.price.monthly}/mo)
-                              </span>
+                              <RevenueCard
+                                title=""
+                                amount={`₹${plan.price.monthly}/mo`}
+                                storageKey={`tenancy-plan-price-${plan._id}`}
+                                className="bg-transparent p-0 inline-block text-xs text-muted-foreground"
+                              />
                             </div>
                           </SelectItem>
                         ))}

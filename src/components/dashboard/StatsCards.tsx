@@ -1,14 +1,16 @@
 'use client'
 
-import { 
-  ShoppingBag, 
-  DollarSign, 
-  Users, 
+import {
+  ShoppingBag,
+  DollarSign,
+  Users,
   Building2,
   TrendingUp,
   TrendingDown,
   Minus
 } from 'lucide-react'
+import { RevenueCard } from '@/components/ui/RevenueCard'
+import PrivacyToggle from '@/components/ui/PrivacyToggle'
 
 interface StatsData {
   totalOrders: number
@@ -103,9 +105,24 @@ export default function StatsCards({ data, loading }: StatsCardsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      {stats.map((stat) => {
+      {stats.map((stat, index) => {
         const Icon = stat.icon
-        
+
+        // Special handling for Revenue card with privacy toggle
+        if (stat.name === 'Revenue') {
+          return (
+            <RevenueCard
+              key={stat.name}
+              title={stat.name}
+              amount={stat.value}
+              subtitle={stat.changeText}
+              icon={<Icon className="w-3 h-3 text-gray-400" />}
+              storageKey="dashboard-total-revenue"
+              className={`${stat.bgColor} ${stat.borderColor} backdrop-blur-sm border rounded-lg p-3 ${stat.hoverBg} hover:border-opacity-75 transition-all duration-200 shadow-sm`}
+            />
+          )
+        }
+
         return (
           <div
             key={stat.name}
@@ -114,11 +131,10 @@ export default function StatsCards({ data, loading }: StatsCardsProps) {
             <div className="flex items-center justify-between mb-1">
               <Icon className="w-3 h-3 text-gray-400" />
               {stat.change !== 0 && (
-                <div className={`flex items-center gap-1 text-xs font-light ${
-                  stat.change > 0 
-                    ? 'text-green-600' 
-                    : 'text-red-600'
-                }`}>
+                <div className={`flex items-center gap-1 text-xs font-light ${stat.change > 0
+                  ? 'text-green-600'
+                  : 'text-red-600'
+                  }`}>
                   {stat.change > 0 ? (
                     <TrendingUp className="w-2 h-2" />
                   ) : (
@@ -130,15 +146,15 @@ export default function StatsCards({ data, loading }: StatsCardsProps) {
                 </div>
               )}
             </div>
-            
+
             <div className="text-lg font-light text-gray-900 mb-1">
               {stat.value}
             </div>
-            
+
             <div className="text-xs font-light text-gray-500 mb-1">
               {stat.name}
             </div>
-            
+
             <div className="text-xs text-gray-400 font-light">
               {stat.changeText}
             </div>

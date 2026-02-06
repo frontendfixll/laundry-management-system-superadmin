@@ -185,7 +185,7 @@ export default function PolicyCreateModal({ isOpen, onClose, onSuccess }: Policy
       };
 
       await api.post('/superadmin/abac/policies', policyData);
-      
+
       toast.success('ABAC policy created successfully');
       onSuccess();
       onClose();
@@ -299,6 +299,9 @@ export default function PolicyCreateModal({ isOpen, onClose, onSuccess }: Policy
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create ABAC Policy</DialogTitle>
+          <div className="sr-only">
+            Create a new Attribute-Based Access Control policy by defining subject, action, resource, and environment attributes.
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

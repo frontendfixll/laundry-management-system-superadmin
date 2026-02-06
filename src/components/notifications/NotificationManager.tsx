@@ -18,15 +18,15 @@ interface NotificationManagerProps {
   maxNotifications?: number
 }
 
-const NotificationManager: React.FC<NotificationManagerProps> = ({ 
-  maxNotifications = 5 
+const NotificationManager: React.FC<NotificationManagerProps> = ({
+  maxNotifications = 5
 }) => {
   const [notifications, setNotifications] = useState<NotificationData[]>([])
 
   // Add notification function
   const addNotification = useCallback((notification: Omit<NotificationData, 'id' | 'timestamp'>) => {
-    console.log('📢 NotificationManager: Adding slide notification:', notification);
-    
+    // console.log('📢 NotificationManager: Adding slide notification:', notification);
+
     const newNotification: NotificationData = {
       ...notification,
       id: `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -36,7 +36,7 @@ const NotificationManager: React.FC<NotificationManagerProps> = ({
     setNotifications(prev => {
       // Remove oldest if exceeding max
       const updated = [newNotification, ...prev].slice(0, maxNotifications)
-      console.log('📢 NotificationManager: Updated notifications list, count:', updated.length);
+      // console.log('📢 NotificationManager: Updated notifications list, count:', updated.length);
       return updated
     })
 
@@ -54,7 +54,7 @@ const NotificationManager: React.FC<NotificationManagerProps> = ({
     try {
       // Create audio context for different sounds
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      
+
       // Different frequencies for different notification types
       const frequencies = {
         permission_update: 800,
@@ -69,62 +69,62 @@ const NotificationManager: React.FC<NotificationManagerProps> = ({
       }
 
       const frequency = frequencies[type] || 700
-      
+
       // Create oscillator for sound
       const oscillator = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
-      
+
       oscillator.connect(gainNode)
       gainNode.connect(audioContext.destination)
-      
+
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime)
       oscillator.type = 'sine'
-      
+
       // Sound envelope
       gainNode.gain.setValueAtTime(0, audioContext.currentTime)
       gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01)
       gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3)
-      
+
       oscillator.start(audioContext.currentTime)
       oscillator.stop(audioContext.currentTime + 0.3)
     } catch (error) {
-      console.log('Audio not supported or blocked')
+      // console.log('Audio not supported or blocked')
     }
   }
 
   // Expose addNotification globally for WebSocket integration
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      console.log('📢 NotificationManager: Exposing __addSlideNotification globally');
+      // console.log('📢 NotificationManager: Exposing __addSlideNotification globally');
       (window as any).__addSlideNotification = addNotification
-      
+
       // Listen for test messages
       const handleTestMessage = (event: MessageEvent) => {
         if (event.data.type === 'TEST_SLIDE_NOTIFICATION' && event.data.config) {
-          console.log('📨 Received test slide notification:', event.data.config);
+          // console.log('📨 Received test slide notification:', event.data.config);
           addNotification(event.data.config);
-          
+
           // Send confirmation back
           event.source?.postMessage({
             type: 'SLIDE_NOTIFICATION_RESULT',
             success: true,
             message: 'Slide notification displayed successfully'
-          }, event.origin);
+          }, { targetOrigin: event.origin });
         }
       };
-      
+
       window.addEventListener('message', handleTestMessage);
-      
+
       return () => {
         window.removeEventListener('message', handleTestMessage);
-        console.log('📢 NotificationManager: Cleaning up __addSlideNotification');
+        // console.log('📢 NotificationManager: Cleaning up __addSlideNotification');
         delete (window as any).__addSlideNotification;
       };
     }
-    
+
     return () => {
       if (typeof window !== 'undefined') {
-        console.log('📢 NotificationManager: Cleaning up __addSlideNotification');
+        // console.log('📢 NotificationManager: Cleaning up __addSlideNotification');
         delete (window as any).__addSlideNotification
       }
     }

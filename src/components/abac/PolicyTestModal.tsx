@@ -9,14 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Play, 
-  X, 
-  CheckCircle, 
-  AlertTriangle, 
-  Clock, 
-  User, 
-  Activity, 
+import {
+  Play,
+  X,
+  CheckCircle,
+  AlertTriangle,
+  Clock,
+  User,
+  Activity,
   Shield,
   Copy,
   RotateCcw
@@ -232,6 +232,9 @@ export default function PolicyTestModal({ isOpen, onClose }: PolicyTestModalProp
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Test ABAC Policies</DialogTitle>
+          <div className="sr-only">
+            Test interface for evaluating ABAC policies against different contexts and scenarios.
+          </div>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-6">
@@ -582,11 +585,10 @@ export default function PolicyTestModal({ isOpen, onClose }: PolicyTestModalProp
                       )}
                     </div>
                     <div className="text-center">
-                      <Badge className={`text-lg px-4 py-2 ${
-                        testResult.decision === 'ALLOW' 
-                          ? 'bg-green-100 text-green-800' 
+                      <Badge className={`text-lg px-4 py-2 ${testResult.decision === 'ALLOW'
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                      }`}>
+                        }`}>
                         {testResult.decision}
                       </Badge>
                       <p className="text-sm text-gray-600 mt-2">

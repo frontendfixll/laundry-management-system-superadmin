@@ -24,29 +24,23 @@ export interface User {
  * Determine which dashboard component to show based on user's primary role
  */
 export function getDashboardRoute(user: User): string {
-  console.log('🎯 Dashboard Router: Analyzing user for routing:', {
-    email: user.email,
-    legacyRole: user.role,
-    rolesCount: user.roles?.length || 0,
-    firstRoleName: user.roles?.[0]?.name,
-    firstRoleSlug: user.roles?.[0]?.slug
-  })
+  // Debug logs removed for production build
 
   if (!user.roles || user.roles.length === 0) {
     // Check legacy role field
     if (user.role === 'superadmin') {
-      console.log('🎯 Dashboard Router: Using legacy superadmin role → /dashboard')
+      // Debug log removed for production build
       return '/dashboard' // SuperAdmin main dashboard
     }
     if (user.role === 'support') {
-      console.log('🎯 Dashboard Router: Using legacy support role → /support-tickets')
+      // Debug log removed for production build
       return '/support-tickets' // Dedicated Support Tickets Dashboard
     }
     if (user.role === 'auditor') {
-      console.log('🎯 Dashboard Router: Using legacy auditor role → /audit')
+      // Debug log removed for production build
       return '/audit' // Dedicated audit dashboard
     }
-    console.log('🎯 Dashboard Router: No roles, defaulting to /dashboard')
+    // Debug log removed for production build
     return '/dashboard' // Default dashboard
   }
 
@@ -69,7 +63,7 @@ export function getDashboardRoute(user: User): string {
       (priorityRole === 'super-admin' && (role.slug === 'super_admin' || role.name === 'Super Admin'))
     )
     if (primaryRole) {
-      console.log('🎯 Dashboard Router: Found priority RBAC role:', primaryRole.name, 'slug:', primaryRole.slug)
+      // Debug log removed for production build
       break
     }
   }
@@ -81,47 +75,47 @@ export function getDashboardRoute(user: User): string {
 
     // Super Admin check
     if (roleSlug === 'super-admin' || roleSlug === 'super_admin' || roleName === 'Super Admin') {
-      console.log('🎯 Dashboard Router: Routing to SuperAdmin dashboard via RBAC')
+      // Debug log removed for production build
       return '/dashboard'
     }
 
     if (roleSlug === 'platform-finance-admin' || roleName === 'Platform Finance Admin') {
-      console.log('🎯 Dashboard Router: Routing to Finance Dashboard via RBAC')
+      // Debug log removed for production build
       return '/finance-dashboard'
     }
 
     if (roleSlug === 'platform-read-only-auditor' || roleName === 'Platform Read-Only Auditor' || roleName === 'Platform Auditor') {
-      console.log('🎯 Dashboard Router: Routing to Auditor Dashboard via RBAC')
+      // Debug log removed for production build
       return '/audit-dashboard'
     }
 
     if (roleSlug === 'platform-support' || roleName === 'Platform Support') {
-      console.log('🎯 Dashboard Router: Routing to Support Dashboard via RBAC')
+      // Debug log removed for production build
       return '/support-dashboard'
     }
 
     if (roleSlug === 'platform-sales' || roleName === 'Platform Sales') {
-      console.log('🎯 Dashboard Router: Routing to Sales Dashboard via RBAC')
+      // Debug log removed for production build
       return '/sales-dashboard'
     }
   }
 
   // LEGACY ROLE SYSTEM: Check legacy role only if no RBAC role found
   if (user.role === 'superadmin') {
-    console.log('🎯 Dashboard Router: Using legacy SuperAdmin role (no RBAC override)')
+    // Debug log removed for production build
     return '/dashboard' // SuperAdmin main dashboard
   }
 
   // LEGACY SUPPORT ROLE: Handle legacy support users
   if (user.role === 'support') {
-    console.log('🎯 Dashboard Router: Using legacy Support role (no RBAC override)')
+    // Debug log removed for production build
     return '/support-tickets' // Dedicated Support Tickets Dashboard
   }
 
   // If no priority role found, use first role
   if (!primaryRole && user.roles.length > 0) {
     primaryRole = user.roles[0]
-    console.log('🎯 Dashboard Router: Using first role as fallback:', primaryRole.name)
+    // Debug log removed for production build
   }
 
   // Route based on role slug AND name (matching roles.md specification)
@@ -130,7 +124,7 @@ export function getDashboardRoute(user: User): string {
     const roleName = primaryRole.name
 
     // For custom roles, determine by permissions
-    console.log('🎯 Dashboard Router: Using permissions-based routing for role:', roleName)
+    // Debug log removed for production build
     return getDashboardByPermissions(primaryRole)
   }
 

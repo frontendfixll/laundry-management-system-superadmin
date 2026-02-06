@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Shield, 
-  Clock, 
-  User, 
-  Activity, 
-  BarChart3, 
-  CheckCircle, 
+import {
+  Shield,
+  Clock,
+  User,
+  Activity,
+  BarChart3,
+  CheckCircle,
   AlertTriangle,
   X,
   Edit,
@@ -59,12 +59,12 @@ interface PolicyDetailsModalProps {
   onToggle?: (policyId: string) => void;
 }
 
-export default function PolicyDetailsModal({ 
-  policy, 
-  isOpen, 
-  onClose, 
-  onEdit, 
-  onToggle 
+export default function PolicyDetailsModal({
+  policy,
+  isOpen,
+  onClose,
+  onEdit,
+  onToggle
 }: PolicyDetailsModalProps) {
   if (!policy) return null;
 
@@ -148,7 +148,7 @@ export default function PolicyDetailsModal({
     </Card>
   );
 
-  const successRate = policy.evaluationCount > 0 
+  const successRate = policy.evaluationCount > 0
     ? ((policy.allowCount / policy.evaluationCount) * 100).toFixed(1)
     : '0';
 
@@ -161,15 +161,17 @@ export default function PolicyDetailsModal({
               {getCategoryIcon(policy.category)}
               {policy.name}
             </DialogTitle>
+            <div className="sr-only">
+              Details and statistics for ABAC policy: {policy.name}
+            </div>
             <div className="flex items-center gap-2">
               {policy.isActive ? (
                 <CheckCircle className="h-5 w-5 text-green-500" />
               ) : (
                 <AlertTriangle className="h-5 w-5 text-red-500" />
               )}
-              <span className={`text-sm font-medium ${
-                policy.isActive ? 'text-green-600' : 'text-red-600'
-              }`}>
+              <span className={`text-sm font-medium ${policy.isActive ? 'text-green-600' : 'text-red-600'
+                }`}>
                 {policy.isActive ? 'Active' : 'Inactive'}
               </span>
             </div>
@@ -197,7 +199,7 @@ export default function PolicyDetailsModal({
                   Version: {policy.version}
                 </Badge>
               </div>
-              
+
               <div>
                 <h4 className="font-medium mb-2">Description</h4>
                 <p className="text-gray-600">{policy.description}</p>
@@ -267,26 +269,26 @@ export default function PolicyDetailsModal({
 
             <div className="grid grid-cols-2 gap-4">
               {renderAttributeSection(
-                'Subject Attributes', 
-                policy.subjectAttributes, 
+                'Subject Attributes',
+                policy.subjectAttributes,
                 <User className="h-4 w-4" />
               )}
               {renderAttributeSection(
-                'Action Attributes', 
-                policy.actionAttributes, 
+                'Action Attributes',
+                policy.actionAttributes,
                 <Activity className="h-4 w-4" />
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               {renderAttributeSection(
-                'Resource Attributes', 
-                policy.resourceAttributes, 
+                'Resource Attributes',
+                policy.resourceAttributes,
                 <Shield className="h-4 w-4" />
               )}
               {renderAttributeSection(
-                'Environment Attributes', 
-                policy.environmentAttributes, 
+                'Environment Attributes',
+                policy.environmentAttributes,
                 <Clock className="h-4 w-4" />
               )}
             </div>

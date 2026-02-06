@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, TrendingUp, Eye, MousePointer, DollarSign, Users } from 'lucide-react';
 import { usePlatformAnalytics } from '@/hooks/useSuperAdminBanners';
+import PrivacyToggle from '../ui/PrivacyToggle';
 
 interface PlatformAnalyticsDashboardProps {
   isOpen: boolean;
@@ -121,9 +122,11 @@ export default function PlatformAnalyticsDashboard({ isOpen, onClose }: Platform
                     <DollarSign className="text-orange-600" size={24} />
                     <span className="text-xs font-medium text-orange-600">TOTAL REVENUE</span>
                   </div>
-                  <p className="text-3xl font-bold text-orange-900">
-                    ₹{analytics.totalRevenue?.toLocaleString() || 0}
-                  </p>
+                  <div className="text-3xl font-bold text-orange-900">
+                    <PrivacyToggle storageKey="analytics-revenue" className="w-full">
+                      ₹{analytics.totalRevenue?.toLocaleString() || 0}
+                    </PrivacyToggle>
+                  </div>
                 </div>
               </div>
 

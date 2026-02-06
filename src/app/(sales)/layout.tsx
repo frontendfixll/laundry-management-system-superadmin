@@ -21,6 +21,8 @@ import NotificationBell from '@/components/layout/NotificationBell'
 import ProgressLoader from '@/components/ui/ProgressLoader'
 import { useLoadingProgress } from '@/hooks/useLoadingProgress'
 
+import { APP_VERSION } from '@/lib/version'
+
 export default function SalesLayout({
   children,
 }: {

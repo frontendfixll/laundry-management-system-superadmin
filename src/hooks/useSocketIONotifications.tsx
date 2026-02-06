@@ -106,27 +106,27 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
 
   // Play notification sound for SuperAdmin
   const playNotificationSound = useCallback((priority: string) => {
-    try {
-      let soundFile = '/notification-sound.mp3';
+    // try {
+    //   let soundFile = '/notification-sound.mp3';
 
-      // Different sounds for different priorities
-      if (priority === 'P0') {
-        soundFile = '/critical-alert.mp3'; // Fallback to default if not found
-      } else if (priority === 'P1') {
-        soundFile = '/high-priority.mp3'; // Fallback to default if not found
-      }
+    //   // Different sounds for different priorities
+    //   if (priority === 'P0') {
+    //     soundFile = '/critical-alert.mp3'; // Fallback to default if not found
+    //   } else if (priority === 'P1') {
+    //     soundFile = '/high-priority.mp3'; // Fallback to default if not found
+    //   }
 
-      const audio = new Audio(soundFile);
-      audio.volume = priority === 'P0' ? 0.8 : 0.5;
-      audio.play().catch(() => {
-        // Fallback to default sound
-        const fallbackAudio = new Audio('/notification-sound.mp3');
-        fallbackAudio.volume = 0.5;
-        fallbackAudio.play().catch(() => { });
-      });
-    } catch (error) {
-      console.warn('Could not play notification sound:', error);
-    }
+    //   const audio = new Audio(soundFile);
+    //   audio.volume = priority === 'P0' ? 0.8 : 0.5;
+    //   audio.play().catch(() => {
+    //     // Fallback to default sound
+    //     const fallbackAudio = new Audio('/notification-sound.mp3');
+    //     fallbackAudio.volume = 0.5;
+    //     fallbackAudio.play().catch(() => { });
+    //   });
+    // } catch (error) {
+    //   // console.warn('Could not play notification sound:', error);
+    // }
   }, []);
 
   // Handle new notification with SuperAdmin-specific treatment
@@ -158,7 +158,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
       // DEDUPLICATION: Check if this notification already exists
       const exists = prev.some(n => (n.id === notification.id) || (n._id === notification.id));
       if (exists) {
-        console.log(`♻️ Skipping duplicate SuperAdmin notification: ${notification.id}`);
+        // console.log(`♻️ Skipping duplicate SuperAdmin notification: ${notification.id}`);
         return prev;
       }
 
@@ -238,7 +238,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
     if (!user || !token) return;
 
     try {
-      console.log('🔄 Fetching SuperAdmin notifications...');
+      // console.log('🔄 Fetching SuperAdmin notifications...');
       const data = await superAdminApi.getNotifications() as any;
       const list = data?.data?.notifications ?? data?.notifications ?? [];
 
@@ -253,10 +253,10 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
         }));
         setNotifications(mapped);
         setStats(calculateStats(mapped));
-        console.log(`✅ Loaded ${mapped.length} SuperAdmin notifications`);
+        // console.log(`✅ Loaded ${mapped.length} SuperAdmin notifications`);
       }
     } catch (error) {
-      console.error('❌ Failed to fetch SuperAdmin notifications:', error);
+      // console.error('❌ Failed to fetch SuperAdmin notifications:', error);
     }
   }, [user, token, calculateStats]);
 
@@ -288,7 +288,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
 
       // Connection events
       socket.on('connect', () => {
-        console.log(`✅ SuperAdmin Socket.IO connected: ${socket.id} for user: ${user?._id || 'unknown'}`);
+        // console.log(`✅ SuperAdmin Socket.IO connected: ${socket.id} for user: ${user?._id || 'unknown'}`);
         setIsConnected(true);
         setIsConnecting(false);
         setConnectionError(null);
@@ -302,7 +302,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
       });
 
       socket.on('disconnect', (reason) => {
-        console.log('🔌 SuperAdmin Socket.IO disconnected:', reason);
+        // console.log('🔌 SuperAdmin Socket.IO disconnected:', reason);
         setIsConnected(false);
         setIsConnecting(false);
 
@@ -313,7 +313,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
       });
 
       socket.on('connect_error', (error) => {
-        console.error('❌ SuperAdmin Socket.IO connection error:', error);
+        // console.error('❌ SuperAdmin Socket.IO connection error:', error);
         setIsConnected(false);
         setIsConnecting(false);
         setConnectionError(error.message);
@@ -379,18 +379,18 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
 
       // Acknowledgment confirmation
       socket.on('ack_confirmed', (data) => {
-        console.log('✅ SuperAdmin acknowledgment confirmed:', data);
+        // console.log('✅ SuperAdmin acknowledgment confirmed:', data);
         toast.success('Critical alert acknowledged');
       });
 
       // Error handling
       socket.on('ack_error', (error) => {
-        console.error('❌ SuperAdmin acknowledgment error:', error);
+        // console.error('❌ SuperAdmin acknowledgment error:', error);
         toast.error('Failed to acknowledge alert');
       });
 
     } catch (error) {
-      console.error('❌ Failed to create SuperAdmin socket connection:', error);
+      // console.error('❌ Failed to create SuperAdmin socket connection:', error);
       setIsConnecting(false);
       setConnectionError('Failed to create connection');
       scheduleReconnect();
@@ -404,7 +404,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
     }
 
     reconnectTimeoutRef.current = setTimeout(() => {
-      console.log('🔄 SuperAdmin attempting to reconnect...');
+      // console.log('🔄 SuperAdmin attempting to reconnect...');
       connect();
     }, 5000);
   }, [connect]);
@@ -440,7 +440,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
 
     // Notify backend
     superAdminApi.markNotificationAsRead(notificationId).catch(err => {
-      console.error('Failed to sync markAsRead to backend:', err);
+      // console.error('Failed to sync markAsRead to backend:', err);
     });
   }, [calculateStats]);
 
@@ -458,7 +458,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
 
     // Notify backend
     superAdminApi.markAllNotificationsAsRead().catch(err => {
-      console.error('Failed to sync markAllAsRead to backend:', err);
+      // console.error('Failed to sync markAllAsRead to backend:', err);
     });
   }, [calculateStats]);
 
@@ -475,7 +475,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
       await superAdminApi.clearAllNotifications();
       toast.success('All platform alerts cleared');
     } catch (err) {
-      console.error('Failed to sync clearNotifications to backend:', err);
+      // console.error('Failed to sync clearNotifications to backend:', err);
       toast.error('Failed to clear alerts from server');
     }
   }, []);
