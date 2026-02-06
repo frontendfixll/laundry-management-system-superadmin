@@ -125,30 +125,30 @@ export function AddOnCreateModal({ open, onClose, onSubmit }: AddOnCreateModalPr
   const handleFormSubmit = async (data: AddOnFormData) => {
     try {
       setLoading(true)
-      console.log('🔍 Form data being submitted:', data)
-      
+      // console.log('🔍 Form data being submitted:', data)
+
       // Check if we're missing required pricing based on billing cycle
       const billingCycle = data.billingCycle;
       let missingFields = [];
-      
+
       if (billingCycle === 'monthly' && (!data.pricing?.monthly || data.pricing.monthly <= 0)) {
         missingFields.push('Monthly pricing is required for monthly billing cycle');
       }
-      
+
       if (billingCycle === 'yearly' && (!data.pricing?.yearly || data.pricing.yearly <= 0)) {
         missingFields.push('Yearly pricing is required for yearly billing cycle');
       }
-      
+
       if (billingCycle === 'one-time' && (!data.pricing?.oneTime || data.pricing.oneTime <= 0)) {
         missingFields.push('One-time pricing is required for one-time billing cycle');
       }
-      
+
       if (missingFields.length > 0) {
         toast.error('Please complete all required fields', {
           duration: 4000,
           position: 'top-right',
         });
-        
+
         // Show individual field errors
         missingFields.forEach((field, index) => {
           setTimeout(() => {
@@ -158,17 +158,17 @@ export function AddOnCreateModal({ open, onClose, onSubmit }: AddOnCreateModalPr
             });
           }, index * 500); // Stagger the messages
         });
-        
+
         // Switch to pricing tab if pricing is missing
         if (missingFields.some(field => field.includes('pricing'))) {
           setActiveTab('pricing');
         }
         return;
       }
-      
+
       // Generate slug from name if not provided
       const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      
+
       const processedData = {
         ...data,
         slug, // Explicitly set the slug
@@ -186,9 +186,9 @@ export function AddOnCreateModal({ open, onClose, onSubmit }: AddOnCreateModalPr
         features: data.features || [],
         useCases: data.useCases || []
       }
-      
-      console.log('🔍 Processed data being submitted:', processedData)
-      
+
+      // console.log('🔍 Processed data being submitted:', processedData)
+
       await onSubmit(processedData)
       toast.success('Add-on created successfully!', {
         duration: 3000,
@@ -197,7 +197,7 @@ export function AddOnCreateModal({ open, onClose, onSubmit }: AddOnCreateModalPr
       form.reset()
       onClose()
     } catch (error) {
-      console.error('❌ Failed to create add-on:', error)
+      // console.error('❌ Failed to create add-on:', error)
       toast.error(`Failed to create add-on: ${error instanceof Error ? error.message : 'Unknown error'}`, {
         duration: 5000,
         position: 'top-right',
@@ -223,13 +223,13 @@ export function AddOnCreateModal({ open, onClose, onSubmit }: AddOnCreateModalPr
     if (key.trim()) {
       const currentFeatures = watchedConfigFeatures
       const existingIndex = currentFeatures.findIndex(f => f.key === key)
-      
+
       if (existingIndex >= 0) {
         currentFeatures[existingIndex].value = value
       } else {
         currentFeatures.push({ key: key.trim(), value })
       }
-      
+
       setValue('config.features', [...currentFeatures])
     }
   }
@@ -271,498 +271,498 @@ export function AddOnCreateModal({ open, onClose, onSubmit }: AddOnCreateModalPr
                   <TabsTrigger value="settings">Settings</TabsTrigger>
                 </TabsList>
 
-              <TabsContent value="basic" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Internal Name *</Label>
+                      <Input
+                        id="name"
+                        {...register('name')}
+                        placeholder="e.g., extra-branch"
+                      />
+                      {errors.name && (
+                        <p className="text-sm text-red-600">{errors.name.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="displayName">Display Name *</Label>
+                      <Input
+                        id="displayName"
+                        {...register('displayName')}
+                        placeholder="e.g., Extra Branch"
+                      />
+                      {errors.displayName && (
+                        <p className="text-sm text-red-600">{errors.displayName.message}</p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="name">Internal Name *</Label>
-                    <Input
-                      id="name"
-                      {...register('name')}
-                      placeholder="e.g., extra-branch"
+                    <Label htmlFor="description">Description *</Label>
+                    <Textarea
+                      id="description"
+                      {...register('description')}
+                      placeholder="Detailed description of what this add-on provides..."
+                      rows={3}
                     />
-                    {errors.name && (
-                      <p className="text-sm text-red-600">{errors.name.message}</p>
+                    {errors.description && (
+                      <p className="text-sm text-red-600">{errors.description.message}</p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="displayName">Display Name *</Label>
+                    <Label htmlFor="shortDescription">Short Description</Label>
                     <Input
-                      id="displayName"
-                      {...register('displayName')}
-                      placeholder="e.g., Extra Branch"
+                      id="shortDescription"
+                      {...register('shortDescription')}
+                      placeholder="Brief one-line description"
                     />
-                    {errors.displayName && (
-                      <p className="text-sm text-red-600">{errors.displayName.message}</p>
-                    )}
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description *</Label>
-                  <Textarea
-                    id="description"
-                    {...register('description')}
-                    placeholder="Detailed description of what this add-on provides..."
-                    rows={3}
-                  />
-                  {errors.description && (
-                    <p className="text-sm text-red-600">{errors.description.message}</p>
-                  )}
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category *</Label>
+                      <Select
+                        value={watchedCategory}
+                        onValueChange={(value) => setValue('category', value as any)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="capacity">Capacity</SelectItem>
+                          <SelectItem value="feature">Feature</SelectItem>
+                          <SelectItem value="usage">Usage</SelectItem>
+                          <SelectItem value="branding">Branding</SelectItem>
+                          <SelectItem value="integration">Integration</SelectItem>
+                          <SelectItem value="support">Support</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.category && (
+                        <p className="text-sm text-red-600">{errors.category.message}</p>
+                      )}
+                      {errors.category && (
+                        <p className="text-sm text-red-600">{errors.category.message}</p>
+                      )}
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="shortDescription">Short Description</Label>
-                  <Input
-                    id="shortDescription"
-                    {...register('shortDescription')}
-                    placeholder="Brief one-line description"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subcategory">Subcategory</Label>
+                      <Input
+                        id="subcategory"
+                        {...register('subcategory')}
+                        placeholder="e.g., locations, users"
+                      />
+                    </div>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="icon">Icon</Label>
+                      <Input
+                        id="icon"
+                        {...register('icon')}
+                        placeholder="Lucide icon name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="color">Color</Label>
+                      <Input
+                        id="color"
+                        {...register('color')}
+                        type="color"
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="pricing" className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category *</Label>
-                    <Select 
-                      value={watchedCategory}
-                      onValueChange={(value) => setValue('category', value as any)}
+                    <Label htmlFor="billingCycle">Billing Cycle *</Label>
+                    <Select
+                      value={watchedBillingCycle}
+                      onValueChange={(value) => setValue('billingCycle', value as any)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="Select billing cycle" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="capacity">Capacity</SelectItem>
-                        <SelectItem value="feature">Feature</SelectItem>
-                        <SelectItem value="usage">Usage</SelectItem>
-                        <SelectItem value="branding">Branding</SelectItem>
-                        <SelectItem value="integration">Integration</SelectItem>
-                        <SelectItem value="support">Support</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                        <SelectItem value="one-time">One-time</SelectItem>
+                        <SelectItem value="usage-based">Usage-based</SelectItem>
                       </SelectContent>
                     </Select>
-                    {errors.category && (
-                      <p className="text-sm text-red-600">{errors.category.message}</p>
-                    )}
-                    {errors.category && (
-                      <p className="text-sm text-red-600">{errors.category.message}</p>
+                    {errors.billingCycle && (
+                      <p className="text-sm text-red-600">{errors.billingCycle.message}</p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="subcategory">Subcategory</Label>
-                    <Input
-                      id="subcategory"
-                      {...register('subcategory')}
-                      placeholder="e.g., locations, users"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="icon">Icon</Label>
-                    <Input
-                      id="icon"
-                      {...register('icon')}
-                      placeholder="Lucide icon name"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="color">Color</Label>
-                    <Input
-                      id="color"
-                      {...register('color')}
-                      type="color"
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="pricing" className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="billingCycle">Billing Cycle *</Label>
-                  <Select 
-                    value={watchedBillingCycle}
-                    onValueChange={(value) => setValue('billingCycle', value as any)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select billing cycle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="yearly">Yearly</SelectItem>
-                      <SelectItem value="one-time">One-time</SelectItem>
-                      <SelectItem value="usage-based">Usage-based</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.billingCycle && (
-                    <p className="text-sm text-red-600">{errors.billingCycle.message}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  {(watchedBillingCycle === 'monthly' || watchedBillingCycle === 'yearly') && (
-                    <div className="space-y-2">
-                      <Label htmlFor="pricing.monthly">Monthly Price (₹) *</Label>
-                      <Input
-                        id="pricing.monthly"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        {...register('pricing.monthly', { 
-                          valueAsNumber: true,
-                          required: watchedBillingCycle === 'monthly' ? 'Monthly price is required' : false,
-                          min: { value: 0.01, message: 'Price must be greater than 0' }
-                        })}
-                        placeholder="99"
-                      />
-                      {errors.pricing?.monthly && (
-                        <p className="text-sm text-red-600">{errors.pricing.monthly.message}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {watchedBillingCycle === 'yearly' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="pricing.yearly">Yearly Price (₹) *</Label>
-                      <Input
-                        id="pricing.yearly"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        {...register('pricing.yearly', { 
-                          valueAsNumber: true,
-                          required: watchedBillingCycle === 'yearly' ? 'Yearly price is required' : false,
-                          min: { value: 0.01, message: 'Price must be greater than 0' }
-                        })}
-                        placeholder="999"
-                      />
-                      {errors.pricing?.yearly && (
-                        <p className="text-sm text-red-600">{errors.pricing.yearly.message}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {watchedBillingCycle === 'one-time' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="pricing.oneTime">One-time Price (₹) *</Label>
-                      <Input
-                        id="pricing.oneTime"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        {...register('pricing.oneTime', { 
-                          valueAsNumber: true,
-                          required: watchedBillingCycle === 'one-time' ? 'One-time price is required' : false,
-                          min: { value: 0.01, message: 'Price must be greater than 0' }
-                        })}
-                        placeholder="499"
-                      />
-                      {errors.pricing?.oneTime && (
-                        <p className="text-sm text-red-600">{errors.pricing.oneTime.message}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {watchedBillingCycle === 'usage-based' && (
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      Usage-based add-ons are charged based on consumption. Configure usage settings in the Configuration tab.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </TabsContent>
-
-              <TabsContent value="config" className="space-y-4">
-                {watchedCategory === 'capacity' && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Capacity Configuration</CardTitle>
-                      <CardDescription>
-                        Configure how this add-on increases capacity limits
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="config.capacity.feature">Feature Key</Label>
-                          <Input
-                            id="config.capacity.feature"
-                            {...register('config.capacity.feature')}
-                            placeholder="e.g., max_branches"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="config.capacity.increment">Increment</Label>
-                          <Input
-                            id="config.capacity.increment"
-                            type="number"
-                            {...register('config.capacity.increment', { valueAsNumber: true })}
-                            placeholder="1"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="config.capacity.unit">Unit</Label>
-                          <Input
-                            id="config.capacity.unit"
-                            {...register('config.capacity.unit')}
-                            placeholder="e.g., branches"
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {watchedCategory === 'feature' && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Feature Configuration</CardTitle>
-                      <CardDescription>
-                        Configure which features this add-on unlocks
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    {(watchedBillingCycle === 'monthly' || watchedBillingCycle === 'yearly') && (
                       <div className="space-y-2">
-                        <Label>Features</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Feature key (e.g., campaigns)"
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                const input = e.target as HTMLInputElement
+                        <Label htmlFor="pricing.monthly">Monthly Price (₹) *</Label>
+                        <Input
+                          id="pricing.monthly"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          {...register('pricing.monthly', {
+                            valueAsNumber: true,
+                            required: watchedBillingCycle === 'monthly' ? 'Monthly price is required' : false,
+                            min: { value: 0.01, message: 'Price must be greater than 0' }
+                          })}
+                          placeholder="99"
+                        />
+                        {errors.pricing?.monthly && (
+                          <p className="text-sm text-red-600">{errors.pricing.monthly.message}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {watchedBillingCycle === 'yearly' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="pricing.yearly">Yearly Price (₹) *</Label>
+                        <Input
+                          id="pricing.yearly"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          {...register('pricing.yearly', {
+                            valueAsNumber: true,
+                            required: watchedBillingCycle === 'yearly' ? 'Yearly price is required' : false,
+                            min: { value: 0.01, message: 'Price must be greater than 0' }
+                          })}
+                          placeholder="999"
+                        />
+                        {errors.pricing?.yearly && (
+                          <p className="text-sm text-red-600">{errors.pricing.yearly.message}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {watchedBillingCycle === 'one-time' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="pricing.oneTime">One-time Price (₹) *</Label>
+                        <Input
+                          id="pricing.oneTime"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          {...register('pricing.oneTime', {
+                            valueAsNumber: true,
+                            required: watchedBillingCycle === 'one-time' ? 'One-time price is required' : false,
+                            min: { value: 0.01, message: 'Price must be greater than 0' }
+                          })}
+                          placeholder="499"
+                        />
+                        {errors.pricing?.oneTime && (
+                          <p className="text-sm text-red-600">{errors.pricing.oneTime.message}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {watchedBillingCycle === 'usage-based' && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        Usage-based add-ons are charged based on consumption. Configure usage settings in the Configuration tab.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="config" className="space-y-4">
+                  {watchedCategory === 'capacity' && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Capacity Configuration</CardTitle>
+                        <CardDescription>
+                          Configure how this add-on increases capacity limits
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="config.capacity.feature">Feature Key</Label>
+                            <Input
+                              id="config.capacity.feature"
+                              {...register('config.capacity.feature')}
+                              placeholder="e.g., max_branches"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="config.capacity.increment">Increment</Label>
+                            <Input
+                              id="config.capacity.increment"
+                              type="number"
+                              {...register('config.capacity.increment', { valueAsNumber: true })}
+                              placeholder="1"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="config.capacity.unit">Unit</Label>
+                            <Input
+                              id="config.capacity.unit"
+                              {...register('config.capacity.unit')}
+                              placeholder="e.g., branches"
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {watchedCategory === 'feature' && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Feature Configuration</CardTitle>
+                        <CardDescription>
+                          Configure which features this add-on unlocks
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Features</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Feature key (e.g., campaigns)"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  const input = e.target as HTMLInputElement
+                                  addConfigFeature(input.value, true)
+                                  input.value = ''
+                                }
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={(e) => {
+                                const input = (e.target as HTMLElement).previousElementSibling as HTMLInputElement
                                 addConfigFeature(input.value, true)
                                 input.value = ''
-                              }
-                            }}
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {watchedConfigFeatures.map((feature, index) => (
+                              <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                                {feature.key}
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0"
+                                  onClick={() => removeConfigFeature(index)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {watchedCategory === 'usage' && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Usage Configuration</CardTitle>
+                        <CardDescription>
+                          Configure usage-based settings
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="config.usage.type">Usage Type</Label>
+                            <Select onValueChange={(value) => setValue('config.usage.type', value as any)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="credits">Credits</SelectItem>
+                                <SelectItem value="quota">Quota</SelectItem>
+                                <SelectItem value="allowance">Allowance</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="config.usage.amount">Amount</Label>
+                            <Input
+                              id="config.usage.amount"
+                              type="number"
+                              {...register('config.usage.amount', { valueAsNumber: true })}
+                              placeholder="1000"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="config.usage.unit">Unit</Label>
+                            <Input
+                              id="config.usage.unit"
+                              {...register('config.usage.unit')}
+                              placeholder="e.g., sms, emails"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="config.usage.lowBalanceThreshold">Low Balance Threshold</Label>
+                            <Input
+                              id="config.usage.lowBalanceThreshold"
+                              type="number"
+                              {...register('config.usage.lowBalanceThreshold', { valueAsNumber: true })}
+                              placeholder="10"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="config.usage.autoRenew"
+                            onCheckedChange={(checked) => setValue('config.usage.autoRenew', checked)}
                           />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={(e) => {
-                              const input = (e.target as HTMLElement).previousElementSibling as HTMLInputElement
-                              addConfigFeature(input.value, true)
-                              input.value = ''
-                            }}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                          <Label htmlFor="config.usage.autoRenew">Auto-renew when low</Label>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {watchedConfigFeatures.map((feature, index) => (
-                            <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                              {feature.key}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-4 w-4 p-0"
-                                onClick={() => removeConfigFeature(index)}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
 
-                {watchedCategory === 'usage' && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Usage Configuration</CardTitle>
-                      <CardDescription>
-                        Configure usage-based settings
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="config.usage.type">Usage Type</Label>
-                          <Select onValueChange={(value) => setValue('config.usage.type', value as any)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="credits">Credits</SelectItem>
-                              <SelectItem value="quota">Quota</SelectItem>
-                              <SelectItem value="allowance">Allowance</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="config.usage.amount">Amount</Label>
-                          <Input
-                            id="config.usage.amount"
-                            type="number"
-                            {...register('config.usage.amount', { valueAsNumber: true })}
-                            placeholder="1000"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="config.usage.unit">Unit</Label>
-                          <Input
-                            id="config.usage.unit"
-                            {...register('config.usage.unit')}
-                            placeholder="e.g., sms, emails"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="config.usage.lowBalanceThreshold">Low Balance Threshold</Label>
-                          <Input
-                            id="config.usage.lowBalanceThreshold"
-                            type="number"
-                            {...register('config.usage.lowBalanceThreshold', { valueAsNumber: true })}
-                            placeholder="10"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="config.usage.autoRenew"
-                          onCheckedChange={(checked) => setValue('config.usage.autoRenew', checked)}
-                        />
-                        <Label htmlFor="config.usage.autoRenew">Auto-renew when low</Label>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
+                <TabsContent value="marketing" className="space-y-4">
+                  <ArrayField
+                    label="Tags"
+                    items={watchedTags}
+                    onAdd={(value) => addArrayItem('tags', value)}
+                    onRemove={(index) => removeArrayItem('tags', index)}
+                    placeholder="Add tag..."
+                  />
 
-              <TabsContent value="marketing" className="space-y-4">
-                <ArrayField
-                  label="Tags"
-                  items={watchedTags}
-                  onAdd={(value) => addArrayItem('tags', value)}
-                  onRemove={(index) => removeArrayItem('tags', index)}
-                  placeholder="Add tag..."
-                />
+                  <ArrayField
+                    label="Benefits"
+                    items={watchedBenefits}
+                    onAdd={(value) => addArrayItem('benefits', value)}
+                    onRemove={(index) => removeArrayItem('benefits', index)}
+                    placeholder="Add benefit..."
+                  />
 
-                <ArrayField
-                  label="Benefits"
-                  items={watchedBenefits}
-                  onAdd={(value) => addArrayItem('benefits', value)}
-                  onRemove={(index) => removeArrayItem('benefits', index)}
-                  placeholder="Add benefit..."
-                />
+                  <ArrayField
+                    label="Features"
+                    items={watchedFeatures}
+                    onAdd={(value) => addArrayItem('features', value)}
+                    onRemove={(index) => removeArrayItem('features', index)}
+                    placeholder="Add feature..."
+                  />
 
-                <ArrayField
-                  label="Features"
-                  items={watchedFeatures}
-                  onAdd={(value) => addArrayItem('features', value)}
-                  onRemove={(index) => removeArrayItem('features', index)}
-                  placeholder="Add feature..."
-                />
+                  <ArrayField
+                    label="Use Cases"
+                    items={watchedUseCases}
+                    onAdd={(value) => addArrayItem('useCases', value)}
+                    onRemove={(index) => removeArrayItem('useCases', index)}
+                    placeholder="Add use case..."
+                  />
+                </TabsContent>
 
-                <ArrayField
-                  label="Use Cases"
-                  items={watchedUseCases}
-                  onAdd={(value) => addArrayItem('useCases', value)}
-                  onRemove={(index) => removeArrayItem('useCases', index)}
-                  placeholder="Add use case..."
-                />
-              </TabsContent>
+                <TabsContent value="settings" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select onValueChange={(value) => setValue('status', value as any)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="hidden">Hidden</SelectItem>
+                          <SelectItem value="deprecated">Deprecated</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              <TabsContent value="settings" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select onValueChange={(value) => setValue('status', value as any)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="hidden">Hidden</SelectItem>
-                        <SelectItem value="deprecated">Deprecated</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <Label htmlFor="sortOrder">Sort Order</Label>
+                      <Input
+                        id="sortOrder"
+                        type="number"
+                        {...register('sortOrder', { valueAsNumber: true })}
+                        placeholder="0"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="sortOrder">Sort Order</Label>
-                    <Input
-                      id="sortOrder"
-                      type="number"
-                      {...register('sortOrder', { valueAsNumber: true })}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="trialDays">Trial Days</Label>
+                      <Input
+                        id="trialDays"
+                        type="number"
+                        {...register('trialDays', { valueAsNumber: true })}
+                        placeholder="0"
+                      />
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="trialDays">Trial Days</Label>
-                    <Input
-                      id="trialDays"
-                      type="number"
-                      {...register('trialDays', { valueAsNumber: true })}
-                      placeholder="0"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="maxQuantity">Max Quantity</Label>
-                    <Input
-                      id="maxQuantity"
-                      type="number"
-                      {...register('maxQuantity', { valueAsNumber: true })}
-                      placeholder="1"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isPopular"
-                      onCheckedChange={(checked) => setValue('isPopular', checked)}
-                    />
-                    <Label htmlFor="isPopular">Mark as Popular</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="maxQuantity">Max Quantity</Label>
+                      <Input
+                        id="maxQuantity"
+                        type="number"
+                        {...register('maxQuantity', { valueAsNumber: true })}
+                        placeholder="1"
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isRecommended"
-                      onCheckedChange={(checked) => setValue('isRecommended', checked)}
-                    />
-                    <Label htmlFor="isRecommended">Mark as Recommended</Label>
-                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="isPopular"
+                        onCheckedChange={(checked) => setValue('isPopular', checked)}
+                      />
+                      <Label htmlFor="isPopular">Mark as Popular</Label>
+                    </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isFeatured"
-                      onCheckedChange={(checked) => setValue('isFeatured', checked)}
-                    />
-                    <Label htmlFor="isFeatured">Mark as Featured</Label>
-                  </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="isRecommended"
+                        onCheckedChange={(checked) => setValue('isRecommended', checked)}
+                      />
+                      <Label htmlFor="isRecommended">Mark as Recommended</Label>
+                    </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="showOnMarketplace"
-                      onCheckedChange={(checked) => setValue('showOnMarketplace', checked)}
-                      defaultChecked
-                    />
-                    <Label htmlFor="showOnMarketplace">Show on Marketplace</Label>
-                  </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="isFeatured"
+                        onCheckedChange={(checked) => setValue('isFeatured', checked)}
+                      />
+                      <Label htmlFor="isFeatured">Mark as Featured</Label>
+                    </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="showOnPricingPage"
-                      onCheckedChange={(checked) => setValue('showOnPricingPage', checked)}
-                    />
-                    <Label htmlFor="showOnPricingPage">Show on Pricing Page</Label>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="showOnMarketplace"
+                        onCheckedChange={(checked) => setValue('showOnMarketplace', checked)}
+                        defaultChecked
+                      />
+                      <Label htmlFor="showOnMarketplace">Show on Marketplace</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="showOnPricingPage"
+                        onCheckedChange={(checked) => setValue('showOnPricingPage', checked)}
+                      />
+                      <Label htmlFor="showOnPricingPage">Show on Pricing Page</Label>
+                    </div>
                   </div>
-                </div>
-              </TabsContent>
+                </TabsContent>
               </Tabs>
             </div>
           </div>

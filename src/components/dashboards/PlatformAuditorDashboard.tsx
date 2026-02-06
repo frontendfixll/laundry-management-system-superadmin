@@ -65,10 +65,10 @@ export function PlatformAuditorDashboard() {
     const fetchAuditData = async () => {
       try {
         setLoading(true)
-        
+
         // Fetch real audit data from backend using superAdminApi
         const data = await superAdminApi.getAuditDashboard()
-        
+
         if (data.success) {
           // Use real data from backend
           setMetrics({
@@ -129,14 +129,14 @@ export function PlatformAuditorDashboard() {
               nextReview: '2024-01-24'
             }
           ])
-          
-          console.log('✅ Successfully loaded real audit data')
+
+          // console.log('✅ Successfully loaded real audit data')
         } else {
           throw new Error(data.message || 'Failed to fetch audit data')
         }
       } catch (error) {
-        console.error('❌ Error fetching audit data:', error)
-        
+        // console.error('❌ Error fetching audit data:', error)
+
         // Show empty state instead of mock data
         setMetrics({
           totalAuditLogs: 0,

@@ -6,11 +6,9 @@ class SuperAdminAPI {
 
     // Try unified auth-storage (new unified store)
     const authData = localStorage.getItem('auth-storage')
-    console.log('🔍 auth-storage:', authData ? 'found' : 'not found')
     if (authData) {
       try {
         const parsed = JSON.parse(authData)
-        console.log('🔍 Parsed auth-storage:', { hasState: !!parsed.state, hasToken: !!parsed.state?.token })
         token = parsed.state?.token || parsed.token
       } catch (e) {
         console.error('Error parsing auth-storage:', e)
@@ -34,8 +32,6 @@ class SuperAdminAPI {
     if (!token) {
       token = localStorage.getItem('superadmin-token') || localStorage.getItem('superAdminToken') || localStorage.getItem('token')
     }
-
-    console.log('🔑 Final token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN')
 
     return {
       'Content-Type': 'application/json',
@@ -63,7 +59,7 @@ class SuperAdminAPI {
     if (!response.ok) {
       // Handle 401 Unauthorized - auto logout
       if (response.status === 401) {
-        console.log('🔴 401 Unauthorized - clearing auth data')
+        // console.log('🔴 401 Unauthorized - clearing auth data')
         this.clearAuthData()
         // Redirect to login
         if (typeof window !== 'undefined') {

@@ -114,7 +114,7 @@ export function useAdminDashboard() {
     } catch (err: any) {
       // Don't show error for permission denied - handle silently
       if (err?.response?.status === 403) {
-        console.log('Dashboard: Permission denied, showing limited view')
+        // console.log('Dashboard: Permission denied, showing limited view')
         setMetrics(null)
         setRecentOrders([])
       } else {
@@ -345,7 +345,7 @@ export function useLogisticsPartners() {
       const response = await adminApi.getLogisticsPartners()
       setPartners(response.data?.partners || response.data || [])
     } catch (err) {
-      console.error('Failed to fetch logistics partners:', err)
+      // console.error('Failed to fetch logistics partners:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch logistics partners')
       // Fallback to empty array if API fails
       setPartners([])

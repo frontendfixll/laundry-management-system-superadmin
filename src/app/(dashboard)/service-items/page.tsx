@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/ui/Pagination'
+import { RevenueCard } from '@/components/ui/RevenueCard'
 import { Plus, Edit2, Trash2, Loader2, Search, X, Save, Package } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -377,32 +378,62 @@ export default function SuperAdminServiceItemsPage() {
                   </td>
                   <td className="px-4 py-3 text-center text-sm">
                     {item.prices.wash_fold?.price ? (
-                      <span className="text-gray-800 font-medium">₹{item.prices.wash_fold.price}</span>
+                      <RevenueCard
+                        title=""
+                        amount={`₹${item.prices.wash_fold.price}`}
+                        storageKey={`service-price-${item._id}-wash-fold`}
+                        className="bg-transparent p-0 text-center inline-block"
+                      />
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-center text-sm">
                     {item.prices.wash_iron?.price ? (
-                      <span className="text-gray-800 font-medium">₹{item.prices.wash_iron.price}</span>
+                      <RevenueCard
+                        title=""
+                        amount={`₹${item.prices.wash_iron.price}`}
+                        storageKey={`service-price-${item._id}-wash-iron`}
+                        className="bg-transparent p-0 text-center inline-block"
+                      />
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-center text-sm">
                     {item.prices.dry_clean?.price ? (
-                      <span className="text-gray-800 font-medium">₹{item.prices.dry_clean.price}</span>
+                      <RevenueCard
+                        title=""
+                        amount={`₹${item.prices.dry_clean.price}`}
+                        storageKey={`service-price-${item._id}-dry-clean`}
+                        className="bg-transparent p-0 text-center inline-block"
+                      />
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-center text-sm">
                     {item.prices.steam_press?.price ? (
-                      <span className="text-gray-800 font-medium">₹{item.prices.steam_press.price}</span>
+                      <RevenueCard
+                        title=""
+                        amount={`₹${item.prices.steam_press.price}`}
+                        storageKey={`service-price-${item._id}-steam-press`}
+                        className="bg-transparent p-0 text-center inline-block"
+                      />
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-center text-sm">
                     {item.prices.starching?.price ? (
-                      <span className="text-gray-800 font-medium">₹{item.prices.starching.price}</span>
+                      <RevenueCard
+                        title=""
+                        amount={`₹${item.prices.starching.price}`}
+                        storageKey={`service-price-${item._id}-starching`}
+                        className="bg-transparent p-0 text-center inline-block"
+                      />
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-center text-sm">
                     {item.prices.alteration?.price ? (
-                      <span className="text-gray-800 font-medium">₹{item.prices.alteration.price}</span>
+                      <RevenueCard
+                        title=""
+                        amount={`₹${item.prices.alteration.price}`}
+                        storageKey={`service-price-${item._id}-alteration`}
+                        className="bg-transparent p-0 text-center inline-block"
+                      />
                     ) : <span className="text-gray-300">-</span>}
                   </td>
                   <td className="px-4 py-3 text-right">

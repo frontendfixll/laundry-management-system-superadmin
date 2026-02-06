@@ -29,12 +29,12 @@ interface NotificationSound {
   [key: string]: string;
 }
 
-const NOTIFICATION_SOUNDS: NotificationSound = {
-  success: '/sounds/success.mp3',
-  error: '/sounds/error.mp3',
-  info: '/sounds/notification.mp3',
-  warning: '/sounds/warning.mp3',
-};
+// const NOTIFICATION_SOUNDS: NotificationSound = {
+//   success: '/sounds/success.mp3',
+//   error: '/sounds/error.mp3',
+//   info: '/sounds/notification.mp3',
+//   warning: '/sounds/warning.mp3',
+// };
 
 export const useNotificationsWebSocket = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -56,7 +56,7 @@ export const useNotificationsWebSocket = () => {
           const token = parsed.state?.token || parsed.token;
           if (token) return token;
         } catch (e) {
-          console.error('Error parsing auth data:', e);
+          // console.error('Error parsing auth data:', e);
         }
       }
       // Fallback to direct token
@@ -67,15 +67,15 @@ export const useNotificationsWebSocket = () => {
 
   // Play notification sound
   const playSound = useCallback((severity: string) => {
-    try {
-      const soundUrl = NOTIFICATION_SOUNDS[severity] || NOTIFICATION_SOUNDS.info;
-      if (audioRef.current) {
-        audioRef.current.src = soundUrl;
-        audioRef.current.play().catch(err => console.log('Sound play failed:', err));
-      }
-    } catch (error) {
-      console.error('Error playing sound:', error);
-    }
+    // try {
+    //   const soundUrl = NOTIFICATION_SOUNDS[severity] || NOTIFICATION_SOUNDS.info;
+    //   if (audioRef.current) {
+    //     audioRef.current.src = soundUrl;
+    //     audioRef.current.play().catch(err => { /* console.log('Sound play failed:', err) */ });
+    //   }
+    // } catch (error) {
+    //   // console.error('Error playing sound:', error);
+    // }
   }, []);
 
   // Show browser notification
@@ -95,7 +95,7 @@ export const useNotificationsWebSocket = () => {
         // Handle different notification types
         if (notification.type === 'permission_update') {
           // For permission updates, just refresh the current page
-          console.log('🔄 Permission notification clicked, refreshing page...');
+          // console.log('🔄 Permission notification clicked, refreshing page...');
           window.location.reload();
         } else if (notification.data?.link) {
           // For other notifications, navigate to the link
@@ -117,15 +117,15 @@ export const useNotificationsWebSocket = () => {
   const connect = useCallback(() => {
     const token = getToken();
     if (!token) {
-      console.log('⚠️ No token found, cannot connect WebSocket');
+      // console.log('⚠️ No token found, cannot connect WebSocket');
       return;
     }
     if (socketRef.current?.connected) {
-      console.log('✅ WebSocket already connected');
+      // console.log('✅ WebSocket already connected');
       return;
     }
 
-    console.log('🔌 Connecting to WebSocket:', SOCKET_URL);
+    // console.log('🔌 Connecting to WebSocket:', SOCKET_URL);
 
     const socket = io(SOCKET_URL, {
       auth: { token },
@@ -137,13 +137,13 @@ export const useNotificationsWebSocket = () => {
     });
 
     socket.on('connect', () => {
-      console.log('✅ WebSocket connected successfully!');
+      // console.log('✅ WebSocket connected successfully!');
       setIsConnected(true);
 
       // Expose socket globally for permission sync
       if (typeof window !== 'undefined') {
         (window as any).__notificationSocket = socket;
-        console.log('🌐 Socket exposed for permission sync');
+        // console.log('🌐 Socket exposed for permission sync');
       }
 
       // Request unread count on connect
@@ -151,15 +151,15 @@ export const useNotificationsWebSocket = () => {
     });
 
     socket.on('connect_error', (error) => {
-      console.error('❌ WebSocket connection error:', error.message);
+      // console.error('❌ WebSocket connection error:', error.message);
     });
 
     socket.on('connected', (data) => {
-      console.log('✅ Server confirmed connection:', data);
+      // console.log('✅ Server confirmed connection:', data);
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('🔌 WebSocket disconnected:', reason);
+      // console.log('🔌 WebSocket disconnected:', reason);
       setIsConnected(false);
     });
 
@@ -222,16 +222,16 @@ export const useNotificationsWebSocket = () => {
     });
 
     socket.on('error', (error) => {
-      console.error('Socket error:', error);
+      // console.error('Socket error:', error);
     });
 
     // Permission sync events
     socket.on('permissionsUpdated', (data) => {
-      console.log('🔄 Permissions updated via WebSocket:', data);
+      // console.log('🔄 Permissions updated via WebSocket:', data);
 
       // Show slide notification instead of toast
       if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
-        console.log('📢 Calling __addSlideNotification for permission update');
+        // console.log('📢 Calling __addSlideNotification for permission update');
         (window as any).__addSlideNotification({
           title: 'Permissions Updated',
           message: 'Your access has been updated by an administrator',
@@ -239,12 +239,12 @@ export const useNotificationsWebSocket = () => {
           duration: 5000,
           actionText: 'Refresh Now',
           onAction: () => {
-            console.log('🔄 User clicked refresh from slide notification');
+            // console.log('🔄 User clicked refresh from slide notification');
             window.location.reload();
           }
         });
       } else {
-        console.log('⚠️ __addSlideNotification not available, slide notification skipped');
+        // console.log('⚠️ __addSlideNotification not available, slide notification skipped');
       }
 
       // Show notification to user (for notification center)
@@ -254,6 +254,7 @@ export const useNotificationsWebSocket = () => {
         message: data.message || 'Your access has been updated by an administrator',
         type: 'permission_update',
         severity: 'info',
+        icon: '/icons/shield.png', // Default icon
         isRead: false,
         createdAt: new Date().toISOString(),
         data: data
@@ -270,7 +271,7 @@ export const useNotificationsWebSocket = () => {
       if (typeof window !== 'undefined') {
         // Check if refresh is already in progress
         if ((window as any).__permissionRefreshInProgress) {
-          console.log('⚠️ Permission refresh already in progress, skipping');
+          // console.log('⚠️ Permission refresh already in progress, skipping');
           return;
         }
 
@@ -283,7 +284,7 @@ export const useNotificationsWebSocket = () => {
         // Auto-refresh after 5 seconds if user doesn't interact
         setTimeout(() => {
           if ((window as any).__permissionRefreshInProgress) {
-            console.log('🔄 Auto-refreshing page for permission updates...');
+            // console.log('🔄 Auto-refreshing page for permission updates...');
             window.location.reload();
           }
         }, 5000);
@@ -297,7 +298,7 @@ export const useNotificationsWebSocket = () => {
 
     // Tenancy update events for real-time updates
     socket.on('tenancyFeaturesUpdated', (data) => {
-      console.log('🔄 Tenancy features updated via WebSocket:', data);
+      // console.log('🔄 Tenancy features updated via WebSocket:', data);
 
       // Show slide notification
       if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
@@ -308,7 +309,7 @@ export const useNotificationsWebSocket = () => {
           duration: 4000,
           actionText: 'View Changes',
           onAction: () => {
-            console.log('🔄 User clicked view changes from slide notification');
+            // console.log('🔄 User clicked view changes from slide notification');
             // Navigate to tenancy page if not already there
             if (window.location.pathname !== `/tenancies/${data.tenancyId}`) {
               window.location.href = `/tenancies/${data.tenancyId}`;
@@ -324,6 +325,7 @@ export const useNotificationsWebSocket = () => {
         message: `Features updated for ${data.tenancyName || 'tenancy'}`,
         type: 'system_alert',
         severity: 'info',
+        icon: '/icons/settings.png', // Default icon
         isRead: false,
         createdAt: new Date().toISOString(),
         data: data
@@ -335,7 +337,7 @@ export const useNotificationsWebSocket = () => {
     });
 
     socket.on('tenancyPermissionsUpdated', (data) => {
-      console.log('🔄 Tenancy permissions updated via WebSocket:', data);
+      // console.log('🔄 Tenancy permissions updated via WebSocket:', data);
 
       // Show slide notification
       if (typeof window !== 'undefined' && (window as any).__addSlideNotification) {
@@ -346,7 +348,7 @@ export const useNotificationsWebSocket = () => {
           duration: 4000,
           actionText: 'View Changes',
           onAction: () => {
-            console.log('🔄 User clicked view changes from slide notification');
+            // console.log('🔄 User clicked view changes from slide notification');
             // Navigate to tenancy page if not already there
             if (window.location.pathname !== `/tenancies/${data.tenancyId}`) {
               window.location.href = `/tenancies/${data.tenancyId}`;
@@ -362,6 +364,7 @@ export const useNotificationsWebSocket = () => {
         message: `Permissions updated for ${data.tenancyName || 'tenancy'} owner`,
         type: 'permission_update',
         severity: 'info',
+        icon: '/icons/shield.png', // Default icon
         isRead: false,
         createdAt: new Date().toISOString(),
         data: data
@@ -406,7 +409,7 @@ export const useNotificationsWebSocket = () => {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      // console.error('Error marking notification as read:', error);
     }
   }, [getToken]);
 
@@ -432,7 +435,7 @@ export const useNotificationsWebSocket = () => {
         setUnreadCount(prev => Math.max(0, prev - notificationIds.length));
       }
     } catch (error) {
-      console.error('Error marking multiple notifications as read:', error);
+      // console.error('Error marking multiple notifications as read:', error);
     }
   }, [getToken]);
 
@@ -454,7 +457,7 @@ export const useNotificationsWebSocket = () => {
   const fetchNotifications = useCallback(async () => {
     const token = getToken();
     if (!token) {
-      console.log('⏭️ No token, skipping notification fetch');
+      // console.log('⏭️ No token, skipping notification fetch');
       return;
     }
 
@@ -471,9 +474,9 @@ export const useNotificationsWebSocket = () => {
         setNotifications(data.data.notifications || []);
         setUnreadCount(data.data.unreadCount || 0);
       } else if (response.status === 401) {
-        console.log('⚠️ Token invalid, skipping notification fetch');
+        // console.log('⚠️ Token invalid, skipping notification fetch');
       } else {
-        console.error('❌ Failed to fetch notifications:', response.status);
+        // console.error('❌ Failed to fetch notifications:', response.status);
       }
     } catch (error) {
       // Silent fail - don't spam console
@@ -488,7 +491,7 @@ export const useNotificationsWebSocket = () => {
 
     // Only initialize if token exists
     if (!token) {
-      console.log('⏭️ No token, skipping WebSocket initialization');
+      // console.log('⏭️ No token, skipping WebSocket initialization');
       return;
     }
 

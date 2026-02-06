@@ -61,12 +61,12 @@ export default function DashboardLayout({
 
       // Redirect sales users to their dashboard
       if (userType === 'sales') {
-        console.log('🔄 Layout - Redirecting sales user to /sales-dashboard')
+        // console.log('🔄 Layout - Redirecting sales user to /sales-dashboard')
         router.push('/sales-dashboard')
         return
       }
 
-      console.log('🔄 Layout - User type is:', userType, '- proceeding with token validation')
+      // console.log('🔄 Layout - User type is:', userType, '- proceeding with token validation')
 
       try {
         // Verify token by calling profile API
@@ -79,7 +79,7 @@ export default function DashboardLayout({
 
         if (!response.ok) {
           // Token is invalid - clear everything and redirect
-          console.log('🔴 Token validation failed, logging out...')
+          // console.log('🔴 Token validation failed, logging out...')
           clearAll()
           toast.error('Session expired. Please login again.')
           router.push('/auth/login')
@@ -87,10 +87,10 @@ export default function DashboardLayout({
         }
 
         // Token is valid
-        console.log('✅ Token validated successfully')
+        // console.log('✅ Token validated successfully')
         setIsValidating(false)
       } catch (error) {
-        console.error('Token validation error:', error)
+        // console.error('Token validation error:', error)
         // Network error - don't logout, just proceed
         setIsValidating(false)
       }

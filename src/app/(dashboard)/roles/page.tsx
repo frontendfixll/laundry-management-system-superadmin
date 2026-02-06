@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRoles } from '@/hooks/useRoles'
+import { RevenueCard } from '@/components/ui/RevenueCard'
 import { 
   Shield, 
   Plus, 
@@ -355,10 +356,12 @@ export default function RolesPage() {
                     <div className="text-xs text-gray-500">Permissions</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">
-                      ₹{role.financialLimits?.maxRefundAmount || 0}
-                    </div>
-                    <div className="text-xs text-gray-500">Refund Limit</div>
+                    <RevenueCard
+                      title="Refund Limit"
+                      amount={`₹${role.financialLimits?.maxRefundAmount || 0}`}
+                      storageKey={`role-refund-limit-${role._id}`}
+                      className="bg-transparent p-0 text-center inline-block"
+                    />
                   </div>
                 </div>
 

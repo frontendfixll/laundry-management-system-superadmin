@@ -34,37 +34,37 @@ export function useNotifications(): UseNotificationsReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  
+
   const socketRef = useRef<Socket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<{ [key: string]: HTMLAudioElement }>({});
 
   // Preload notification sounds
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      audioRef.current = {
-        success: new Audio('/sounds/success.mp3'),
-        error: new Audio('/sounds/error.mp3'),
-        warning: new Audio('/sounds/warning.mp3'),
-        info: new Audio('/sounds/notification.mp3'),
-      };
-      
-      // Set volume
-      Object.values(audioRef.current).forEach(audio => {
-        audio.volume = 0.5;
-      });
-    }
+    // if (typeof window !== 'undefined') {
+    //   audioRef.current = {
+    //     success: new Audio('/sounds/success.mp3'),
+    //     error: new Audio('/sounds/error.mp3'),
+    //     warning: new Audio('/sounds/warning.mp3'),
+    //     info: new Audio('/sounds/notification.mp3'),
+    //   };
+
+    //   // Set volume
+    //   Object.values(audioRef.current).forEach(audio => {
+    //     audio.volume = 0.5;
+    //   });
+    // }
   }, []);
 
   // Play notification sound
   const playNotificationSound = useCallback((severity: string) => {
-    try {
-      const audio = audioRef.current[severity] || audioRef.current.info;
-      audio.currentTime = 0;
-      audio.play().catch(err => console.log('Audio play failed:', err));
-    } catch (error) {
-      console.log('Sound playback error:', error);
-    }
+    // try {
+    //   const audio = audioRef.current[severity] || audioRef.current.info;
+    //   audio.currentTime = 0;
+    //   audio.play().catch(err => { /* console.log('Audio play failed:', err) */ });
+    // } catch (error) {
+    //   // console.log('Sound playback error:', error);
+    // }
   }, []);
 
   // Fetch notifications from API
@@ -85,7 +85,7 @@ export function useNotifications(): UseNotificationsReturn {
         setUnreadCount(data.data.unreadCount || 0);
       }
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      // console.error('Failed to fetch notifications:', error);
     }
   }, []);
 
@@ -93,7 +93,7 @@ export function useNotifications(): UseNotificationsReturn {
   const initializeSocket = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      console.log('No token found, skipping socket connection');
+      // console.log('No token found, skipping socket connection');
       return;
     }
 
@@ -102,7 +102,7 @@ export function useNotifications(): UseNotificationsReturn {
       socketRef.current.disconnect();
     }
 
-    console.log('🔌 Initializing WebSocket connection...');
+    // console.log('🔌 Initializing WebSocket connection...');
 
     // Create socket connection with auto-reconnection
     const socket = io(API_URL, {
@@ -119,51 +119,51 @@ export function useNotifications(): UseNotificationsReturn {
 
     // Connection successful
     socket.on('connect', () => {
-      console.log('✅ WebSocket connected:', socket.id);
+      // console.log('✅ WebSocket connected:', socket.id);
       setIsConnected(true);
       setIsReconnecting(false);
       setConnectionError(null);
-      
+
       // Request unread count on connect
       socket.emit('getUnreadCount');
     });
 
     // Connection error
     socket.on('connect_error', (error) => {
-      console.error('❌ WebSocket connection error:', error.message);
+      // console.error('❌ WebSocket connection error:', error.message);
       setIsConnected(false);
       setConnectionError(error.message);
     });
 
     // Reconnection attempt
     socket.io.on('reconnect_attempt', (attempt) => {
-      console.log(`🔄 Reconnection attempt ${attempt}...`);
+      // console.log(`🔄 Reconnection attempt ${attempt}...`);
       setIsReconnecting(true);
       setConnectionError('Reconnecting...');
     });
 
     // Reconnection successful
     socket.io.on('reconnect', (attempt) => {
-      console.log(`✅ Reconnected after ${attempt} attempts`);
+      // console.log(`✅ Reconnected after ${attempt} attempts`);
       setIsReconnecting(false);
       setConnectionError(null);
-      
+
       // Fetch latest notifications after reconnection
       fetchNotifications();
     });
 
     // Reconnection failed
     socket.io.on('reconnect_failed', () => {
-      console.error('❌ Reconnection failed');
+      // console.error('❌ Reconnection failed');
       setIsReconnecting(false);
       setConnectionError('Connection failed. Please refresh the page.');
     });
 
     // Disconnected
     socket.on('disconnect', (reason) => {
-      console.log('🔌 WebSocket disconnected:', reason);
+      // console.log('🔌 WebSocket disconnected:', reason);
       setIsConnected(false);
-      
+
       if (reason === 'io server disconnect') {
         // Server disconnected, manually reconnect
         socket.connect();
@@ -172,19 +172,19 @@ export function useNotifications(): UseNotificationsReturn {
 
     // New notification received
     socket.on('notification', (notification: Notification) => {
-      console.log('📬 New notification:', notification);
-      
+      // console.log('📬 New notification:', notification);
+
       // Add to notifications list
       setNotifications(prev => [notification, ...prev]);
-      
+
       // Update unread count
       if (!notification.isRead) {
         setUnreadCount(prev => prev + 1);
       }
-      
+
       // Play sound
       playNotificationSound(notification.severity);
-      
+
       // Show browser notification if permitted
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         new Notification(notification.title, {
@@ -194,7 +194,7 @@ export function useNotifications(): UseNotificationsReturn {
           tag: notification._id,
         });
       }
-      
+
       // Vibrate on mobile
       if (typeof window !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate([200, 100, 200]);
@@ -224,7 +224,7 @@ export function useNotifications(): UseNotificationsReturn {
 
     // Error from server
     socket.on('error', ({ message }) => {
-      console.error('Server error:', message);
+      // console.error('Server error:', message);
     });
 
     return socket;
@@ -262,7 +262,7 @@ export function useNotifications(): UseNotificationsReturn {
         setUnreadCount(0);
       }
     } catch (error) {
-      console.error('Failed to mark all as read:', error);
+      // console.error('Failed to mark all as read:', error);
     }
   }, []);
 
@@ -270,7 +270,7 @@ export function useNotifications(): UseNotificationsReturn {
   useEffect(() => {
     // Fetch initial notifications
     fetchNotifications();
-    
+
     // Initialize socket connection
     const socket = initializeSocket();
 
@@ -293,14 +293,14 @@ export function useNotifications(): UseNotificationsReturn {
   // Handle online/offline events
   useEffect(() => {
     const handleOnline = () => {
-      console.log('🌐 Network online, reconnecting...');
+      // console.log('🌐 Network online, reconnecting...');
       if (socketRef.current && !socketRef.current.connected) {
         socketRef.current.connect();
       }
     };
 
     const handleOffline = () => {
-      console.log('📡 Network offline');
+      // console.log('📡 Network offline');
       setConnectionError('No internet connection');
     };
 

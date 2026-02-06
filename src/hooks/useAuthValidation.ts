@@ -11,16 +11,14 @@ export const useAuthValidation = () => {
   useEffect(() => {
     // Add small delay to allow Zustand to hydrate from localStorage
     const timer = setTimeout(() => {
-      console.log('🔐 Auth validation - Token:', !!token)
-      console.log('🔐 Auth validation - User:', !!user)
-      console.log('🔐 Auth validation - UserType:', userType)
+      // Debug logs removed for production build
       
       // Set validation as complete after delay
       setIsValidating(false)
       
       // Only redirect if no token at all after hydration delay
       if (!token) {
-        console.log('🔐 No token found after hydration delay, redirecting to login')
+        // Debug logs removed for production build
         router.push('/auth/login')
       }
     }, 100) // 100ms delay for hydration

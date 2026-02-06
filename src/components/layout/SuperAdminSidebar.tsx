@@ -54,6 +54,7 @@ import {
   Zap
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { APP_VERSION } from '@/lib/version'
 
 const getSidebarNavigationByRole = (
   userRoles: string[],
@@ -146,17 +147,8 @@ const getSidebarNavigationByRole = (
         { name: 'Loyalty', href: '/promotional/loyalty', icon: Star },
       ]
     },
-    {
-      name: 'Financial',
-      icon: DollarSign,
-      isExpandable: true,
-      permission: 'subscription_plans',
-      subItems: [
-        { name: 'Overview', href: '/financial/overview', icon: BarChart3 },
-        { name: 'Billing Plans', href: '/billing/plans', icon: Tag },
-        { name: 'Add-ons', href: '/addons', icon: Package },
-      ]
-    },
+
+
     {
       name: 'Notifications',
       icon: Bell,
@@ -213,22 +205,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
   const userRoles = (user as any)?.roles?.flatMap((role: any) => [role.name, role.slug].filter(Boolean)) || []
   const legacyRole = user?.role // Legacy role field
 
-  // Debug logging
-  console.log('🔍 SuperAdmin Sidebar Debug:')
-  console.log('- User Email:', user?.email)
-  console.log('- User Type:', userType)
-  console.log('- Legacy Role:', legacyRole)
-  console.log('- User Roles:', userRoles)
-  console.log('- Is SuperAdmin (new):', userRoles.includes('super_admin') || userRoles.includes('Super Admin'))
-  console.log('- Is SuperAdmin (legacy):', legacyRole === 'superadmin')
-  console.log('- Is Platform Support:', userRoles.includes('platform-support') || userRoles.includes('Platform Support'))
-  console.log('- Is Platform Finance:', userRoles.includes('platform-finance-admin') || userRoles.includes('Platform Finance Admin'))
-  console.log('- Is Platform Auditor:', userRoles.includes('platform-read-only-auditor') || userRoles.includes('Platform Auditor') || userRoles.includes('Platform Read-Only Auditor'))
-  console.log('- Is SuperAdmin (new):', userRoles.includes('super_admin') || userRoles.includes('Super Admin'))
-  console.log('- Is SuperAdmin (legacy):', legacyRole === 'superadmin')
-  console.log('- Is Platform Support:', userRoles.includes('platform-support') || userRoles.includes('Platform Support'))
-  console.log('- Is Platform Finance:', userRoles.includes('platform-finance-admin') || userRoles.includes('Platform Finance Admin'))
-  console.log('- Is Platform Auditor:', userRoles.includes('platform-read-only-auditor') || userRoles.includes('Platform Auditor'))
+  // Debug logging removed
 
   // Determine which sidebar to show
   const isPlatformSupport = userRoles.includes('platform-support') || userRoles.includes('Platform Support')
@@ -236,13 +213,13 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
   const isPlatformAuditor = userRoles.includes('platform-read-only-auditor') || userRoles.includes('Platform Auditor')
 
   if (isPlatformSupport) {
-    console.log('🎯 SIDEBAR: Showing Platform Support sidebar (RBAC role takes priority)')
+    // Platform Support
   } else if (isPlatformFinance) {
-    console.log('🎯 SIDEBAR: Showing Platform Finance sidebar (RBAC role takes priority)')
+    // Platform Finance
   } else if (isPlatformAuditor) {
-    console.log('🎯 SIDEBAR: Showing Platform Auditor sidebar (RBAC role takes priority)')
+    // Platform Auditor
   } else {
-    console.log('🎯 SIDEBAR: Showing SuperAdmin sidebar (legacy or SuperAdmin RBAC role)')
+    // SuperAdmin
   }
 
   // Get information from unified auth helper
@@ -570,7 +547,7 @@ export default function SuperAdminSidebar({ mobileOpen = false, onMobileClose }:
             {/* Version Info */}
             <div className={`px-6 py-3 border-t border-gray-100 transition-all duration-300 overflow-hidden ${sidebarCollapsed ? 'lg:h-0 lg:p-0 lg:opacity-0' : 'lg:h-auto lg:opacity-100'}`}>
               <div className="text-xs text-gray-400 font-light whitespace-nowrap">
-                v1.0.0
+                v{APP_VERSION}
               </div>
             </div>
 

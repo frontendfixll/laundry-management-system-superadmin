@@ -8,6 +8,8 @@ interface ProgressLoaderProps {
     subMessage?: string
 }
 
+import { APP_VERSION } from '@/lib/version'
+
 const ProgressLoader: React.FC<ProgressLoaderProps> = ({
     progress,
     message = "Loading...",
@@ -52,7 +54,7 @@ const ProgressLoader: React.FC<ProgressLoaderProps> = ({
                 {/* Footer Info */}
                 <div className="mt-6 flex justify-between items-center px-1">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        SuperAdmin v2.0
+                        SuperAdmin v{APP_VERSION}
                     </span>
                     <div className="flex gap-1.5">
                         {[1, 2, 3].map((i) => (

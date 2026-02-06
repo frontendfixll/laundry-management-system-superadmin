@@ -143,13 +143,13 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
       ]);
 
       setTemplates(templatesRes.data.data?.templates || []);
-      
+
       // Set promotions if available
       if (promotionsRes.data.data) {
         setPromotions(promotionsRes.data.data);
       }
     } catch (error) {
-      console.error('Failed to load data:', error);
+      // console.error('Failed to load data:', error);
     } finally {
       setLoadingData(false);
     }
@@ -157,17 +157,17 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
 
   const handleTemplateChange = (templateId: string) => {
     const template = templates.find(t => t._id === templateId);
-    console.log('🔍 Selected template:', template);
-    console.log('🔍 Template ID:', templateId);
-    console.log('🔍 All templates:', templates);
-    console.log('🔍 Allowed positions:', template?.allowedPositions);
-    console.log('🔍 Is array?', Array.isArray(template?.allowedPositions));
-    
+    // console.log('🔍 Selected template:', template);
+    // console.log('🔍 Template ID:', templateId);
+    // console.log('🔍 All templates:', templates);
+    // console.log('🔍 Allowed positions:', template?.allowedPositions);
+    // console.log('🔍 Is array?', Array.isArray(template?.allowedPositions));
+
     if (template && template.allowedPositions) {
       const globalPositions = template.allowedPositions.filter((pos: string) => pos.startsWith('GLOBAL_'));
-      console.log('🔍 GLOBAL positions found:', globalPositions);
+      // console.log('🔍 GLOBAL positions found:', globalPositions);
     }
-    
+
     setSelectedTemplate(template || null);
     setFormData(prev => ({
       ...prev,
@@ -204,7 +204,7 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
 
       return response.data.data.url;
     } catch (error) {
-      console.error('Failed to upload image:', error);
+      // console.error('Failed to upload image:', error);
       throw error;
     } finally {
       setUploading(false);
@@ -219,8 +219,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
     // Promotion is optional for informational banners
     if (!formData.schedule.startDate) newErrors.startDate = 'Start date is required';
     if (!formData.schedule.endDate) newErrors.endDate = 'End date is required';
-    if (formData.schedule.startDate && formData.schedule.endDate && 
-        new Date(formData.schedule.startDate) >= new Date(formData.schedule.endDate)) {
+    if (formData.schedule.startDate && formData.schedule.endDate &&
+      new Date(formData.schedule.startDate) >= new Date(formData.schedule.endDate)) {
       newErrors.endDate = 'End date must be after start date';
     }
     setErrors(newErrors);
@@ -276,7 +276,7 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
           type: formData.promotionType,
           id: formData.promotionId
         };
-        
+
         // Backward compatibility for campaigns
         if (formData.promotionType === 'campaign') {
           bannerData.linkedCampaign = formData.promotionId;
@@ -287,7 +287,7 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Failed to create global banner:', error);
+      // console.error('Failed to create global banner:', error);
     }
   };
 
@@ -359,15 +359,15 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
               {/* Content Section */}
               <div className="border-t pt-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Banner Content</h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
                     <input
                       type="text"
                       value={formData.content.title}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         content: { ...formData.content, title: e.target.value }
                       })}
                       maxLength={100}
@@ -382,8 +382,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
                     <input
                       type="text"
                       value={formData.content.subtitle}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         content: { ...formData.content, subtitle: e.target.value }
                       })}
                       maxLength={150}
@@ -396,8 +396,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
                     <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                     <textarea
                       value={formData.content.description}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         content: { ...formData.content, description: e.target.value }
                       })}
                       maxLength={500}
@@ -412,8 +412,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
                     <input
                       type="text"
                       value={formData.content.message}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         content: { ...formData.content, message: e.target.value }
                       })}
                       maxLength={200}
@@ -427,7 +427,7 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
               {/* Images Section */}
               <div className="border-t pt-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Images</h3>
-                
+
                 <div className="space-y-4">
                   {/* Image Upload */}
                   <div>
@@ -507,7 +507,7 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
               {/* Promotion Linking */}
               <div className="border-t pt-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Promotion Linking</h3>
-                
+
                 <div className="space-y-4">
                   {/* Promotion Type Selection */}
                   <div>
@@ -562,15 +562,15 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
               {/* Call to Action */}
               <div className="border-t pt-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Call to Action</h3>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Primary Button Text</label>
                     <input
                       type="text"
                       value={formData.cta.text}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         cta: { ...formData.cta, text: e.target.value }
                       })}
                       maxLength={50}
@@ -583,8 +583,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
                     <input
                       type="text"
                       value={formData.cta.link}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         cta: { ...formData.cta, link: e.target.value }
                       })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -597,8 +597,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
                     <input
                       type="text"
                       value={formData.cta.secondaryText}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         cta: { ...formData.cta, secondaryText: e.target.value }
                       })}
                       maxLength={50}
@@ -611,8 +611,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
                     <input
                       type="text"
                       value={formData.cta.secondaryLink}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         cta: { ...formData.cta, secondaryLink: e.target.value }
                       })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -639,15 +639,15 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
               {/* Schedule */}
               <div className="border-t pt-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Schedule</h3>
-                
+
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
                     <input
                       type="datetime-local"
                       value={formData.schedule.startDate}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         schedule: { ...formData.schedule, startDate: e.target.value }
                       })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -660,8 +660,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
                     <input
                       type="datetime-local"
                       value={formData.schedule.endDate}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         schedule: { ...formData.schedule, endDate: e.target.value }
                       })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -675,8 +675,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
                     <input
                       type="checkbox"
                       checked={formData.schedule.autoActivate}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         schedule: { ...formData.schedule, autoActivate: e.target.checked }
                       })}
                       className="w-4 h-4"
@@ -688,8 +688,8 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
                     <input
                       type="checkbox"
                       checked={formData.schedule.autoComplete}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
+                      onChange={(e) => setFormData({
+                        ...formData,
                         schedule: { ...formData.schedule, autoComplete: e.target.checked }
                       })}
                       className="w-4 h-4"

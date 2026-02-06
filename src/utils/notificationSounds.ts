@@ -58,61 +58,62 @@ class NotificationSoundManager {
   }
 
   private async loadSounds() {
-    for (const [priority, config] of Object.entries(SOUND_CONFIGS)) {
-      try {
-        await this.loadSound(priority, config.file)
-      } catch (error) {
-        console.warn(`Failed to load sound for ${priority}:`, error)
-      }
-    }
+    // Sounds are currently disabled/missing from public folder
+    // for (const [priority, config] of Object.entries(SOUND_CONFIGS)) {
+    //   try {
+    //     await this.loadSound(priority, config.file)
+    //   } catch (error) {
+    //     console.warn(`Failed to load sound for ${priority}:`, error)
+    //   }
+    // }
   }
 
   private async loadSound(priority: string, file: string): Promise<void> {
-    if (!this.audioContext) return
+    // if (!this.audioContext) return
 
-    try {
-      const response = await fetch(file)
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-      
-      const arrayBuffer = await response.arrayBuffer()
-      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer)
-      this.soundBuffers.set(priority, audioBuffer)
-      
-      console.log(`✅ Loaded sound for ${priority}`)
-    } catch (error) {
-      console.warn(`Failed to load sound ${file}:`, error)
-      // Try to load fallback sound
-      if (priority !== 'default') {
-        await this.loadFallbackSound(priority)
-      }
-    }
+    // try {
+    //   const response = await fetch(file)
+    //   if (!response.ok) {
+    //     throw new Error(`HTTP ${response.status}`)
+    //   }
+
+    //   const arrayBuffer = await response.arrayBuffer()
+    //   const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer)
+    //   this.soundBuffers.set(priority, audioBuffer)
+
+    //   console.log(`✅ Loaded sound for ${priority}`)
+    // } catch (error) {
+    //   console.warn(`Failed to load sound ${file}:`, error)
+    //   // Try to load fallback sound
+    //   if (priority !== 'default') {
+    //     await this.loadFallbackSound(priority)
+    //   }
+    // }
   }
 
   private async loadFallbackSound(priority: string): Promise<void> {
-    const fallbackFiles = [
-      '/notification-sound.mp3',
-      '/sounds/notification.mp3',
-      '/notification.mp3'
-    ]
+    // const fallbackFiles = [
+    //   '/notification-sound.mp3',
+    //   '/sounds/notification.mp3',
+    //   '/notification.mp3'
+    // ]
 
-    for (const fallbackFile of fallbackFiles) {
-      try {
-        const response = await fetch(fallbackFile)
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer()
-          const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer)
-          this.soundBuffers.set(priority, audioBuffer)
-          console.log(`✅ Loaded fallback sound for ${priority}: ${fallbackFile}`)
-          return
-        }
-      } catch (error) {
-        continue
-      }
-    }
-    
-    console.warn(`No fallback sound available for ${priority}`)
+    // for (const fallbackFile of fallbackFiles) {
+    //   try {
+    //     const response = await fetch(fallbackFile)
+    //     if (response.ok) {
+    //       const arrayBuffer = await response.arrayBuffer()
+    //       const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer)
+    //       this.soundBuffers.set(priority, audioBuffer)
+    //       console.log(`✅ Loaded fallback sound for ${priority}: ${fallbackFile}`)
+    //       return
+    //     }
+    //   } catch (error) {
+    //     continue
+    //   }
+    // }
+
+    // console.warn(`No fallback sound available for ${priority}`)
   }
 
   public async playNotificationSound(priority: string = 'default'): Promise<void> {
@@ -166,7 +167,7 @@ class NotificationSoundManager {
 
   public async playCriticalAlert(): Promise<void> {
     await this.playNotificationSound('P0')
-    
+
     // For critical alerts, also try browser notification sound
     if ('Notification' in window && Notification.permission === 'granted') {
       // Browser will handle its own notification sound
@@ -214,34 +215,34 @@ class NotificationSoundManager {
 const notificationSoundManager = new NotificationSoundManager()
 
 // Export convenience functions
-export const playNotificationSound = (priority: string) => 
+export const playNotificationSound = (priority: string) =>
   notificationSoundManager.playNotificationSound(priority)
 
-export const playCriticalAlert = () => 
+export const playCriticalAlert = () =>
   notificationSoundManager.playCriticalAlert()
 
-export const playHighPriorityAlert = () => 
+export const playHighPriorityAlert = () =>
   notificationSoundManager.playHighPriorityAlert()
 
-export const playMediumPriorityAlert = () => 
+export const playMediumPriorityAlert = () =>
   notificationSoundManager.playMediumPriorityAlert()
 
-export const playLowPriorityAlert = () => 
+export const playLowPriorityAlert = () =>
   notificationSoundManager.playLowPriorityAlert()
 
-export const setNotificationSoundsEnabled = (enabled: boolean) => 
+export const setNotificationSoundsEnabled = (enabled: boolean) =>
   notificationSoundManager.setEnabled(enabled)
 
-export const isNotificationSoundsEnabled = () => 
+export const isNotificationSoundsEnabled = () =>
   notificationSoundManager.isAudioEnabled()
 
-export const testNotificationSound = (priority: string) => 
+export const testNotificationSound = (priority: string) =>
   notificationSoundManager.testSound(priority)
 
-export const getLoadedSounds = () => 
+export const getLoadedSounds = () =>
   notificationSoundManager.getLoadedSounds()
 
-export const stopAllNotificationSounds = () => 
+export const stopAllNotificationSounds = () =>
   notificationSoundManager.stopAllSounds()
 
 export default notificationSoundManager

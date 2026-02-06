@@ -129,13 +129,7 @@ export const useAuthStore = create<AuthState>()(
         // Determine user type based on role and RBAC roles
         let userType: 'superadmin' | 'sales' | 'support' | 'auditor' | 'finance' = 'superadmin'
 
-        console.log('🏪 Auth Store - Setting user:', {
-          email: user.email,
-          legacyRole: user.role,
-          rolesCount: user.roles?.length || 0,
-          firstRoleName: user.roles?.[0]?.name,
-          firstRoleSlug: user.roles?.[0]?.slug
-        })
+        // Debug logs removed for production build
 
         // Check RBAC roles first (if available)
         if (user.roles && user.roles.length > 0) {
@@ -143,7 +137,7 @@ export const useAuthStore = create<AuthState>()(
           const slug = (primaryRole.slug || '').toLowerCase().replace(/-/g, '_')
           const name = (primaryRole.name || '').toLowerCase()
 
-          console.log('🏪 Auth Store - Normalizing role:', { slug, name })
+          // Debug logs removed for production build
 
           if (slug.includes('support') || name.includes('support')) {
             userType = 'support'
@@ -155,34 +149,34 @@ export const useAuthStore = create<AuthState>()(
             userType = 'superadmin'
           }
 
-          console.log('🏪 Auth Store - Classified userType:', userType)
+          // Debug logs removed for production build
         } else {
           // Fallback to legacy role field
-          console.log('🏪 Auth Store - No RBAC roles, checking legacy role:', user.role)
+          // Debug logs removed for production build
 
           if (user.role === 'superadmin') {
             userType = 'superadmin'
-            console.log('🏪 Auth Store - Classified as SUPERADMIN via legacy role')
+            // Debug logs removed for production build
           } else if (user.role === 'support') {
             userType = 'support'
-            console.log('🏪 Auth Store - Classified as SUPPORT via legacy role')
+            // Debug logs removed for production build
           } else if (user.role === 'auditor') {
             userType = 'auditor'
-            console.log('🏪 Auth Store - Classified as AUDITOR via legacy role')
+            // Debug logs removed for production build
           } else if (user.role === 'finance') {
             userType = 'finance'
-            console.log('🏪 Auth Store - Classified as FINANCE via legacy role')
+            // Debug logs removed for production build
           } else if (user.role === 'sales_admin') {
             userType = 'sales'
-            console.log('🏪 Auth Store - Classified as SALES via legacy role')
+            // Debug logs removed for production build
           } else {
             // Default fallback
             userType = 'superadmin'
-            console.log('🏪 Auth Store - Unknown legacy role, defaulting to SUPERADMIN')
+            // Debug logs removed for production build
           }
         }
 
-        console.log('🏪 Auth Store - Final userType:', userType)
+        // Debug logs removed for production build
 
         set({
           user,
@@ -257,11 +251,7 @@ export const useAuthInfo = () => {
     const permissions = (user as any)?.permissions || {}
     const modulePerms = permissions[module]
 
-    console.log(`🔐 Permission Check [${module}.${action}]:`, {
-      hasModule: !!modulePerms,
-      permValue: modulePerms,
-      userType
-    })
+    // Debug log removed for production build
 
     if (!modulePerms) return false
 

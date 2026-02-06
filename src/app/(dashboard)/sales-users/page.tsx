@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { RevenueCard } from '@/components/ui/RevenueCard'
 import { 
   Plus, 
   Search, 
@@ -200,22 +201,14 @@ export default function SalesUsersPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-3xl font-semibold text-gray-900 mt-2">
-                  {formatCurrency(stats.performance?.totalRevenue || 0)}
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  {formatCurrency(stats.performance?.currentMonthRevenue || 0)} this month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
+          <RevenueCard
+            title="Total Revenue"
+            amount={formatCurrency(stats.performance?.totalRevenue || 0)}
+            subtitle={`${formatCurrency(stats.performance?.currentMonthRevenue || 0)} this month`}
+            icon={<DollarSign className="w-6 h-6 text-green-600" />}
+            storageKey="sales-total-revenue"
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+          />
 
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
@@ -325,14 +318,13 @@ export default function SalesUsersPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {formatCurrency(user.performance.totalRevenue)}
-                  </div>
-                  {user.performance.target > 0 && (
-                    <div className="text-xs text-gray-500">
-                      Target: {user.performance.targetAchieved.toFixed(0)}%
-                    </div>
-                  )}
+                  <RevenueCard
+                    title=""
+                    amount={formatCurrency(user.performance.totalRevenue)}
+                    subtitle={user.performance.target > 0 ? `Target: ${user.performance.targetAchieved.toFixed(0)}%` : undefined}
+                    storageKey={`sales-user-revenue-${user._id}`}
+                    className="bg-transparent p-0"
+                  />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
@@ -417,12 +409,13 @@ export default function SalesUsersPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
-                    {formatCurrency(performer.performance?.totalRevenue || 0)}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {performer.performance?.leadsConverted || 0} conversions
-                  </div>
+                  <RevenueCard
+                    title=""
+                    amount={formatCurrency(performer.performance?.totalRevenue || 0)}
+                    subtitle={`${performer.performance?.leadsConverted || 0} conversions`}
+                    storageKey={`top-performer-revenue-${performer._id}`}
+                    className="bg-transparent p-0 text-right"
+                  />
                 </div>
               </div>
             ))}

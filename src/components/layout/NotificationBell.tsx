@@ -36,7 +36,7 @@ export default function NotificationBell() {
                 setUnreadCount(response.data.unreadCount || 0)
             }
         } catch (error) {
-            console.log('Could not fetch unread count')
+            // console.log('🔔 NotificationBell mounted, manually fetching unread count')
         }
     }
 
@@ -49,7 +49,7 @@ export default function NotificationBell() {
                 setUnreadCount(response.data.unreadCount || 0)
             }
         } catch (error) {
-            console.log('Could not fetch notifications')
+            // console.log('Could not fetch notifications')
         } finally {
             setLoading(false)
         }
@@ -99,7 +99,7 @@ export default function NotificationBell() {
             )
             setUnreadCount(prev => Math.max(0, prev - notificationIds.length))
         } catch (error) {
-            console.log('Could not mark as read')
+            // console.log('Could not mark as read')
         }
     }
 
@@ -110,7 +110,7 @@ export default function NotificationBell() {
             setUnreadCount(0)
             toast.success('All notifications marked as read')
         } catch (error) {
-            toast.error('Failed to mark all as read')
+            // console.error('Failed to mark all as read:', error)
         }
     }
 

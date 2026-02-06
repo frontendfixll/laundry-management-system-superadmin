@@ -18,12 +18,17 @@ import {
   IndianRupee,
   TrendingUp,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  Package,
+  Tag,
+  PieChart
 } from 'lucide-react'
 import NotificationContainer from '@/components/NotificationContainer'
 import NotificationBell from '@/components/layout/NotificationBell'
 import ProgressLoader from '@/components/ui/ProgressLoader'
 import { useLoadingProgress } from '@/hooks/useLoadingProgress'
+
+import { APP_VERSION } from '@/lib/version'
 
 export default function FinanceLayout({
   children,
@@ -87,6 +92,7 @@ export default function FinanceLayout({
       permission: 'payments_revenue',
       subItems: [
         { name: 'Platform Revenue', href: '/finances/revenue', icon: DollarSign },
+        { name: 'Overview', href: '/financial/overview', icon: PieChart },
         { name: 'Transactions', href: '/finances/transactions', icon: Receipt },
         { name: 'Refunds', href: '/finances/refunds', icon: RefreshCw },
       ]
@@ -98,6 +104,8 @@ export default function FinanceLayout({
       permission: 'subscription_plans',
       subItems: [
         { name: 'Billing Status', href: '/billing', icon: Receipt },
+        { name: 'Billing Plans', href: '/billing/plans', icon: Tag },
+        { name: 'Add-ons', href: '/addons', icon: Package },
         { name: 'Payment Failures', href: '/finances/failures', icon: AlertTriangle },
       ]
     },
@@ -255,6 +263,9 @@ export default function FinanceLayout({
                     {email}
                   </p>
                 </div>
+              </div>
+              <div className="text-xs text-gray-400 text-center mb-2">
+                v{APP_VERSION}
               </div>
               <button
                 onClick={handleLogout}

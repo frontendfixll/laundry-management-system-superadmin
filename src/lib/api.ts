@@ -17,8 +17,8 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token
-    console.log('🔐 API Interceptor - Token exists:', !!token);
-    console.log('🔐 API Interceptor - Token preview:', token?.substring(0, 50) + '...');
+    // console.log('🔐 API Interceptor - Token exists:', !!token);
+    // console.log('🔐 API Interceptor - Token preview:', token?.substring(0, 50) + '...');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -35,7 +35,7 @@ api.interceptors.response.use(
   (error) => {
     const message = error.response?.data?.message || 'Something went wrong'
     const errorCode = error.response?.data?.code
-    
+
     if (error.response?.status === 401) {
       const store = useAuthStore.getState()
       if (store.token) {
@@ -50,7 +50,7 @@ api.interceptors.response.use(
     } else if (error.response?.status >= 400) {
       toast.error(message)
     }
-    
+
     return Promise.reject(error)
   }
 )

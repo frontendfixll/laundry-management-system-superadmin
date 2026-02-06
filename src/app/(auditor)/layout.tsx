@@ -35,6 +35,8 @@ import NotificationBell from '@/components/layout/NotificationBell'
 import ProgressLoader from '@/components/ui/ProgressLoader'
 import { useLoadingProgress } from '@/hooks/useLoadingProgress'
 
+import { APP_VERSION } from '@/lib/version'
+
 export default function AuditorLayout({
   children,
 }: {
@@ -331,6 +333,9 @@ export default function AuditorLayout({
                   {email}
                 </p>
               </div>
+            </div>
+            <div className="text-xs text-gray-400 text-center mb-2">
+              v{APP_VERSION}
             </div>
             <button
               onClick={handleLogout}

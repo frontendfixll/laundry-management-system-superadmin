@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/authStore'
-import { 
-  Shield, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
+import {
+  Shield,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
   AlertCircle,
   CheckCircle,
   Loader2,
@@ -131,7 +131,7 @@ export default function UnifiedLogin() {
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text()
-        console.error('Non-JSON response from SuperAdmin login:', text)
+        // console.error('Non-JSON response from SuperAdmin login:', text)
         throw new Error('Server returned invalid response format')
       }
 
@@ -140,7 +140,7 @@ export default function UnifiedLogin() {
       if (response.ok && data.success) {
         // Check user type by examining the roles array first, then legacy role field
         const admin = data.admin || data.data?.admin || data.data?.user
-        
+
         if (admin) {
           // Check roles array first (new RBAC system)
           if (admin.roles && admin.roles.length > 0) {
@@ -159,7 +159,7 @@ export default function UnifiedLogin() {
               return { success: true, data, type: 'finance' }
             }
           }
-          
+
           // Fallback to legacy role field
           const legacyRole = admin.role
           if (legacyRole === 'support') {
@@ -178,12 +178,12 @@ export default function UnifiedLogin() {
           }
         }
       }
-      
+
       // Store error for later
       lastError = data.message || 'SuperAdmin login failed'
     } catch (error: any) {
       // SuperAdmin login failed, try regular auth for support users
-      console.log('SuperAdmin login failed, trying regular auth...', error.message)
+      // console.log('SuperAdmin login failed, trying regular auth...', error.message)
       lastError = error.message
     }
 
@@ -205,7 +205,7 @@ export default function UnifiedLogin() {
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text()
-        console.error('Non-JSON response from Sales login:', text)
+        // console.error('Non-JSON response from Sales login:', text)
         throw new Error('Server returned invalid response format')
       }
 
@@ -244,7 +244,7 @@ export default function UnifiedLogin() {
         // Login successful (either SuperAdmin without MFA or Sales)
         // Handle different response structures
         let userData, token, session
-        
+
         if (result.type === 'superadmin' || result.type === 'support' || result.type === 'auditor' || result.type === 'finance') {
           // SuperAdmin/Support/Auditor/Finance response: { admin, token, session } (direct structure)
           userData = result.data.admin || result.data.data?.admin
@@ -257,42 +257,42 @@ export default function UnifiedLogin() {
           token = result.data.data?.token || result.data.token
           session = result.data.data?.session || result.data.session
         }
-        
+
         if (!userData) {
-          console.error('Response data:', result.data)
+          // console.error('Response data:', result.data)
           throw new Error('User data not found in response')
         }
-        
+
         // Update unified auth store
         setToken(token)
         setUser(userData)
         if (session) {
           setSession(session)
         }
-        
-        console.log('✅ Stored token in auth store:', token?.substring(0, 50) + '...')
-        console.log('✅ Stored user:', userData.email, userData.role || userData.designation)
-        
+
+        // console.log('✅ Stored token in auth store:', token?.substring(0, 50) + '...')
+        // console.log('✅ Stored user:', userData.email, userData.role || userData.designation)
+
         setSuccess('Login successful! Redirecting...')
-        
+
         // Redirect based on user type and role
         setTimeout(() => {
           if (result.type === 'superadmin' || result.type === 'support' || result.type === 'auditor' || result.type === 'finance') {
             // Use role-based dashboard routing for SuperAdmin, Support, Auditor, and Finance users
-            console.log('🔄 Login - Importing dashboard router for user type:', result.type)
+            // console.log('🔄 Login - Importing dashboard router for user type:', result.type)
             import('@/utils/dashboardRouter').then(({ getDashboardRoute }) => {
               const dashboardRoute = getDashboardRoute(userData)
-              console.log('🎯 Login - Routing user to dashboard:', dashboardRoute, 'based on role:', userData.role || userData.roles?.[0]?.name)
+              // console.log('🎯 Login - Routing user to dashboard:', dashboardRoute, 'based on role:', userData.role || userData.roles?.[0]?.name)
               router.push(dashboardRoute)
             })
           } else {
-            console.log('🔄 Login - Routing sales user to /sales-dashboard')
+            // console.log('🔄 Login - Routing sales user to /sales-dashboard')
             router.push('/sales-dashboard')
           }
         }, 2000) // Increased delay to ensure token is properly stored
       }
     } catch (error: any) {
-      console.error('Login error:', error)
+      // console.error('Login error:', error)
       setError(error.message || 'Invalid email or password')
     } finally {
       setLoading(false)
@@ -322,7 +322,7 @@ export default function UnifiedLogin() {
       const contentType = response.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text()
-        console.error('Non-JSON response from MFA verification:', text)
+        // console.error('Non-JSON response from MFA verification:', text)
         throw new Error('Server returned invalid response format')
       }
 
@@ -338,13 +338,13 @@ export default function UnifiedLogin() {
       if (data.session) {
         setSession(data.session)
       }
-      
+
       setSuccess('Verification successful! Redirecting...')
       setTimeout(() => {
         // Use role-based dashboard routing for MFA verified users
         import('@/utils/dashboardRouter').then(({ getDashboardRoute }) => {
           const dashboardRoute = getDashboardRoute(data.admin)
-          console.log('🎯 Routing MFA user to dashboard:', dashboardRoute, 'based on role:', data.admin.roles?.[0]?.name)
+          // console.log('🎯 Routing MFA user to dashboard:', dashboardRoute, 'based on role:', data.admin.roles?.[0]?.name)
           router.push(dashboardRoute)
         })
       }, 1000)
@@ -447,8 +447,8 @@ export default function UnifiedLogin() {
                   />
                   <span className="text-sm text-gray-300">Remember me</span>
                 </label>
-                
-                <Link 
+
+                <Link
                   href="/auth/forgot-password"
                   className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
                 >
@@ -541,8 +541,8 @@ export default function UnifiedLogin() {
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">Two-Factor Authentication</h3>
                 <p className="text-gray-300 text-sm">
-                  {useBackupCode 
-                    ? 'Enter your backup code' 
+                  {useBackupCode
+                    ? 'Enter your backup code'
                     : 'Enter the 6-digit code sent to your email'
                   }
                 </p>
@@ -609,7 +609,7 @@ export default function UnifiedLogin() {
                 >
                   {useBackupCode ? 'Use verification code instead' : 'Use backup code instead'}
                 </button>
-                
+
                 {!useBackupCode && (
                   <button
                     type="button"
