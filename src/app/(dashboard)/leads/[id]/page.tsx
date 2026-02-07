@@ -88,15 +88,15 @@ export default function LeadDetailPage() {
   const router = useRouter();
   const params = useParams();
   const leadId = params.id as string;
-  
+
   const { getLeadById, updateLead, deleteLead, loading, error } = useLeads();
-  
+
   const [lead, setLead] = useState<Lead | null>(null);
   const [status, setStatus] = useState<LeadStatus>('new');
   const [notes, setNotes] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Payment link state
   const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -106,11 +106,11 @@ export default function LeadDetailPage() {
   const [paymentNotes, setPaymentNotes] = useState('');
   const [creatingPaymentLink, setCreatingPaymentLink] = useState(false);
   const [newPaymentUrl, setNewPaymentUrl] = useState<string | null>(null);
-  
+
   // Custom pricing state
   const [useCustomPricing, setUseCustomPricing] = useState(false);
   const [customAmount, setCustomAmount] = useState<string>('');
-  
+
   // Mark as paid state
   const [isMarkPaidDialogOpen, setIsMarkPaidDialogOpen] = useState(false);
   const [markPaidLinkId, setMarkPaidLinkId] = useState<string | null>(null);
@@ -118,12 +118,12 @@ export default function LeadDetailPage() {
   const [offlineTransactionId, setOfflineTransactionId] = useState('');
   const [offlineNotes, setOfflineNotes] = useState('');
   const [markingAsPaid, setMarkingAsPaid] = useState(false);
-  
+
   // Share dropdown state
   const [shareDropdownOpen, setShareDropdownOpen] = useState<string | null>(null);
-  
+
   // Available plans for payment link
-  const [availablePlans, setAvailablePlans] = useState<Array<{name: string; displayName: string; isActive: boolean}>>([]);
+  const [availablePlans, setAvailablePlans] = useState<Array<{ name: string; displayName: string; isActive: boolean }>>([]);
 
   const loadPaymentLinks = useCallback(async () => {
     try {
@@ -161,22 +161,40 @@ export default function LeadDetailPage() {
 
   // Helper to get auth headers
   function getAuthHeaders() {
+    if (typeof window === 'undefined') return { 'Content-Type': 'application/json' };
+
+    // Try unified auth-storage (new unified store)
     let token = null;
-    
-    // Try superadmin-storage (Zustand persist format)
-    const superAdminData = localStorage.getItem('superadmin-storage');
-    if (superAdminData) {
+    const authData = localStorage.getItem('auth-storage');
+    if (authData) {
       try {
-        const parsed = JSON.parse(superAdminData);
+        const parsed = JSON.parse(authData);
         token = parsed.state?.token || parsed.token;
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error parsing auth-storage:', e);
+      }
     }
-    
-    // Fallback to legacy keys
+
+    // Try legacy superadmin-storage
     if (!token) {
-      token = localStorage.getItem('superadmin-token') || localStorage.getItem('superAdminToken');
+      const superAdminData = localStorage.getItem('superadmin-storage');
+      if (superAdminData) {
+        try {
+          const parsed = JSON.parse(superAdminData);
+          token = parsed.state?.token || parsed.token;
+        } catch (e) {
+          console.error('Error parsing superadmin-storage:', e);
+        }
+      }
     }
-    
+
+    // Try other legacy keys
+    if (!token) {
+      token = localStorage.getItem('superadmin-token') ||
+        localStorage.getItem('superAdminToken') ||
+        localStorage.getItem('token');
+    }
+
     return {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` })
@@ -203,11 +221,11 @@ export default function LeadDetailPage() {
 
   const handleSave = async () => {
     if (!lead) return;
-    
+
     setIsSaving(true);
     const success = await updateLead(lead._id, { status, notes });
     setIsSaving(false);
-    
+
     if (success) {
       toast.success('Lead updated successfully');
       const updated = await getLeadById(leadId);
@@ -221,7 +239,7 @@ export default function LeadDetailPage() {
 
   const handleDelete = async () => {
     if (!lead) return;
-    
+
     const success = await deleteLead(lead._id);
     if (success) {
       toast.success('Lead deleted');
@@ -235,7 +253,7 @@ export default function LeadDetailPage() {
   const handleCreatePaymentLink = async () => {
     setCreatingPaymentLink(true);
     setNewPaymentUrl(null);
-    
+
     try {
       const response = await fetch(`${API_URL}/superadmin/payment-links`, {
         method: 'POST',
@@ -249,9 +267,9 @@ export default function LeadDetailPage() {
           notes: paymentNotes
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast.success('Payment link created!');
         setNewPaymentUrl(data.data.paymentUrl);
@@ -283,9 +301,9 @@ export default function LeadDetailPage() {
         method: 'POST',
         headers: getAuthHeaders()
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast.success('Payment link cancelled');
         loadPaymentLinks();
@@ -329,7 +347,7 @@ export default function LeadDetailPage() {
 
   const handleMarkAsPaid = async () => {
     if (!markPaidLinkId) return;
-    
+
     setMarkingAsPaid(true);
     try {
       const response = await fetch(`${API_URL}/superadmin/payment-links/${markPaidLinkId}/mark-paid`, {
@@ -341,9 +359,9 @@ export default function LeadDetailPage() {
           notes: offlineNotes
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast.success('Payment marked as paid!');
         setIsMarkPaidDialogOpen(false);
@@ -612,8 +630,8 @@ export default function LeadDetailPage() {
                         <span className="font-medium">{PLAN_LABELS[link.plan]} Plan</span>
                         <Badge variant={
                           link.status === 'paid' ? 'default' :
-                          link.status === 'pending' ? 'secondary' :
-                          'outline'
+                            link.status === 'pending' ? 'secondary' :
+                              'outline'
                         }>
                           {link.status}
                         </Badge>
@@ -623,7 +641,7 @@ export default function LeadDetailPage() {
                       </p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {link.status === 'paid' 
+                        {link.status === 'paid'
                           ? `Paid on ${format(new Date(link.paidAt!), 'PP')}`
                           : `Expires ${format(new Date(link.expiresAt), 'PP')}`
                         }
@@ -759,7 +777,7 @@ export default function LeadDetailPage() {
               Generate a payment link to send to {lead.businessName}
             </DialogDescription>
           </DialogHeader>
-          
+
           {newPaymentUrl ? (
             <div className="space-y-4">
               <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -814,7 +832,7 @@ export default function LeadDetailPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Billing Cycle</Label>
                 <Select value={paymentCycle} onValueChange={(v) => setPaymentCycle(v as 'monthly' | 'yearly')}>
@@ -827,7 +845,7 @@ export default function LeadDetailPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Discount (₹)</Label>
                 <Input
@@ -838,7 +856,7 @@ export default function LeadDetailPage() {
                   placeholder="0"
                 />
               </div>
-              
+
               {/* Custom Pricing Option */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -863,7 +881,7 @@ export default function LeadDetailPage() {
                   />
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Notes (optional)</Label>
                 <Textarea
@@ -873,7 +891,7 @@ export default function LeadDetailPage() {
                   rows={2}
                 />
               </div>
-              
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
                   Cancel
@@ -896,7 +914,7 @@ export default function LeadDetailPage() {
               Record an offline payment (cash, bank transfer, UPI, etc.)
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Payment Method</Label>
@@ -913,7 +931,7 @@ export default function LeadDetailPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Transaction ID / Reference (optional)</Label>
               <Input
@@ -922,7 +940,7 @@ export default function LeadDetailPage() {
                 placeholder="e.g., UPI ref number, cheque number"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Notes (optional)</Label>
               <Textarea
@@ -932,13 +950,13 @@ export default function LeadDetailPage() {
                 rows={2}
               />
             </div>
-            
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsMarkPaidDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleMarkAsPaid} 
+              <Button
+                onClick={handleMarkAsPaid}
                 disabled={markingAsPaid}
                 className="bg-green-600 hover:bg-green-700"
               >

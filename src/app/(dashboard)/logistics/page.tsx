@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import { 
+import {
   Truck, Plus, Search, Edit, Trash2, ToggleLeft, ToggleRight,
   Phone, Mail, IndianRupee
 } from 'lucide-react'
@@ -28,7 +28,7 @@ export default function LogisticsPartnersPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingPartner, setEditingPartner] = useState<LogisticsPartner | null>(null)
   const [activeTab, setActiveTab] = useState<'partners' | 'settlement'>('partners')
-  
+
   // Settlement state
   const [settlementPartnerId, setSettlementPartnerId] = useState('')
   const [settlementMonth, setSettlementMonth] = useState(new Date().getMonth() + 1)
@@ -53,25 +53,41 @@ export default function LogisticsPartnersPage() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
   const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return { 'Content-Type': 'application/json' }
+
+    // Try unified auth-storage (new unified store)
     let token = null
-    
-    // First try superadmin-storage (Zustand persist format)
-    try {
-      const SuperAdminData = localStorage.getItem('superadmin-storage')
-      if (SuperAdminData) {
-        const parsed = JSON.parse(SuperAdminData)
+    const authData = localStorage.getItem('auth-storage')
+    if (authData) {
+      try {
+        const parsed = JSON.parse(authData)
         token = parsed.state?.token || parsed.token
+      } catch (e) {
+        console.error('Error parsing auth-storage:', e)
       }
-    } catch (e) {
-      console.error('Error parsing superadmin-storage:', e)
     }
-    
-    // Fallback to legacy token keys
+
+    // Try legacy superadmin-storage
     if (!token) {
-      token = localStorage.getItem('superadmin-token') || localStorage.getItem('SuperAdminToken') || localStorage.getItem('token')
+      const superAdminData = localStorage.getItem('superadmin-storage')
+      if (superAdminData) {
+        try {
+          const parsed = JSON.parse(superAdminData)
+          token = parsed.state?.token || parsed.token
+        } catch (e) {
+          console.error('Error parsing superadmin-storage:', e)
+        }
+      }
     }
-    
-    return { 
+
+    // Try other legacy keys
+    if (!token) {
+      token = localStorage.getItem('superadmin-token') ||
+        localStorage.getItem('superAdminToken') ||
+        localStorage.getItem('token')
+    }
+
+    return {
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` })
     }
@@ -87,7 +103,7 @@ export default function LogisticsPartnersPage() {
       const params = new URLSearchParams()
       if (search) params.append('search', search)
       if (statusFilter) params.append('status', statusFilter)
-      
+
       const res = await fetch(`${API_URL}/superadmin/logistics/partners?${params}`, {
         headers: getAuthHeaders()
       })
@@ -126,16 +142,16 @@ export default function LogisticsPartnersPage() {
         }))
       }
 
-      const url = editingPartner 
+      const url = editingPartner
         ? `${API_URL}/superadmin/logistics/partners/${editingPartner._id}`
         : `${API_URL}/superadmin/logistics/partners`
-      
+
       const res = await fetch(url, {
         method: editingPartner ? 'PUT' : 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       })
-      
+
       const data = await res.json()
       if (data.success) {
         setShowModal(false)
@@ -245,11 +261,10 @@ export default function LogisticsPartnersPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === tab.id
+              className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
                   ? 'border-purple-500 text-purple-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
               <tab.icon className="w-4 h-4" />
               <span>{tab.label}</span>
@@ -310,9 +325,8 @@ export default function LogisticsPartnersPage() {
                       <h3 className="text-lg font-semibold text-gray-900">{partner.companyName}</h3>
                       <p className="text-sm text-gray-500">{partner.contactPerson.name}</p>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      partner.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${partner.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                      }`}>
                       {partner.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -356,9 +370,8 @@ export default function LogisticsPartnersPage() {
                     </div>
                     <button
                       onClick={() => handleToggleStatus(partner._id)}
-                      className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-sm ${
-                        partner.isActive ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'
-                      }`}
+                      className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-sm ${partner.isActive ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'
+                        }`}
                     >
                       {partner.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                       <span>{partner.isActive ? 'Deactivate' : 'Activate'}</span>
@@ -493,7 +506,7 @@ export default function LogisticsPartnersPage() {
                 {editingPartner ? 'Edit Partner' : 'Add New Partner'}
               </h3>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>

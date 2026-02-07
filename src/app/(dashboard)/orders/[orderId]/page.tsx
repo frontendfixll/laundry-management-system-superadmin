@@ -5,12 +5,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  ArrowLeft, 
-  Package, 
-  User, 
-  MapPin, 
-  Phone, 
+import {
+  ArrowLeft,
+  Package,
+  User,
+  MapPin,
+  Phone,
   Mail,
   Calendar,
   Clock,
@@ -95,7 +95,7 @@ export default function OrderDetailPage() {
   const params = useParams()
   const router = useRouter()
   const orderId = params.orderId as string
-  
+
   const [order, setOrder] = useState<OrderDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -105,24 +105,35 @@ export default function OrderDetailPage() {
   }, [orderId])
 
   const getAuthToken = () => {
-    // First try superadmin-storage (Zustand persist format)
+    if (typeof window === 'undefined') return null
+
+    // Try unified auth-storage (new unified store)
+    const authData = localStorage.getItem('auth-storage')
+    if (authData) {
+      try {
+        const parsed = JSON.parse(authData)
+        const token = parsed.state?.token || parsed.token
+        if (token) return token
+      } catch (e) {
+        console.error('Error parsing auth-storage:', e)
+      }
+    }
+
+    // Try legacy superadmin-storage
     const superAdminData = localStorage.getItem('superadmin-storage')
     if (superAdminData) {
       try {
         const parsed = JSON.parse(superAdminData)
         if (parsed.state?.token) return parsed.state.token
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error parsing superadmin-storage:', e)
+      }
     }
-    // Fallback to laundry-auth
-    const authData = localStorage.getItem('laundry-auth')
-    if (authData) {
-      try {
-        const parsed = JSON.parse(authData)
-        return parsed.state?.token || parsed.token
-      } catch (e) {}
-    }
-    // Legacy fallback
-    return localStorage.getItem('superadmin-token') || localStorage.getItem('token')
+
+    // Try other legacy keys
+    return localStorage.getItem('superadmin-token') ||
+      localStorage.getItem('superAdminToken') ||
+      localStorage.getItem('token')
   }
 
   const fetchOrderDetails = async () => {
@@ -135,11 +146,11 @@ export default function OrderDetailPage() {
           'Content-Type': 'application/json'
         }
       })
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch order details')
       }
-      
+
       const data = await response.json()
       setOrder(data.order || data.data?.order || data)
     } catch (err: any) {
@@ -364,9 +375,8 @@ export default function OrderDetailPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Status</span>
-                <span className={`font-medium ${
-                  order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'
-                }`}>
+                <span className={`font-medium ${order.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'
+                  }`}>
                   {order.paymentStatus?.charAt(0).toUpperCase() + order.paymentStatus?.slice(1)}
                 </span>
               </div>

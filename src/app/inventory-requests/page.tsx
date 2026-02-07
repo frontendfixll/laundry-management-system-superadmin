@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Package,
+  Clock,
+  CheckCircle,
+  XCircle,
   AlertTriangle,
   RefreshCw,
   Loader2,
@@ -23,14 +23,35 @@ import toast from 'react-hot-toast'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
 const getAuthToken = () => {
-  try {
-    const data = localStorage.getItem('superadmin-auth')
-    if (data) {
-      const parsed = JSON.parse(data)
-      return parsed.state?.token || parsed.token
+  if (typeof window === 'undefined') return null
+
+  // Try unified auth-storage (new unified store)
+  const authData = localStorage.getItem('auth-storage')
+  if (authData) {
+    try {
+      const parsed = JSON.parse(authData)
+      const token = parsed.state?.token || parsed.token
+      if (token) return token
+    } catch (e) {
+      console.error('Error parsing auth-storage:', e)
     }
-  } catch {}
-  return localStorage.getItem('token')
+  }
+
+  // Try legacy superadmin-storage
+  const superAdminData = localStorage.getItem('superadmin-storage')
+  if (superAdminData) {
+    try {
+      const parsed = JSON.parse(superAdminData)
+      if (parsed.state?.token) return parsed.state.token
+    } catch (e) {
+      console.error('Error parsing superadmin-storage:', e)
+    }
+  }
+
+  // Try other legacy keys
+  return localStorage.getItem('superadmin-token') ||
+    localStorage.getItem('superAdminToken') ||
+    localStorage.getItem('token')
 }
 
 interface InventoryRequest {
@@ -79,7 +100,7 @@ function SuperAdminInventoryRequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<InventoryRequest | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
-  
+
   // Form states for approval/rejection
   const [approvalForm, setApprovalForm] = useState({
     estimatedCost: '',
@@ -137,7 +158,7 @@ function SuperAdminInventoryRequestsPage() {
           adminNotes: approvalForm.adminNotes
         })
       })
-      
+
       const data = await res.json()
       if (data.success) {
         toast.success('Request approved successfully')
@@ -173,7 +194,7 @@ function SuperAdminInventoryRequestsPage() {
         credentials: 'include',
         body: JSON.stringify(rejectionForm)
       })
-      
+
       const data = await res.json()
       if (data.success) {
         toast.success('Request rejected')
@@ -208,7 +229,7 @@ function SuperAdminInventoryRequestsPage() {
           adminNotes: approvalForm.adminNotes
         })
       })
-      
+
       const data = await res.json()
       if (data.success) {
         toast.success('Request marked as completed')
@@ -313,11 +334,10 @@ function SuperAdminInventoryRequestsPage() {
             <button
               key={tab.key}
               onClick={() => setFilter(tab.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === tab.key
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === tab.key
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+                }`}
             >
               {tab.label}
               <span className="ml-2 text-xs">
@@ -333,7 +353,7 @@ function SuperAdminInventoryRequestsPage() {
           <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">No requests found</h3>
           <p className="text-gray-600">
-            {filter === 'all' 
+            {filter === 'all'
               ? "No inventory requests have been submitted yet."
               : `No ${filter} requests found.`
             }
@@ -356,7 +376,7 @@ function SuperAdminInventoryRequestsPage() {
                       {request.urgency.toUpperCase()}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center gap-4 mb-3 text-sm text-gray-600">
                     <div className="flex items-center gap-1">
                       <Building className="w-4 h-4" />
@@ -371,13 +391,13 @@ function SuperAdminInventoryRequestsPage() {
                       <span>{new Date(request.requestDate).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  
+
                   {request.category && (
                     <p className="text-sm text-gray-500 mb-2">Category: {request.category}</p>
                   )}
-                  
+
                   <p className="text-gray-700 mb-3">{request.description}</p>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
                     <div>
                       <span className="font-medium text-gray-600">Estimated Quantity:</span>
@@ -398,7 +418,7 @@ function SuperAdminInventoryRequestsPage() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex gap-2 ml-4">
                   {request.status === 'pending' && (
                     <>
@@ -469,11 +489,11 @@ function SuperAdminInventoryRequestsPage() {
                 <h2 className="text-xl font-bold text-gray-800">
                   {selectedRequest.status === 'pending' ? 'Review Request' : 'Request Details'}
                 </h2>
-                <button 
+                <button
                   onClick={() => {
                     setShowModal(false)
                     setSelectedRequest(null)
-                  }} 
+                  }}
                   className="p-2 hover:bg-gray-100 rounded-lg"
                 >
                   <XCircle className="w-5 h-5 text-gray-500" />
@@ -492,7 +512,7 @@ function SuperAdminInventoryRequestsPage() {
                     <p className="text-gray-900">{selectedRequest.category || 'Not specified'}</p>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Description</label>
                   <p className="text-gray-900">{selectedRequest.description}</p>
@@ -549,7 +569,7 @@ function SuperAdminInventoryRequestsPage() {
                       <input
                         type="number"
                         value={approvalForm.estimatedCost}
-                        onChange={(e) => setApprovalForm({...approvalForm, estimatedCost: e.target.value})}
+                        onChange={(e) => setApprovalForm({ ...approvalForm, estimatedCost: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="0.00"
                       />
@@ -559,7 +579,7 @@ function SuperAdminInventoryRequestsPage() {
                       <input
                         type="text"
                         value={approvalForm.supplier}
-                        onChange={(e) => setApprovalForm({...approvalForm, supplier: e.target.value})}
+                        onChange={(e) => setApprovalForm({ ...approvalForm, supplier: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Supplier name"
                       />
@@ -571,7 +591,7 @@ function SuperAdminInventoryRequestsPage() {
                     <input
                       type="date"
                       value={approvalForm.expectedDelivery}
-                      onChange={(e) => setApprovalForm({...approvalForm, expectedDelivery: e.target.value})}
+                      onChange={(e) => setApprovalForm({ ...approvalForm, expectedDelivery: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -580,7 +600,7 @@ function SuperAdminInventoryRequestsPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Admin Notes</label>
                     <textarea
                       value={approvalForm.adminNotes}
-                      onChange={(e) => setApprovalForm({...approvalForm, adminNotes: e.target.value})}
+                      onChange={(e) => setApprovalForm({ ...approvalForm, adminNotes: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
                       placeholder="Additional notes for the tenancy admin..."
@@ -592,7 +612,7 @@ function SuperAdminInventoryRequestsPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Rejection Reason</label>
                     <textarea
                       value={rejectionForm.rejectionReason}
-                      onChange={(e) => setRejectionForm({...rejectionForm, rejectionReason: e.target.value})}
+                      onChange={(e) => setRejectionForm({ ...rejectionForm, rejectionReason: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
                       placeholder="Explain why this request is being rejected..."

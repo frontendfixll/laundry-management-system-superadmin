@@ -189,27 +189,35 @@ export default function SuperAdminServicesPage() {
   }, [])
 
   const getAuthToken = () => {
-    // First check Super Admin store
-    try {
-      const SuperAdminData = localStorage.getItem('superadmin-storage')
-      if (SuperAdminData) {
-        const parsed = JSON.parse(SuperAdminData)
-        if (parsed.state?.token) return parsed.state.token
-      }
-    } catch (e) {
-      console.error('Error parsing superadmin-storage:', e)
-    }
-    // Fallback to regular auth
-    try {
-      const authData = localStorage.getItem('laundry-auth')
-      if (authData) {
+    if (typeof window === 'undefined') return null
+
+    // Try unified auth-storage (new unified store)
+    const authData = localStorage.getItem('auth-storage')
+    if (authData) {
+      try {
         const parsed = JSON.parse(authData)
-        return parsed.state?.token || parsed.token
+        const token = parsed.state?.token || parsed.token
+        if (token) return token
+      } catch (e) {
+        console.error('Error parsing auth-storage:', e)
       }
-    } catch (e) {
-      console.error('Error parsing laundry-auth:', e)
     }
-    return localStorage.getItem('token') || localStorage.getItem('superadmin-token')
+
+    // Try legacy superadmin-storage
+    const superAdminData = localStorage.getItem('superadmin-storage')
+    if (superAdminData) {
+      try {
+        const parsed = JSON.parse(superAdminData)
+        if (parsed.state?.token) return parsed.state.token
+      } catch (e) {
+        console.error('Error parsing superadmin-storage:', e)
+      }
+    }
+
+    // Try other legacy keys
+    return localStorage.getItem('superadmin-token') ||
+      localStorage.getItem('superAdminToken') ||
+      localStorage.getItem('token')
   }
 
   const fetchServices = async () => {

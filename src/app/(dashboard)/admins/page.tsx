@@ -12,12 +12,35 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 const ITEMS_PER_PAGE = 8
 
 const getAuthToken = () => {
-  let token = null
-  try {
-    const data = localStorage.getItem('superadmin-storage')
-    if (data) { const p = JSON.parse(data); token = p.state?.token || p.token }
-  } catch (e) { }
-  return token || localStorage.getItem('superadmin-token') || localStorage.getItem('token')
+  if (typeof window === 'undefined') return null
+
+  // Try unified auth-storage (new unified store)
+  const authData = localStorage.getItem('auth-storage')
+  if (authData) {
+    try {
+      const parsed = JSON.parse(authData)
+      const token = parsed.state?.token || parsed.token
+      if (token) return token
+    } catch (e) {
+      console.error('Error parsing auth-storage:', e)
+    }
+  }
+
+  // Try legacy superadmin-storage
+  const superAdminData = localStorage.getItem('superadmin-storage')
+  if (superAdminData) {
+    try {
+      const parsed = JSON.parse(superAdminData)
+      if (parsed.state?.token) return parsed.state.token
+    } catch (e) {
+      console.error('Error parsing superadmin-storage:', e)
+    }
+  }
+
+  // Try other legacy keys
+  return localStorage.getItem('superadmin-token') ||
+    localStorage.getItem('superAdminToken') ||
+    localStorage.getItem('token')
 }
 
 const apiCall = async (endpoint: string, options: RequestInit = {}) => {
