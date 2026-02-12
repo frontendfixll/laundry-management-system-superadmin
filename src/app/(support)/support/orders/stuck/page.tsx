@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   AlertTriangle,
   Clock,
@@ -70,6 +71,7 @@ export default function StuckOrdersPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(12) // 12 orders per page for smarter pagination
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadStuckOrders()
@@ -78,106 +80,27 @@ export default function StuckOrdersPage() {
   const loadStuckOrders = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
+      setError(null)
+      const response = await api.get('/support/orders/stuck', { params: { hours: hoursFilter } })
+      const data = response.data
+      const payload = data?.data || data
 
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      const response = await fetch(`${API_URL}/support/orders/stuck?hours=${hoursFilter}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+      setStuckOrders(payload?.stuckOrders || [])
+      const s = payload?.summary || {}
+      setStats({
+        total: s.total ?? 0,
+        byStatus: s.byStatus || {},
+        oldestStuck: s.oldestStuck || '',
+        avgStuckTime: s.avgStuckTime ?? 0
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('🔍 Stuck orders data:', data)
-        
-        if (data.success) {
-          setStuckOrders(data.data.stuckOrders || [])
-          setStats({
-            total: data.data.summary?.total || 0,
-            byStatus: data.data.summary?.byStatus || {},
-            oldestStuck: data.data.summary?.oldestStuck || '',
-            avgStuckTime: 0 // Calculate if needed
-          })
-        }
-      } else {
-        console.error('Failed to load stuck orders:', response.status)
-        // Use mock data for demo
-        setMockData()
-      }
-    } catch (error) {
-      console.error('Error loading stuck orders:', error)
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading stuck orders:', err)
+      setError(err?.response?.data?.message || 'Failed to load stuck orders')
+      setStuckOrders([])
+      setStats({ total: 0, byStatus: {}, oldestStuck: '', avgStuckTime: 0 })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockOrders: StuckOrder[] = [
-      {
-        id: '1',
-        orderNumber: 'ORD-2026-001',
-        customer: {
-          name: 'Rajesh Kumar',
-          phone: '+91 98765 43210',
-          email: 'rajesh@example.com'
-        },
-        tenancy: {
-          name: 'CleanWash Laundry',
-          slug: 'cleanwash'
-        },
-        branch: {
-          name: 'Main Branch',
-          address: 'MG Road, Bangalore'
-        },
-        status: 'assigned_to_branch',
-        paymentStatus: 'completed',
-        stuckDuration: 36,
-        lastStatusChange: '2026-01-26T10:30:00Z',
-        totalAmount: 450,
-        createdAt: '2026-01-25T14:20:00Z',
-        updatedAt: '2026-01-26T10:30:00Z'
-      },
-      {
-        id: '2',
-        orderNumber: 'ORD-2026-002',
-        customer: {
-          name: 'Priya Sharma',
-          phone: '+91 87654 32109',
-          email: 'priya@example.com'
-        },
-        tenancy: {
-          name: 'QuickClean Services',
-          slug: 'quickclean'
-        },
-        status: 'placed',
-        paymentStatus: 'completed',
-        stuckDuration: 48,
-        lastStatusChange: '2026-01-25T08:15:00Z',
-        totalAmount: 320,
-        createdAt: '2026-01-25T08:15:00Z',
-        updatedAt: '2026-01-25T08:15:00Z'
-      }
-    ]
-
-    setStuckOrders(mockOrders)
-    setStats({
-      total: mockOrders.length,
-      byStatus: {
-        'assigned_to_branch': 1,
-        'placed': 1
-      },
-      oldestStuck: '2026-01-25T08:15:00Z',
-      avgStuckTime: 42
-    })
   }
 
   const getStatusColor = (status: string) => {
@@ -284,6 +207,13 @@ export default function StuckOrdersPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadStuckOrders} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

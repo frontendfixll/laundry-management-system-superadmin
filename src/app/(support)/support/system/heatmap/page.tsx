@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   Target,
   TrendingUp,
@@ -79,6 +80,7 @@ export default function TenantHeatmapPage() {
   const [tierFilter, setTierFilter] = useState('all')
   const [selectedTenant, setSelectedTenant] = useState<TenantHeatmapData | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadHeatmapData()
@@ -91,183 +93,30 @@ export default function TenantHeatmapPage() {
   const loadHeatmapData = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
+      setError(null)
+      const response = await api.get('/support/system/heatmap')
+      const data = response.data
+      const payload = data?.data || data
 
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      // Load tenant heatmap data
-      const response = await fetch(`${API_URL}/support/system/heatmap`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+      setTenants(payload?.tenants || [])
+      setStats(payload?.stats || {
+        totalTenants: 0,
+        healthyTenants: 0,
+        warningTenants: 0,
+        criticalTenants: 0,
+        avgHealth: 0,
+        totalUsers: 0,
+        totalOrders: 0,
+        totalRevenue: 0
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('🗺️ Tenant heatmap data:', data)
-        
-        if (data.success) {
-          setTenants(data.data.tenants || [])
-          setStats(data.data.stats || stats)
-        }
-      } else {
-        console.error('Failed to load heatmap data:', response.status)
-        setMockData()
-      }
-    } catch (error) {
-      console.error('Error loading heatmap data:', error)
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading heatmap data:', err)
+      setError(err?.response?.data?.message || 'Failed to load tenant heatmap')
+      setTenants([])
+      setStats({ totalTenants: 0, healthyTenants: 0, warningTenants: 0, criticalTenants: 0, avgHealth: 0, totalUsers: 0, totalOrders: 0, totalRevenue: 0 })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockTenants: TenantHeatmapData[] = [
-      {
-        id: '1',
-        tenantName: 'CleanWash Laundry',
-        tenantSlug: 'cleanwash',
-        location: {
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          country: 'India',
-          coordinates: { lat: 19.0760, lng: 72.8777 }
-        },
-        metrics: {
-          activeUsers: 245,
-          dailyOrders: 89,
-          revenue: 15600,
-          supportTickets: 3,
-          systemHealth: 95,
-          responseTime: 180,
-          errorRate: 0.2,
-          customerSatisfaction: 4.8
-        },
-        status: 'healthy',
-        lastUpdated: '2026-01-27T15:30:00Z',
-        tier: 'premium',
-        onboardedAt: '2025-08-15T10:00:00Z'
-      },
-      {
-        id: '2',
-        tenantName: 'QuickClean Services',
-        tenantSlug: 'quickclean',
-        location: {
-          city: 'Delhi',
-          state: 'Delhi',
-          country: 'India',
-          coordinates: { lat: 28.6139, lng: 77.2090 }
-        },
-        metrics: {
-          activeUsers: 156,
-          dailyOrders: 67,
-          revenue: 12400,
-          supportTickets: 8,
-          systemHealth: 78,
-          responseTime: 450,
-          errorRate: 1.2,
-          customerSatisfaction: 4.2
-        },
-        status: 'warning',
-        lastUpdated: '2026-01-27T15:25:00Z',
-        tier: 'basic',
-        onboardedAt: '2025-11-20T14:30:00Z'
-      },
-      {
-        id: '3',
-        tenantName: 'FreshSpin Laundromat',
-        tenantSlug: 'freshspin',
-        location: {
-          city: 'Bangalore',
-          state: 'Karnataka',
-          country: 'India',
-          coordinates: { lat: 12.9716, lng: 77.5946 }
-        },
-        metrics: {
-          activeUsers: 89,
-          dailyOrders: 34,
-          revenue: 8900,
-          supportTickets: 12,
-          systemHealth: 65,
-          responseTime: 780,
-          errorRate: 3.5,
-          customerSatisfaction: 3.8
-        },
-        status: 'critical',
-        lastUpdated: '2026-01-27T15:20:00Z',
-        tier: 'free',
-        onboardedAt: '2026-01-10T09:15:00Z'
-      },
-      {
-        id: '4',
-        tenantName: 'LaundryMaster Pro',
-        tenantSlug: 'laundrymaster',
-        location: {
-          city: 'Chennai',
-          state: 'Tamil Nadu',
-          country: 'India',
-          coordinates: { lat: 13.0827, lng: 80.2707 }
-        },
-        metrics: {
-          activeUsers: 312,
-          dailyOrders: 145,
-          revenue: 28900,
-          supportTickets: 2,
-          systemHealth: 98,
-          responseTime: 120,
-          errorRate: 0.1,
-          customerSatisfaction: 4.9
-        },
-        status: 'healthy',
-        lastUpdated: '2026-01-27T15:30:00Z',
-        tier: 'enterprise',
-        onboardedAt: '2025-06-01T08:00:00Z'
-      },
-      {
-        id: '5',
-        tenantName: 'WashCycle Express',
-        tenantSlug: 'washcycle',
-        location: {
-          city: 'Pune',
-          state: 'Maharashtra',
-          country: 'India',
-          coordinates: { lat: 18.5204, lng: 73.8567 }
-        },
-        metrics: {
-          activeUsers: 198,
-          dailyOrders: 76,
-          revenue: 16800,
-          supportTickets: 5,
-          systemHealth: 88,
-          responseTime: 220,
-          errorRate: 0.8,
-          customerSatisfaction: 4.5
-        },
-        status: 'healthy',
-        lastUpdated: '2026-01-27T15:28:00Z',
-        tier: 'premium',
-        onboardedAt: '2025-09-12T11:45:00Z'
-      }
-    ]
-
-    setTenants(mockTenants)
-    setStats({
-      totalTenants: mockTenants.length,
-      healthyTenants: mockTenants.filter(t => t.status === 'healthy').length,
-      warningTenants: mockTenants.filter(t => t.status === 'warning').length,
-      criticalTenants: mockTenants.filter(t => t.status === 'critical').length,
-      avgHealth: Math.round(mockTenants.reduce((sum, t) => sum + t.metrics.systemHealth, 0) / mockTenants.length),
-      totalUsers: mockTenants.reduce((sum, t) => sum + t.metrics.activeUsers, 0),
-      totalOrders: mockTenants.reduce((sum, t) => sum + t.metrics.dailyOrders, 0),
-      totalRevenue: mockTenants.reduce((sum, t) => sum + t.metrics.revenue, 0)
-    })
   }
 
   const getStatusColor = (status: string) => {
@@ -379,6 +228,13 @@ export default function TenantHeatmapPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadHeatmapData} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

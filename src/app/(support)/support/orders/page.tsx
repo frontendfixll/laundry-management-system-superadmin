@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import api from '@/lib/api'
 import { 
   Package, 
   Search, 
@@ -113,31 +114,19 @@ export default function OrderInvestigationPage() {
         return
       }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      // Build query parameters
-      const params = new URLSearchParams({
+      const params: Record<string, string> = {
         page: currentPage.toString(),
-        limit: pageSize.toString(),
-        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-        ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(paymentFilter !== 'all' && { paymentStatus: paymentFilter })
-      })
-      
-      const response = await fetch(`${API_URL}/support/orders?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
+        limit: pageSize.toString()
+      }
+      if (debouncedSearchTerm) params.search = debouncedSearchTerm
+      if (statusFilter !== 'all') params.status = statusFilter
+      if (paymentFilter !== 'all') params.paymentStatus = paymentFilter
 
-      if (response.ok) {
-        const data = await response.json()
-        console.log('📦 Orders API Response:', data)
-        
-        if (data.success && data.data) {
-          // Transform backend data to frontend format
-          const transformedOrders = (data.data.orders || []).map((order: any) => ({
+      const response = await api.get('/support/orders', { params })
+      const data = response.data
+
+      if (data?.success && data?.data) {
+        const transformedOrders = (data.data.orders || []).map((order: any) => ({
             id: order._id || order.id,
             orderNumber: order.orderNumber || order.orderCode || `ORD-${(order._id || order.id || '').slice(-6)}`,
             customer: {
@@ -160,17 +149,9 @@ export default function OrderInvestigationPage() {
             } : undefined
           }))
           
-          setOrders(transformedOrders)
-          setTotalOrders(data.data.total || transformedOrders.length)
-          setTotalPages(Math.ceil((data.data.total || transformedOrders.length) / pageSize))
-          
-          console.log('✅ Loaded real orders:', transformedOrders.length, 'of', data.data.total)
-        } else {
-          console.log('⚠️ Invalid orders response format')
-          setOrders([])
-          setTotalOrders(0)
-          setTotalPages(1)
-        }
+        setOrders(transformedOrders)
+        setTotalOrders(data.data.total || transformedOrders.length)
+        setTotalPages(Math.ceil((data.data.total || transformedOrders.length) / pageSize))
       } else {
         console.log('⚠️ Orders API not available, using empty state')
         setOrders([])
@@ -191,27 +172,10 @@ export default function OrderInvestigationPage() {
 
   const loadStuckOrders = async () => {
     try {
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
+      const response = await api.get('/support/orders/stuck', { params: { hours: 24 } })
+      const data = response.data
 
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      const response = await fetch(`${API_URL}/support/orders/stuck?hours=24`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('🚨 Stuck Orders API Response:', data)
-        
-        if (data.success && data.data) {
+      if (data?.success && data?.data) {
           // Transform backend data to frontend format
           const transformedStuckOrders = (data.data.stuckOrders || data.data || []).map((order: any) => ({
             id: order._id || order.id,
@@ -236,14 +200,8 @@ export default function OrderInvestigationPage() {
             } : undefined
           }))
           
-          setStuckOrders(transformedStuckOrders)
-          console.log('✅ Loaded real stuck orders:', transformedStuckOrders.length)
-        } else {
-          console.log('⚠️ No stuck orders found')
-          setStuckOrders([])
-        }
+        setStuckOrders(transformedStuckOrders)
       } else {
-        console.log('⚠️ Stuck orders API not available')
         setStuckOrders([])
       }
     } catch (error) {

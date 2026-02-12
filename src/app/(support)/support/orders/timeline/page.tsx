@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuthStore } from '@/store/authStore'
+import api from '@/lib/api'
 import { 
   Search,
   Package,
@@ -64,97 +64,28 @@ export default function OrderTimelinePage() {
     if (!searchQuery.trim()) return
 
     setLoading(true)
+    setOrderTimeline(null)
     try {
-      const authStorage = localStorage.getItem('auth-storage')
-      const token = authStorage ? JSON.parse(authStorage).state?.token : null
+      const response = await api.get(`/support/orders/${encodeURIComponent(searchQuery.trim())}/timeline`)
+      const data = response.data
+      const payload = data?.data || data
 
-      if (!token) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-      const response = await fetch(`${API_URL}/support/orders/${searchQuery}/timeline`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setOrderTimeline({
-            ...data.data.order,
-            timeline: data.data.timeline,
-            investigation: data.data.investigation
-          })
-        }
-      } else {
-        // Fallback to mock data
+      if (payload?.order || payload?.timeline) {
         setOrderTimeline({
-          orderId: 'order_123',
-          orderNumber: 'ORD-2026-001',
-          customer: {
-            name: 'Rajesh Kumar',
-            email: 'rajesh@example.com',
-            phone: '+91 98765 43210'
-          },
-          tenant: {
-            name: 'CleanWash Laundry',
-            slug: 'cleanwash'
-          },
-          branch: {
-            name: 'CleanWash Main Branch',
-            address: '123 Main Street, Mumbai'
-          },
-          currentStatus: 'assigned_to_logistics_pickup',
-          paymentStatus: 'completed',
-          timeline: [
-            {
-              id: '1',
-              action: 'ORDER_CREATED',
-              status: 'placed',
-              timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-              actor: 'Customer',
-              details: 'Order placed by customer'
-            },
-            {
-              id: '2',
-              action: 'PAYMENT_COMPLETED',
-              status: 'payment_confirmed',
-              timestamp: new Date(Date.now() - 3.5 * 60 * 60 * 1000),
-              actor: 'Payment Gateway',
-              details: 'Payment of ₹250 completed via Razorpay'
-            },
-            {
-              id: '3',
-              action: 'ORDER_ASSIGNED_TO_BRANCH',
-              status: 'assigned_to_branch',
-              timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-              actor: 'System',
-              details: 'Order assigned to CleanWash Main Branch'
-            },
-            {
-              id: '4',
-              action: 'PICKUP_SCHEDULED',
-              status: 'assigned_to_logistics_pickup',
-              timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-              actor: 'Branch Staff',
-              details: 'Pickup scheduled for today 2:00 PM'
-            }
-          ],
-          investigation: {
-            totalStatusChanges: 4,
-            stuckDuration: 2,
-            lastUpdated: new Date(Date.now() - 2 * 60 * 60 * 1000)
-          },
-          pricing: {
-            subtotal: 225,
-            tax: 25,
-            total: 250
-          }
-        })
+          ...(payload.order || {}),
+          timeline: payload.timeline || [],
+          investigation: payload.investigation || { totalStatusChanges: 0, lastUpdated: new Date() },
+          pricing: payload.pricing || payload.order?.pricing || { subtotal: 0, tax: 0, total: 0 }
+        } as OrderTimeline)
+      } else {
+        setOrderTimeline(null)
       }
-    } catch (error) {
-      console.error('Error fetching order timeline:', error)
+    } catch (err: any) {
+      console.error('Error fetching order timeline:', err)
+      setOrderTimeline(null)
+      if (err?.response?.status !== 404) {
+        alert(err?.response?.data?.message || 'Failed to load order timeline')
+      }
     } finally {
       setLoading(false)
     }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   RefreshCw,
   Search,
@@ -78,182 +79,65 @@ export default function RefundStatusPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedRefund, setSelectedRefund] = useState<RefundRequest | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadRefunds()
-  }, [])
+  }, [statusFilter])
+
+  const mapRefund = (r: any): RefundRequest => ({
+    id: r._id,
+    refundId: r.externalTransactionId || `REF-${String(r._id).slice(-6)}`,
+    orderId: r.orderId?._id || r.orderId,
+    orderNumber: r.orderId?.orderNumber || 'N/A',
+    transactionId: r.externalTransactionId,
+    customer: {
+      name: r.customerId?.name || 'Unknown',
+      email: r.customerId?.email || 'N/A',
+      phone: r.customerId?.phone || 'N/A'
+    },
+    tenancy: r.tenancyId ? { name: r.tenancyId?.name || 'Unknown', slug: r.tenancyId?.slug || 'unknown' } : { name: 'Unknown', slug: 'unknown' },
+    originalAmount: r.amount || 0,
+    refundAmount: r.amount || 0,
+    refundReason: r.metadata?.reason || 'Refund request',
+    status: r.status === 'pending' ? 'requested' : r.status === 'completed' ? 'completed' : r.status === 'failed' ? 'failed' : r.status === 'approved' ? 'approved' : 'requested',
+    requestedBy: 'customer',
+    requestedAt: r.createdAt,
+    metadata: r.metadata
+  })
 
   const loadRefunds = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
+      setError(null)
+      const params: Record<string, string> = {}
+      if (statusFilter !== 'all') params.status = statusFilter
 
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
+      const response = await api.get('/support/payments/refunds', { params })
+      const data = response.data
+      const payload = data?.data || data
+      const rawRefunds = payload?.refunds || []
+      const refundRequests = rawRefunds.map(mapRefund)
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      // Try to load refund data from payments endpoint
-      const response = await fetch(`${API_URL}/support/payments?status=refund_requested`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+      setRefunds(refundRequests)
+      const s = payload?.stats || {}
+      setStats({
+        total: s.totalRequests ?? refundRequests.length,
+        pending: s.pending ?? refundRequests.filter((r: RefundRequest) => r.status === 'requested').length,
+        approved: s.approved ?? refundRequests.filter((r: RefundRequest) => r.status === 'approved').length,
+        completed: s.processed ?? refundRequests.filter((r: RefundRequest) => r.status === 'completed').length,
+        failed: s.rejected ?? refundRequests.filter((r: RefundRequest) => r.status === 'failed').length,
+        totalAmount: s.totalAmount ?? refundRequests.reduce((sum: number, r: RefundRequest) => sum + r.refundAmount, 0),
+        avgProcessingTime: '0h'
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('💰 Refund data:', data)
-        
-        if (data.success) {
-          // Transform payment issues to refund format
-          const refundRequests = (data.data.paymentIssues || []).map((issue: any) => ({
-            id: issue._id,
-            refundId: `REF-${issue._id.slice(-6)}`,
-            orderId: issue._id,
-            orderNumber: issue.orderNumber,
-            transactionId: issue.paymentId,
-            customer: {
-              name: issue.customer?.name || 'Unknown',
-              email: issue.customer?.email || 'unknown@email.com',
-              phone: issue.customer?.phone || 'N/A'
-            },
-            tenancy: {
-              name: issue.tenancy?.name || 'Unknown Tenant',
-              slug: issue.tenancy?.slug || 'unknown'
-            },
-            originalAmount: issue.pricing?.total || 0,
-            refundAmount: issue.pricing?.total || 0,
-            refundReason: 'Service not delivered',
-            status: issue.paymentStatus === 'refund_requested' ? 'requested' : 'completed',
-            requestedBy: 'customer',
-            requestedAt: issue.createdAt,
-            metadata: {}
-          }))
-          
-          setRefunds(refundRequests)
-          
-          // Calculate stats
-          const totalAmount = refundRequests.reduce((sum: number, r: RefundRequest) => sum + r.refundAmount, 0)
-          const pending = refundRequests.filter((r: RefundRequest) => r.status === 'requested').length
-          const approved = refundRequests.filter((r: RefundRequest) => r.status === 'approved').length
-          const completed = refundRequests.filter((r: RefundRequest) => r.status === 'completed').length
-          const failed = refundRequests.filter((r: RefundRequest) => r.status === 'failed').length
-          
-          setStats({
-            total: refundRequests.length,
-            pending,
-            approved,
-            completed,
-            failed,
-            totalAmount,
-            avgProcessingTime: '2.5h'
-          })
-        }
-      } else {
-        console.error('Failed to load refunds:', response.status)
-        setMockData()
-      }
-    } catch (error) {
-      console.error('Error loading refunds:', error)
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading refunds:', err)
+      setError(err?.response?.data?.message || 'Failed to load refunds')
+      setRefunds([])
+      setStats({ total: 0, pending: 0, approved: 0, completed: 0, failed: 0, totalAmount: 0, avgProcessingTime: '0h' })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockRefunds: RefundRequest[] = [
-      {
-        id: '1',
-        refundId: 'REF-2026-001',
-        orderId: 'order_001',
-        orderNumber: 'ORD-2026-001',
-        transactionId: 'TXN-2026-001',
-        customer: {
-          name: 'Rajesh Kumar',
-          email: 'rajesh@example.com',
-          phone: '+91 98765 43210'
-        },
-        tenancy: {
-          name: 'CleanWash Laundry',
-          slug: 'cleanwash'
-        },
-        originalAmount: 450,
-        refundAmount: 450,
-        refundReason: 'Service not delivered on time',
-        status: 'processing',
-        requestedBy: 'customer',
-        approvedBy: 'tenant_admin',
-        processedBy: 'platform_support',
-        gatewayRefundId: 'rfnd_live_1234567890',
-        requestedAt: '2026-01-27T10:30:00Z',
-        approvedAt: '2026-01-27T11:00:00Z',
-        processedAt: '2026-01-27T11:30:00Z'
-      },
-      {
-        id: '2',
-        refundId: 'REF-2026-002',
-        orderId: 'order_002',
-        orderNumber: 'ORD-2026-002',
-        transactionId: 'TXN-2026-002',
-        customer: {
-          name: 'Priya Sharma',
-          email: 'priya@example.com',
-          phone: '+91 87654 32109'
-        },
-        tenancy: {
-          name: 'QuickClean Services',
-          slug: 'quickclean'
-        },
-        originalAmount: 320,
-        refundAmount: 160,
-        refundReason: 'Partial service completion',
-        status: 'completed',
-        requestedBy: 'tenant_admin',
-        approvedBy: 'platform_finance',
-        processedBy: 'platform_support',
-        gatewayRefundId: 'rfnd_live_0987654321',
-        requestedAt: '2026-01-26T14:20:00Z',
-        approvedAt: '2026-01-26T15:00:00Z',
-        processedAt: '2026-01-26T15:30:00Z',
-        completedAt: '2026-01-26T16:00:00Z'
-      },
-      {
-        id: '3',
-        refundId: 'REF-2026-003',
-        orderId: 'order_003',
-        orderNumber: 'ORD-2026-003',
-        customer: {
-          name: 'Amit Singh',
-          email: 'amit@example.com',
-          phone: '+91 76543 21098'
-        },
-        tenancy: {
-          name: 'Express Laundry',
-          slug: 'express'
-        },
-        originalAmount: 280,
-        refundAmount: 280,
-        refundReason: 'Damaged clothes',
-        status: 'requested',
-        requestedBy: 'customer',
-        requestedAt: '2026-01-27T09:15:00Z'
-      }
-    ]
-
-    setRefunds(mockRefunds)
-    setStats({
-      total: mockRefunds.length,
-      pending: 1,
-      approved: 0,
-      completed: 1,
-      failed: 0,
-      totalAmount: 890,
-      avgProcessingTime: '2.5h'
-    })
   }
 
   const getStatusColor = (status: string) => {
@@ -335,6 +219,13 @@ export default function RefundStatusPage() {
           <span>Refresh</span>
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadRefunds} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

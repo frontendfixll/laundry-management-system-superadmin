@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   Activity,
   Server,
@@ -76,6 +77,7 @@ export default function PlatformHealthPage() {
     systemUptime: 99.9
   })
   const [activeTab, setActiveTab] = useState<'overview' | 'metrics' | 'components'>('overview')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadHealthData()
@@ -88,200 +90,31 @@ export default function PlatformHealthPage() {
   const loadHealthData = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
+      setError(null)
+      const response = await api.get('/support/system/health')
+      const data = response.data
+      const payload = data?.data || data
 
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      // Load platform health data
-      const response = await fetch(`${API_URL}/support/system/health`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+      setMetrics(payload?.metrics || [])
+      setComponents(payload?.components || [])
+      setStats(payload?.stats || {
+        overallHealth: 100,
+        totalComponents: 0,
+        healthyComponents: 0,
+        warningComponents: 0,
+        criticalComponents: 0,
+        avgResponseTime: 0,
+        systemUptime: 99.9
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('🏥 Platform health data:', data)
-        
-        if (data.success) {
-          setMetrics(data.data.metrics || [])
-          setComponents(data.data.components || [])
-          setStats(data.data.stats || stats)
-        }
-      } else {
-        console.error('Failed to load health data:', response.status)
-        setMockData()
-      }
-    } catch (error) {
-      console.error('Error loading health data:', error)
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading health data:', err)
+      setError(err?.response?.data?.message || 'Failed to load platform health')
+      setMetrics([])
+      setComponents([])
+      setStats({ overallHealth: 0, totalComponents: 0, healthyComponents: 0, warningComponents: 0, criticalComponents: 0, avgResponseTime: 0, systemUptime: 0 })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockMetrics: HealthMetric[] = [
-      {
-        id: '1',
-        name: 'CPU Usage',
-        category: 'system',
-        status: 'healthy',
-        value: 45,
-        unit: '%',
-        threshold: { warning: 70, critical: 90 },
-        trend: 'stable',
-        lastUpdated: '2026-01-27T15:30:00Z',
-        description: 'Average CPU utilization across all servers'
-      },
-      {
-        id: '2',
-        name: 'Memory Usage',
-        category: 'system',
-        status: 'warning',
-        value: 75,
-        unit: '%',
-        threshold: { warning: 70, critical: 90 },
-        trend: 'up',
-        lastUpdated: '2026-01-27T15:30:00Z',
-        description: 'Memory utilization across application servers'
-      },
-      {
-        id: '3',
-        name: 'Database Connections',
-        category: 'database',
-        status: 'healthy',
-        value: 65,
-        unit: '%',
-        threshold: { warning: 80, critical: 95 },
-        trend: 'stable',
-        lastUpdated: '2026-01-27T15:30:00Z',
-        description: 'Active database connection pool usage'
-      },
-      {
-        id: '4',
-        name: 'API Response Time',
-        category: 'api',
-        status: 'healthy',
-        value: 250,
-        unit: 'ms',
-        threshold: { warning: 500, critical: 1000 },
-        trend: 'down',
-        lastUpdated: '2026-01-27T15:30:00Z',
-        description: 'Average API response time across all endpoints'
-      },
-      {
-        id: '5',
-        name: 'Disk Usage',
-        category: 'infrastructure',
-        status: 'warning',
-        value: 78,
-        unit: '%',
-        threshold: { warning: 75, critical: 90 },
-        trend: 'up',
-        lastUpdated: '2026-01-27T15:30:00Z',
-        description: 'Storage utilization across all servers'
-      },
-      {
-        id: '6',
-        name: 'Failed Requests',
-        category: 'api',
-        status: 'healthy',
-        value: 0.5,
-        unit: '%',
-        threshold: { warning: 2, critical: 5 },
-        trend: 'stable',
-        lastUpdated: '2026-01-27T15:30:00Z',
-        description: 'Percentage of failed API requests'
-      }
-    ]
-
-    const mockComponents: SystemComponent[] = [
-      {
-        id: '1',
-        name: 'Main API Server',
-        type: 'service',
-        status: 'online',
-        uptime: 99.8,
-        responseTime: 180,
-        lastCheck: '2026-01-27T15:30:00Z',
-        dependencies: ['Database', 'Redis Cache'],
-        location: 'US-East-1'
-      },
-      {
-        id: '2',
-        name: 'PostgreSQL Database',
-        type: 'database',
-        status: 'online',
-        uptime: 99.9,
-        responseTime: 15,
-        lastCheck: '2026-01-27T15:30:00Z',
-        dependencies: [],
-        location: 'US-East-1'
-      },
-      {
-        id: '3',
-        name: 'Redis Cache',
-        type: 'database',
-        status: 'online',
-        uptime: 99.7,
-        responseTime: 5,
-        lastCheck: '2026-01-27T15:30:00Z',
-        dependencies: [],
-        location: 'US-East-1'
-      },
-      {
-        id: '4',
-        name: 'Payment Gateway',
-        type: 'external',
-        status: 'degraded',
-        uptime: 98.5,
-        responseTime: 850,
-        lastCheck: '2026-01-27T15:30:00Z',
-        dependencies: [],
-        location: 'External'
-      },
-      {
-        id: '5',
-        name: 'File Storage',
-        type: 'service',
-        status: 'online',
-        uptime: 99.9,
-        responseTime: 120,
-        lastCheck: '2026-01-27T15:30:00Z',
-        dependencies: [],
-        location: 'US-East-1'
-      },
-      {
-        id: '6',
-        name: 'Background Jobs',
-        type: 'service',
-        status: 'online',
-        uptime: 99.6,
-        responseTime: 0,
-        lastCheck: '2026-01-27T15:30:00Z',
-        dependencies: ['Database', 'Redis Cache'],
-        location: 'US-East-1'
-      }
-    ]
-
-    setMetrics(mockMetrics)
-    setComponents(mockComponents)
-    setStats({
-      overallHealth: 94,
-      totalComponents: mockComponents.length,
-      healthyComponents: mockComponents.filter(c => c.status === 'online').length,
-      warningComponents: mockComponents.filter(c => c.status === 'degraded').length,
-      criticalComponents: mockComponents.filter(c => c.status === 'offline').length,
-      avgResponseTime: 235,
-      systemUptime: 99.2
-    })
   }
 
   const getStatusColor = (status: string) => {
@@ -393,6 +226,13 @@ export default function PlatformHealthPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadHealthData} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Overall Health Card */}
       <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-8 text-white">

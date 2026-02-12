@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   Key,
   Search,
@@ -83,6 +84,7 @@ export default function ResetPasswordPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedRequest, setSelectedRequest] = useState<PasswordResetRequest | null>(null)
   const [showPasswords, setShowPasswords] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadPasswordResets()
@@ -91,186 +93,33 @@ export default function ResetPasswordPage() {
   const loadPasswordResets = async () => {
     try {
       setLoading(true)
-      
-      // Build query parameters
+      setError(null)
       const params = new URLSearchParams()
       if (methodFilter !== 'all') params.append('method', methodFilter)
       if (statusFilter !== 'all') params.append('status', statusFilter)
-      
-      const response = await fetch(`/api/support/users/password-reset-requests?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+
+      const response = await api.get(`/support/users/password-reset-requests?${params}`)
+      const data = response.data
+      const payload = data?.data || data
+
+      setRequests(payload?.requests || [])
+      setStats(payload?.stats || {
+        total: 0,
+        pending: 0,
+        successful: 0,
+        expired: 0,
+        failed: 0,
+        byMethod: {},
+        avgResponseTime: '0m'
       })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch password reset requests')
-      }
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        setRequests(data.data.requests || [])
-        setStats(data.data.stats || {
-          total: 0,
-          pending: 0,
-          successful: 0,
-          expired: 0,
-          failed: 0,
-          byMethod: {},
-          avgResponseTime: '0m'
-        })
-      } else {
-        throw new Error(data.message || 'Failed to load password reset requests')
-      }
-    } catch (error) {
-      console.error('Error loading password resets:', error)
-      // Fallback to mock data on error
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading password resets:', err)
+      setError(err?.response?.data?.message || 'Failed to load password reset requests')
+      setRequests([])
+      setStats({ total: 0, pending: 0, successful: 0, expired: 0, failed: 0, byMethod: {}, avgResponseTime: '0m' })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockRequests: PasswordResetRequest[] = [
-      {
-        id: '1',
-        userId: 'user_001',
-        user: {
-          name: 'Rajesh Kumar',
-          email: 'rajesh@cleanwash.com',
-          phone: '+91 98765 43210',
-          role: 'tenant_admin',
-          tenancy: {
-            name: 'CleanWash Laundry',
-            slug: 'cleanwash'
-          }
-        },
-        resetMethod: 'email',
-        status: 'sent',
-        resetToken: 'rst_1234567890abcdef',
-        resetExpiry: '2026-01-27T13:30:00Z',
-        requestedBy: 'user',
-        reason: 'Forgot password',
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        createdAt: '2026-01-27T12:30:00Z',
-        updatedAt: '2026-01-27T12:30:00Z',
-        securityLog: {
-          previousLoginAttempts: 3,
-          lastSuccessfulLogin: '2026-01-25T09:15:00Z',
-          suspiciousActivity: false
-        }
-      },
-      {
-        id: '2',
-        userId: 'user_002',
-        user: {
-          name: 'Priya Sharma',
-          email: 'priya@quickclean.in',
-          phone: '+91 87654 32109',
-          role: 'tenant_staff',
-          tenancy: {
-            name: 'QuickClean Services',
-            slug: 'quickclean'
-          }
-        },
-        resetMethod: 'admin_override',
-        status: 'used',
-        temporaryPassword: 'TempPass123!',
-        requestedBy: 'platform_support',
-        reason: 'Account locked, emergency access needed',
-        ipAddress: '103.21.58.66',
-        userAgent: 'Support Dashboard',
-        usedAt: '2026-01-27T11:45:00Z',
-        createdAt: '2026-01-27T11:00:00Z',
-        updatedAt: '2026-01-27T11:45:00Z',
-        securityLog: {
-          previousLoginAttempts: 5,
-          lastSuccessfulLogin: '2026-01-24T16:30:00Z',
-          suspiciousActivity: true
-        }
-      },
-      {
-        id: '3',
-        userId: 'user_003',
-        user: {
-          name: 'Amit Singh',
-          email: 'amit@express.com',
-          phone: '+91 76543 21098',
-          role: 'customer'
-        },
-        resetMethod: 'sms',
-        status: 'pending',
-        resetToken: 'rst_sms_9876543210',
-        resetExpiry: '2026-01-27T13:15:00Z',
-        requestedBy: 'user',
-        reason: 'Cannot access email',
-        ipAddress: '157.32.45.78',
-        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)',
-        createdAt: '2026-01-27T12:15:00Z',
-        updatedAt: '2026-01-27T12:15:00Z',
-        securityLog: {
-          previousLoginAttempts: 1,
-          lastSuccessfulLogin: '2026-01-26T20:45:00Z',
-          suspiciousActivity: false
-        }
-      },
-      {
-        id: '4',
-        userId: 'user_004',
-        user: {
-          name: 'Sneha Patel',
-          email: 'sneha@freshlaundry.com',
-          phone: '+91 65432 10987',
-          role: 'tenant_admin',
-          tenancy: {
-            name: 'Fresh Laundry Co',
-            slug: 'freshlaundry'
-          }
-        },
-        resetMethod: 'email',
-        status: 'expired',
-        resetToken: 'rst_expired_abcd1234',
-        resetExpiry: '2026-01-26T18:30:00Z',
-        requestedBy: 'user',
-        reason: 'Password forgotten',
-        ipAddress: '45.123.67.89',
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        createdAt: '2026-01-26T17:30:00Z',
-        updatedAt: '2026-01-26T18:30:00Z',
-        securityLog: {
-          previousLoginAttempts: 2,
-          lastSuccessfulLogin: '2026-01-24T14:20:00Z',
-          suspiciousActivity: false
-        }
-      }
-    ]
-
-    setRequests(mockRequests)
-    
-    const totalRequests = mockRequests.length
-    const pending = mockRequests.filter(req => req.status === 'pending' || req.status === 'sent').length
-    const successful = mockRequests.filter(req => req.status === 'used').length
-    const expired = mockRequests.filter(req => req.status === 'expired').length
-    const failed = mockRequests.filter(req => req.status === 'failed').length
-
-    setStats({
-      total: totalRequests,
-      pending,
-      successful,
-      expired,
-      failed,
-      byMethod: {
-        email: mockRequests.filter(req => req.resetMethod === 'email').length,
-        sms: mockRequests.filter(req => req.resetMethod === 'sms').length,
-        admin_override: mockRequests.filter(req => req.resetMethod === 'admin_override').length,
-        security_questions: mockRequests.filter(req => req.resetMethod === 'security_questions').length
-      },
-      avgResponseTime: '2.5m'
-    })
   }
 
   const getStatusColor = (status: string) => {
@@ -311,36 +160,21 @@ export default function ResetPasswordPage() {
 
   const handlePasswordAction = async (requestId: string, action: 'generate' | 'resend' | 'expire') => {
     try {
-      const method = 'POST'
-      
-      const response = await fetch(`/api/support/users/password-reset-requests/${requestId}/${action}`, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          method: 'email', // Default method
-          reason: `${action} by platform support`
-        })
+      const response = await api.post(`/support/users/password-reset-requests/${requestId}/${action}`, {
+        method: 'email',
+        reason: `${action} by platform support`
       })
-      
-      if (!response.ok) {
-        throw new Error(`Failed to ${action} password reset`)
-      }
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        // Reload the requests to get updated data
+      const data = response.data
+      if (data?.success) {
         await loadPasswordResets()
         alert(`Password reset ${action}ed successfully`)
       } else {
-        throw new Error(data.message || `Failed to ${action} password reset`)
+        throw new Error(data?.message || `Failed to ${action} password reset`)
       }
-    } catch (error) {
-      console.error(`Error ${action}ing password reset:`, error)
-      alert(`Failed to ${action} password reset: ${error.message}`)
+    } catch (err: any) {
+      console.error(`Error ${action}ing password reset:`, err)
+      const msg = err?.response?.data?.message || err?.message || `Failed to ${action} password reset`
+      alert(msg)
     }
   }
 
@@ -400,6 +234,13 @@ export default function ResetPasswordPage() {
           <span>Refresh</span>
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadPasswordResets} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

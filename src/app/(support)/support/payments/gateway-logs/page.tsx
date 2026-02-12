@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   Activity,
   Search,
@@ -71,162 +72,78 @@ export default function GatewayLogsPage() {
   const [gatewayFilter, setGatewayFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedLog, setSelectedLog] = useState<GatewayLog | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const mapToGatewayLog = (t: any): GatewayLog => ({
+    id: t._id,
+    timestamp: t.createdAt,
+    gateway: (t.paymentGateway?.toLowerCase() || 'razorpay') as GatewayLog['gateway'],
+    event: t.type === 'refund' ? 'refund.processed' : 'payment.captured',
+    transactionId: t.externalTransactionId || t.transactionId,
+    orderId: t.orderId?.orderNumber,
+    amount: t.amount,
+    currency: t.currency || 'INR',
+    status: t.status === 'completed' ? 'success' : t.status === 'failed' ? 'failed' : t.status === 'pending' ? 'pending' : 'success',
+    httpStatus: t.status === 'completed' ? 200 : t.status === 'failed' ? 400 : 202,
+    requestId: String(t._id || t.id || ''),
+    responseTime: 0,
+    ipAddress: '-',
+    retryAttempt: t.retryCount || 0,
+    errorCode: t.failureReason ? 'PAYMENT_FAILED' : undefined,
+    errorMessage: t.failureReason
+  })
 
   useEffect(() => {
     loadGatewayLogs()
-  }, [])
+  }, [gatewayFilter, statusFilter])
 
   const loadGatewayLogs = async () => {
     try {
       setLoading(true)
-      // Mock data for gateway logs since this would typically come from gateway webhooks/logs
-      setMockData()
-    } catch (error) {
-      console.error('Error loading gateway logs:', error)
-      setMockData()
+      setError(null)
+      const params: Record<string, string> = {}
+      if (gatewayFilter !== 'all') params.gateway = gatewayFilter
+      if (statusFilter !== 'all') params.status = statusFilter === 'success' ? 'completed' : statusFilter
+
+      const response = await api.get('/support/payments/gateway-logs', { params })
+      const data = response.data
+      const payload = data?.data || data
+      const rawLogs = payload?.logs || []
+      const mappedLogs = rawLogs.map(mapToGatewayLog)
+
+      setLogs(mappedLogs)
+
+      const totalLogs = mappedLogs.length
+      const successCount = mappedLogs.filter(log => log.status === 'success').length
+      const failedCount = mappedLogs.filter(log => log.status === 'failed').length
+      const timeoutCount = mappedLogs.filter(log => log.status === 'timeout').length
+      const pendingCount = mappedLogs.filter(log => log.status === 'pending').length
+      const avgResponseTime = totalLogs > 0
+        ? mappedLogs.reduce((sum, log) => sum + log.responseTime, 0) / totalLogs
+        : 0
+
+      const byGateway: Record<string, number> = {}
+      mappedLogs.forEach(log => {
+        byGateway[log.gateway] = (byGateway[log.gateway] || 0) + 1
+      })
+
+      setStats({
+        totalLogs,
+        successRate: totalLogs > 0 ? (successCount / totalLogs) * 100 : 0,
+        avgResponseTime: Math.round(avgResponseTime),
+        errorRate: totalLogs > 0 ? (failedCount / totalLogs) * 100 : 0,
+        timeoutRate: totalLogs > 0 ? (timeoutCount / totalLogs) * 100 : 0,
+        byGateway,
+        byStatus: { success: successCount, failed: failedCount, timeout: timeoutCount, pending: pendingCount }
+      })
+    } catch (err: any) {
+      console.error('Error loading gateway logs:', err)
+      setError(err?.response?.data?.message || 'Failed to load gateway logs')
+      setLogs([])
+      setStats({ totalLogs: 0, successRate: 0, avgResponseTime: 0, errorRate: 0, timeoutRate: 0, byGateway: {}, byStatus: {} })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockLogs: GatewayLog[] = [
-      {
-        id: '1',
-        timestamp: '2026-01-27T12:30:45Z',
-        gateway: 'razorpay',
-        event: 'payment.captured',
-        transactionId: 'pay_live_1234567890',
-        orderId: 'ORD-2026-001',
-        amount: 45000,
-        currency: 'INR',
-        status: 'success',
-        httpStatus: 200,
-        requestId: 'req_1234567890',
-        responseTime: 245,
-        ipAddress: '103.21.58.66',
-        userAgent: 'Razorpay/1.0',
-        retryAttempt: 0,
-        webhookVerified: true,
-        requestPayload: {
-          amount: 45000,
-          currency: 'INR',
-          receipt: 'ORD-2026-001',
-          payment_capture: 1
-        },
-        responsePayload: {
-          id: 'pay_live_1234567890',
-          status: 'captured',
-          amount: 45000,
-          currency: 'INR'
-        }
-      },
-      {
-        id: '2',
-        timestamp: '2026-01-27T12:25:30Z',
-        gateway: 'razorpay',
-        event: 'payment.failed',
-        transactionId: 'pay_live_0987654321',
-        orderId: 'ORD-2026-002',
-        amount: 32000,
-        currency: 'INR',
-        status: 'failed',
-        httpStatus: 400,
-        requestId: 'req_0987654321',
-        responseTime: 180,
-        ipAddress: '103.21.58.66',
-        userAgent: 'Razorpay/1.0',
-        retryAttempt: 1,
-        webhookVerified: true,
-        errorCode: 'BAD_REQUEST_ERROR',
-        errorMessage: 'Payment failed due to insufficient funds',
-        requestPayload: {
-          amount: 32000,
-          currency: 'INR',
-          receipt: 'ORD-2026-002'
-        },
-        responsePayload: {
-          error: {
-            code: 'BAD_REQUEST_ERROR',
-            description: 'Payment failed due to insufficient funds'
-          }
-        }
-      },
-      {
-        id: '3',
-        timestamp: '2026-01-27T12:20:15Z',
-        gateway: 'stripe',
-        event: 'payment_intent.succeeded',
-        transactionId: 'pi_1234567890',
-        orderId: 'ORD-2026-003',
-        amount: 28000,
-        currency: 'INR',
-        status: 'success',
-        httpStatus: 200,
-        requestId: 'req_stripe_123',
-        responseTime: 320,
-        ipAddress: '54.187.174.169',
-        userAgent: 'Stripe/1.0',
-        retryAttempt: 0,
-        webhookVerified: true,
-        requestPayload: {
-          amount: 28000,
-          currency: 'inr',
-          payment_method: 'pm_1234567890'
-        },
-        responsePayload: {
-          id: 'pi_1234567890',
-          status: 'succeeded',
-          amount: 28000,
-          currency: 'inr'
-        }
-      },
-      {
-        id: '4',
-        timestamp: '2026-01-27T12:15:00Z',
-        gateway: 'razorpay',
-        event: 'payment.timeout',
-        transactionId: 'pay_live_timeout123',
-        orderId: 'ORD-2026-004',
-        amount: 15000,
-        currency: 'INR',
-        status: 'timeout',
-        httpStatus: 408,
-        requestId: 'req_timeout123',
-        responseTime: 30000,
-        ipAddress: '103.21.58.66',
-        retryAttempt: 2,
-        webhookVerified: false,
-        errorCode: 'GATEWAY_TIMEOUT',
-        errorMessage: 'Request timeout after 30 seconds'
-      }
-    ]
-
-    setLogs(mockLogs)
-    
-    const totalLogs = mockLogs.length
-    const successCount = mockLogs.filter(log => log.status === 'success').length
-    const failedCount = mockLogs.filter(log => log.status === 'failed').length
-    const timeoutCount = mockLogs.filter(log => log.status === 'timeout').length
-    const avgResponseTime = mockLogs.reduce((sum, log) => sum + log.responseTime, 0) / totalLogs
-
-    setStats({
-      totalLogs,
-      successRate: (successCount / totalLogs) * 100,
-      avgResponseTime: Math.round(avgResponseTime),
-      errorRate: (failedCount / totalLogs) * 100,
-      timeoutRate: (timeoutCount / totalLogs) * 100,
-      byGateway: {
-        razorpay: mockLogs.filter(log => log.gateway === 'razorpay').length,
-        stripe: mockLogs.filter(log => log.gateway === 'stripe').length
-      },
-      byStatus: {
-        success: successCount,
-        failed: failedCount,
-        timeout: timeoutCount,
-        pending: mockLogs.filter(log => log.status === 'pending').length
-      }
-    })
   }
 
   const getStatusColor = (status: string) => {
@@ -319,6 +236,13 @@ export default function GatewayLogsPage() {
           <span>Refresh</span>
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadGatewayLogs} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSuperAdmin } from '@/store/authStore'
+import api from '@/lib/api'
 import { 
   MessageSquare, 
   Search,
@@ -57,65 +58,38 @@ export default function ChatHistory() {
   const loadChatHistory = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
-
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      try {
-        // Try to load real chat history from API
-        const response = await fetch(`${API_URL}/support/chat/history?period=${dateFilter}&status=${statusFilter}`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          }
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success && data.data) {
-            // Transform backend data to frontend format
-            const transformedHistory = data.data.map((chat: any) => ({
-              ticketId: chat._id || chat.id,
-              ticketNumber: chat.ticketNumber || `TKT-${(chat._id || chat.id || '').slice(-6)}`,
-              customer: {
-                name: chat.customer?.name || 'Unknown Customer',
-                email: chat.customer?.email || 'unknown@email.com',
-                phone: chat.customer?.phone
-              },
-              tenant: {
-                name: chat.tenant?.name || 'Unknown Tenant',
-                slug: chat.tenant?.slug || 'unknown'
-              },
-              messageCount: chat.messageCount || 0,
-              duration: chat.duration || '0m',
-              status: chat.status || 'unknown',
-              priority: chat.priority || 'medium',
-              createdAt: chat.createdAt,
-              resolvedAt: chat.resolvedAt,
-              lastActivity: chat.lastActivity || chat.updatedAt,
-              category: chat.category || 'general'
-            }))
-            
-            setChatHistory(transformedHistory)
-            console.log('✅ Loaded real chat history:', transformedHistory.length, 'items')
-            return
-          }
-        }
-        
-        console.log('⚠️ Chat history API not available, using empty state')
-        setChatHistory([])
-      } catch (error) {
-        console.error('Failed to load chat history from API:', error)
-        console.log('⚠️ Using empty state due to API error')
+      const { data } = await api.get('/support/chat/history', {
+        params: { period: dateFilter, status: statusFilter }
+      })
+      if (data.success && Array.isArray(data.data)) {
+        const transformedHistory = data.data.map((chat: any) => ({
+          ticketId: chat._id || chat.id,
+          ticketNumber: chat.ticketNumber || `TKT-${(chat._id || chat.id || '').toString().slice(-6)}`,
+          customer: {
+            name: chat.customer?.name || 'Unknown Customer',
+            email: chat.customer?.email || 'unknown@email.com',
+            phone: chat.customer?.phone
+          },
+          tenant: {
+            name: chat.tenant?.name || 'Unknown Tenant',
+            slug: chat.tenant?.slug || 'unknown'
+          },
+          messageCount: chat.messageCount || 0,
+          duration: chat.duration || '0m',
+          status: chat.status || 'unknown',
+          priority: chat.priority || 'medium',
+          createdAt: chat.createdAt,
+          resolvedAt: chat.resolvedAt,
+          lastActivity: chat.lastActivity || chat.updatedAt,
+          category: chat.category || 'general'
+        }))
+        setChatHistory(transformedHistory)
+      } else {
         setChatHistory([])
       }
     } catch (error) {
       console.error('Failed to load chat history:', error)
+      setChatHistory([])
     } finally {
       setLoading(false)
     }

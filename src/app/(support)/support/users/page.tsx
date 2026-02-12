@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   Users, 
   Search, 
@@ -50,6 +51,7 @@ export default function UserAssistancePage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadUsers()
@@ -57,88 +59,16 @@ export default function UserAssistancePage() {
 
   const loadUsers = async () => {
     try {
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
-
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      const response = await fetch(`${API_URL}/support/users?limit=50`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setUsers(data.data.users || [])
-        }
-      } else {
-        // Mock data for demo
-        setUsers([
-          {
-            id: '1',
-            name: 'Rajesh Kumar',
-            email: 'ra***@cleanwash.com',
-            phone: '+91 98***43210',
-            tenantName: 'CleanWash Laundry',
-            role: 'admin',
-            status: 'active',
-            lastLogin: '2026-01-27T10:30:00Z',
-            createdAt: '2026-01-15T08:00:00Z',
-            isEmailVerified: true,
-            phoneVerified: true
-          },
-          {
-            id: '2',
-            name: 'Priya Sharma',
-            email: 'pr***@quickclean.in',
-            phone: '+91 87***32109',
-            tenantName: 'QuickClean Services',
-            role: 'admin',
-            status: 'locked',
-            lastLogin: '2026-01-26T15:45:00Z',
-            createdAt: '2026-01-10T12:30:00Z',
-            isEmailVerified: true,
-            phoneVerified: false,
-            loginAttempts: 5,
-            lockUntil: '2026-01-27T15:45:00Z'
-          },
-          {
-            id: '3',
-            name: 'Amit Patel',
-            email: 'am***@freshclean.com',
-            phone: '+91 76***21098',
-            tenantName: 'FreshClean Express',
-            role: 'customer',
-            status: 'active',
-            lastLogin: '2026-01-27T09:15:00Z',
-            createdAt: '2026-01-20T14:20:00Z',
-            isEmailVerified: false,
-            phoneVerified: true
-          },
-          {
-            id: '4',
-            name: 'Neha Singh',
-            email: 'ne***@speedwash.pro',
-            phone: '+91 65***10987',
-            tenantName: 'SpeedWash Pro',
-            role: 'staff',
-            status: 'inactive',
-            lastLogin: '2026-01-25T11:20:00Z',
-            createdAt: '2026-01-18T16:45:00Z',
-            isEmailVerified: true,
-            phoneVerified: true
-          }
-        ])
-      }
-    } catch (error) {
-      console.error('Failed to load users:', error)
+      setLoading(true)
+      setError(null)
+      const response = await api.get('/support/users', { params: { limit: 50 } })
+      const data = response.data
+      const payload = data?.data || data
+      setUsers(payload?.users || [])
+    } catch (err: any) {
+      console.error('Failed to load users:', err)
+      setError(err?.response?.data?.message || 'Failed to load users')
+      setUsers([])
     } finally {
       setLoading(false)
     }
@@ -147,48 +77,13 @@ export default function UserAssistancePage() {
   const handleUserAction = async (userId: string, action: 'resend-otp' | 'unlock' | 'reset-password', reason?: string) => {
     setActionLoading(action)
     try {
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
-
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      const response = await fetch(`${API_URL}/support/users/${userId}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          // Show success message
-          alert(`${action.replace('-', ' ')} completed successfully`)
-          // Reload users
-          loadUsers()
-        }
-      } else {
-        // Mock success for demo
-        alert(`${action.replace('-', ' ')} completed successfully`)
-        
-        // Update user status locally for demo
-        if (action === 'unlock') {
-          setUsers(prev => prev.map(user => 
-            user.id === userId 
-              ? { ...user, status: 'active' as const, loginAttempts: 0, lockUntil: undefined }
-              : user
-          ))
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to ${action}:`, error)
-      alert(`Failed to ${action.replace('-', ' ')}`)
+      await api.post(`/support/users/${userId}/${action}`, { reason })
+      alert(`${action.replace('-', ' ')} completed successfully`)
+      loadUsers()
+    } catch (err: any) {
+      console.error(`Failed to ${action}:`, err)
+      const msg = err?.response?.data?.message || err?.message || `Failed to ${action.replace('-', ' ')}`
+      alert(msg)
     } finally {
       setActionLoading(null)
     }
@@ -267,12 +162,19 @@ export default function UserAssistancePage() {
         </div>
         
         <div className="flex items-center space-x-3">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+          <button onClick={loadUsers} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
             <RefreshCw className="w-4 h-4" />
             <span>Refresh</span>
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadUsers} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

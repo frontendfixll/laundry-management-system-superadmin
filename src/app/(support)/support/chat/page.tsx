@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import api from '@/lib/api'
 import { 
   MessageSquare,
   Send,
@@ -95,263 +96,43 @@ export default function ActiveChatsPage() {
   }
 
   const fetchActiveChats = async () => {
-    console.log('🔄 Fetching active chats for platform support...');
-    
     try {
-      const authStorage = localStorage.getItem('auth-storage')
-      let token = authStorage ? JSON.parse(authStorage).state?.token : null
-
-      // Also try direct token
-      if (!token) {
-        token = localStorage.getItem('token');
-      }
-
-      console.log('🔑 Platform support token found:', !!token);
-
-      if (!token) {
-        console.log('❌ No token found for platform support');
-        setLoading(false);
-        return;
-      }
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-      console.log('🌐 Fetching from:', `${API_URL}/support/chat/active`);
-      
-      const response = await fetch(`${API_URL}/support/chat/active`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      console.log('📥 Active chats response status:', response.status);
-      console.log('📥 Active chats response ok:', response.ok);
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('✅ Active chats data:', data);
-        
-        if (data.success) {
-          setChatSessions(data.data.activeChats || [])
-          console.log('✅ Active chats updated:', data.data.activeChats?.length || 0);
-          console.log('📋 Active chats list:', data.data.activeChats?.map(chat => ({
-            ticketId: chat.ticketId,
-            ticketNumber: chat.ticketNumber,
-            customerName: chat.customer?.name,
-            tenantName: chat.tenant?.name,
-            status: chat.status,
-            priority: chat.priority
-          })) || []);
-        }
+      const { data } = await api.get('/support/chat/active')
+      if (data.success && data.data?.activeChats) {
+        setChatSessions(data.data.activeChats)
       } else {
-        console.log('❌ Active chats API error:', response.status);
-        const errorText = await response.text();
-        console.log('❌ Error details:', errorText);
-        
-        // Test if backend is running
-        try {
-          const healthCheck = await fetch(`${API_URL.replace('/api', '')}/api/health`);
-          console.log('🏥 Backend health check:', healthCheck.ok ? 'ONLINE' : 'OFFLINE');
-        } catch (healthError) {
-          console.log('🏥 Backend health check: OFFLINE -', healthError.message);
-        }
-        
-        // Fallback to mock data for demonstration
-        console.log('🔄 Using mock data for platform support...');
-        setChatSessions([
-          {
-            ticketId: 'ticket_1',
-            ticketNumber: 'TKT-2026-001',
-            customer: {
-              name: 'Rajesh Kumar',
-              email: 'rajesh@cleanwash.com',
-              phone: '+91 98765 43210'
-            },
-            tenant: {
-              name: 'CleanWash Laundry',
-              slug: 'cleanwash'
-            },
-            lastMessage: {
-              message: 'The payment gateway is still showing errors. Can you please check?',
-              timestamp: new Date(Date.now() - 5 * 60 * 1000),
-              sender: 'Rajesh Kumar',
-              isFromSupport: false
-            },
-            unreadCount: 2,
-            status: 'in_progress',
-            priority: 'high'
-          },
-          {
-            ticketId: 'ticket_2',
-            ticketNumber: 'TKT-2026-002',
-            customer: {
-              name: 'Priya Sharma',
-              email: 'priya@quickclean.in'
-            },
-            tenant: {
-              name: 'QuickClean Services',
-              slug: 'quickclean'
-            },
-            lastMessage: {
-              message: 'Thank you for the update. I will check and get back to you.',
-              timestamp: new Date(Date.now() - 15 * 60 * 1000),
-              sender: 'Support Agent',
-              isFromSupport: true
-            },
-            unreadCount: 0,
-            status: 'waiting',
-            priority: 'medium'
-          }
-        ])
+        setChatSessions([])
       }
     } catch (error) {
-      console.error('❌ Error fetching active chats:', error)
-      
-      // Fallback to mock data on network error
-      console.log('🔄 Using mock data due to network error...');
-      setChatSessions([
-        {
-          ticketId: 'error_ticket_1',
-          ticketNumber: 'TKT-ERROR-001',
-          customer: {
-            name: 'Network Error - Mock Customer',
-            email: 'error@example.com'
-          },
-          tenant: {
-            name: 'Mock Tenant (Network Error)',
-            slug: 'mock-tenant'
-          },
-          lastMessage: {
-            message: 'This is a mock chat due to network error: ' + error.message,
-            timestamp: new Date(),
-            sender: 'System',
-            isFromSupport: true
-          },
-          unreadCount: 0,
-          status: 'open',
-          priority: 'high'
-        }
-      ]);
+      console.error('Error fetching active chats:', error)
+      setChatSessions([])
     } finally {
       setLoading(false)
     }
   }
 
   const fetchChatHistory = async (sessionId: string) => {
-    console.log('🔄 Fetching chat history for session:', sessionId);
-    
     try {
-      const authStorage = localStorage.getItem('auth-storage')
-      let token = authStorage ? JSON.parse(authStorage).state?.token : null
-
-      // Also try direct token
-      if (!token) {
-        token = localStorage.getItem('token');
-      }
-
-      if (!token) {
-        console.log('❌ No token found for chat history');
-        return;
-      }
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-      console.log('🌐 Fetching history from:', `${API_URL}/support/chat/${sessionId}/history`);
-      
-      const response = await fetch(`${API_URL}/support/chat/${sessionId}/history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      console.log('📥 Chat history response status:', response.status);
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('✅ Chat history data:', data);
-        
-        if (data.success) {
-          const newMessages = data.data.messages || []
-          
-          // Preserve optimistic messages during refresh
-          setMessages(prev => {
-            // Get all optimistic messages (temp IDs start with 'temp_support_')
-            const optimisticMessages = prev.filter(msg => msg.id.startsWith('temp_support_'))
-            
-            console.log('✅ Chat messages updated:', newMessages.length, 'server messages +', optimisticMessages.length, 'optimistic messages');
-            
-            // Merge server messages with optimistic messages and sort by timestamp
-            return [...newMessages, ...optimisticMessages]
-              .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()) // Sort by timestamp ascending
-          })
-        }
-      } else {
-        console.log('❌ Chat history API error:', response.status);
-        const errorText = await response.text();
-        console.log('❌ Error details:', errorText);
-        
-        // Only use fallback if we don't have any messages yet
-        if (messages.length === 0) {
-          console.log('🔄 Using mock chat history...');
-          setMessages([
-            {
-              id: 'msg_1',
-              sender: { name: 'Rajesh Kumar', role: 'tenant_admin' },
-              message: 'Hi, I am facing issues with the payment gateway. Customers are unable to complete payments.',
-              timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-              isInternal: false,
-              isFromSupport: false
-            },
-            {
-              id: 'msg_2',
-              sender: { name: 'Support Agent', role: 'support' },
-              message: 'Hello Rajesh, I understand you are facing payment gateway issues. Let me check the logs and get back to you.',
-              timestamp: new Date(Date.now() - 1.5 * 60 * 60 * 1000),
-              isInternal: false,
-              isFromSupport: true
-            },
-            {
-              id: 'msg_3',
-              sender: { name: 'Support Agent', role: 'support' },
-              message: 'Internal note: Checking Razorpay logs for tenant cleanwash',
-              timestamp: new Date(Date.now() - 1.4 * 60 * 60 * 1000),
-              isInternal: true,
-              isFromSupport: true
-            },
-            {
-              id: 'msg_4',
-              sender: { name: 'Support Agent', role: 'support' },
-              message: 'I found the issue. There was a temporary connectivity problem with Razorpay. It should be resolved now. Can you please try again?',
-              timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
-              isInternal: false,
-              isFromSupport: true
-            },
-            {
-              id: 'msg_5',
-              sender: { name: 'Rajesh Kumar', role: 'tenant_admin' },
-              message: 'The payment gateway is still showing errors. Can you please check?',
-              timestamp: new Date(Date.now() - 5 * 60 * 1000),
-              isInternal: false,
-              isFromSupport: false
-            }
-          ])
-        }
+      const { data } = await api.get(`/support/chat/${sessionId}/history`)
+      if (data.success && data.data?.messages) {
+        const newMessages = data.data.messages
+        setMessages(prev => {
+          const optimisticMessages = prev.filter(msg => msg.id.startsWith('temp_support_'))
+          return [...newMessages, ...optimisticMessages]
+            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        })
       }
     } catch (error) {
-      console.error('❌ Error fetching chat history:', error)
-      
-      // Only use fallback if we don't have any messages yet
+      console.error('Error fetching chat history:', error)
       if (messages.length === 0) {
-        setMessages([
-          {
-            id: 'error_msg_1',
-            sender: { name: 'System', role: 'system' },
-            message: 'Error loading chat history: ' + error.message,
-            timestamp: new Date(),
-            isInternal: true,
-            isFromSupport: true
-          }
-        ]);
+        setMessages([{
+          id: 'error_msg_1',
+          sender: { name: 'System', role: 'system' },
+          message: 'Unable to load chat history. Please try again.',
+          timestamp: new Date(),
+          isInternal: true,
+          isFromSupport: true
+        }])
       }
     }
   }
@@ -362,13 +143,6 @@ export default function ActiveChatsPage() {
     const messageText = newMessage.trim()
     const isInternalNote = isInternal
 
-    console.log('📤 Sending message from platform support:', {
-      sessionId: selectedChat.ticketId,
-      message: messageText,
-      isInternal: isInternalNote
-    });
-
-    // Create optimistic message with unique ID
     const optimisticId = `temp_support_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const optimisticMessage = {
       id: optimisticId,
@@ -379,90 +153,38 @@ export default function ActiveChatsPage() {
       isFromSupport: true
     }
 
-    // Add optimistic message immediately and clear input
     setMessages(prev => [...prev, optimisticMessage])
     setNewMessage('')
     setIsInternal(false)
 
     try {
-      const authStorage = localStorage.getItem('auth-storage')
-      let token = authStorage ? JSON.parse(authStorage).state?.token : null
-
-      // Also try direct token
-      if (!token) {
-        token = localStorage.getItem('token');
-      }
-
-      if (!token) {
-        console.log('❌ No token found for sending message');
-        // Only restore message if no token (authentication issue)
-        setMessages(prev => prev.filter(msg => msg.id !== optimisticId))
-        setNewMessage(messageText)
-        setIsInternal(isInternalNote)
-        return;
-      }
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-      console.log('🌐 Sending message to:', `${API_URL}/support/chat/${selectedChat.ticketId}/message`);
-      
-      const response = await fetch(`${API_URL}/support/chat/${selectedChat.ticketId}/message`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: messageText,
-          isInternal: isInternalNote,
-          messageType: 'text'
-        })
+      const { data } = await api.post(`/support/chat/${selectedChat.ticketId}/message`, {
+        message: messageText,
+        isInternal: isInternalNote,
+        messageType: 'text'
       })
 
-      console.log('📥 Send message response status:', response.status);
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('✅ Message sent successfully:', data);
-        
-        if (data.success && data.data.message) {
-          // Replace optimistic message with real message from server
-          setMessages(prev => prev.map(msg => 
-            msg.id === optimisticId ? {
-              id: data.data.message.id || `msg_${Date.now()}`,
-              sender: data.data.message.sender || { name: user?.name || 'Support Agent', role: 'support' },
-              message: data.data.message.message || messageText,
-              timestamp: new Date(data.data.message.timestamp || Date.now()),
-              isInternal: data.data.message.isInternal || isInternalNote,
-              isFromSupport: true,
-              messageType: data.data.message.messageType || 'text',
-              status: data.data.message.status || 'sent'
-            } : msg
-          ))
-          
-          // Force refresh of chat history to ensure sync (but don't restore input)
-          setTimeout(() => {
-            fetchChatHistory(selectedChat.ticketId)
-          }, 1000)
-        } else {
-          // API returned success: false - keep optimistic message but don't restore input
-          console.log('❌ API returned success: false', data);
-          // Keep the optimistic message for now, let the refresh handle it
-        }
-      } else {
-        console.log('❌ Send message API error:', response.status);
-        const errorText = await response.text();
-        console.log('❌ Error details:', errorText);
-        
-        // For API errors, keep the optimistic message and let refresh handle it
-        // Don't restore the input text to prevent the "reappearing message" issue
-        console.log('🔄 Keeping optimistic message, will be handled by refresh');
+      if (data.success && data.data?.message) {
+        const serverMsg = data.data.message
+        setMessages(prev => prev.map(msg =>
+          msg.id === optimisticId ? {
+            id: serverMsg.id || `msg_${Date.now()}`,
+            sender: serverMsg.sender || { name: user?.name || 'Support Agent', role: 'support' },
+            message: serverMsg.message || messageText,
+            timestamp: new Date(serverMsg.timestamp || Date.now()),
+            isInternal: serverMsg.isInternal ?? isInternalNote,
+            isFromSupport: true,
+            messageType: serverMsg.messageType || 'text',
+            status: serverMsg.status || 'sent'
+          } : msg
+        ))
+        setTimeout(() => fetchChatHistory(selectedChat.ticketId), 1000)
       }
     } catch (error) {
-      console.error('❌ Error sending message:', error)
-      
-      // For network errors, keep the optimistic message and let refresh handle it
-      // Don't restore the input text to prevent the "reappearing message" issue
-      console.log('🔄 Network error, keeping optimistic message for now');
+      console.error('Error sending message:', error)
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticId))
+      setNewMessage(messageText)
+      setIsInternal(isInternalNote)
     }
   }
 

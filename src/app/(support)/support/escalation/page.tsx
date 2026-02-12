@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   ArrowUpRight,
   Clock,
@@ -66,6 +67,7 @@ export default function EscalationMatrixPage() {
     avgResolutionTime: '0m',
     criticalEscalations: 0
   })
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadEscalationData()
@@ -74,144 +76,28 @@ export default function EscalationMatrixPage() {
   const loadEscalationData = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
+      setError(null)
+      const response = await api.get('/support/escalation')
+      const data = response.data
+      const payload = data?.data || data
 
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      // Load escalation data
-      const response = await fetch(`${API_URL}/support/escalation`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+      setRules(payload?.rules || [])
+      setEvents(payload?.events || [])
+      setStats(payload?.stats || {
+        activeEscalations: 0,
+        resolvedToday: 0,
+        avgResolutionTime: '0m',
+        criticalEscalations: 0
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('🚨 Escalation data:', data)
-        
-        if (data.success) {
-          // Use real data if available
-          setRules(data.data.rules || [])
-          setEvents(data.data.events || [])
-          setStats(data.data.stats || stats)
-        }
-      } else {
-        console.error('Failed to load escalation data:', response.status)
-        setMockData()
-      }
-    } catch (error) {
-      console.error('Error loading escalation data:', error)
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading escalation data:', err)
+      setError(err?.response?.data?.message || 'Failed to load escalation data')
+      setRules([])
+      setEvents([])
+      setStats({ activeEscalations: 0, resolvedToday: 0, avgResolutionTime: '0m', criticalEscalations: 0 })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockRules: EscalationRule[] = [
-      {
-        id: '1',
-        name: 'Critical Payment Issues',
-        priority: 'critical',
-        triggerConditions: {
-          timeThreshold: 15,
-          ticketType: ['payment_failure', 'refund_issue'],
-          customerTier: ['premium', 'enterprise']
-        },
-        escalationPath: [
-          {
-            level: 1,
-            assignTo: 'Senior Support',
-            notifyUsers: ['support-lead@laundrylobby.com'],
-            timeLimit: 30
-          },
-          {
-            level: 2,
-            assignTo: 'Support Manager',
-            notifyUsers: ['support-manager@laundrylobby.com'],
-            timeLimit: 60
-          }
-        ],
-        isActive: true,
-        createdAt: '2026-01-20T10:00:00Z',
-        lastTriggered: '2026-01-27T14:30:00Z'
-      },
-      {
-        id: '2',
-        name: 'Service Outage Reports',
-        priority: 'high',
-        triggerConditions: {
-          timeThreshold: 5,
-          ticketType: ['service_outage', 'system_down'],
-          customerTier: ['all']
-        },
-        escalationPath: [
-          {
-            level: 1,
-            assignTo: 'Technical Team',
-            notifyUsers: ['tech-lead@laundrylobby.com'],
-            timeLimit: 15
-          },
-          {
-            level: 2,
-            assignTo: 'Engineering Manager',
-            notifyUsers: ['eng-manager@laundrylobby.com'],
-            timeLimit: 30
-          }
-        ],
-        isActive: true,
-        createdAt: '2026-01-15T09:00:00Z'
-      }
-    ]
-
-    const mockEvents: EscalationEvent[] = [
-      {
-        id: '1',
-        ticketId: 'TKT-2026-001',
-        ticketTitle: 'Payment gateway timeout causing order failures',
-        customerName: 'CleanWash Laundry',
-        customerEmail: 'admin@cleanwash.com',
-        priority: 'critical',
-        currentLevel: 2,
-        maxLevel: 2,
-        assignedTo: 'Support Manager',
-        escalatedAt: '2026-01-27T14:30:00Z',
-        status: 'active',
-        escalationReason: 'No response for 30 minutes on critical payment issue',
-        timeToResolve: 45
-      },
-      {
-        id: '2',
-        ticketId: 'TKT-2026-002',
-        ticketTitle: 'Mobile app login issues affecting multiple users',
-        customerName: 'QuickClean Services',
-        customerEmail: 'support@quickclean.in',
-        priority: 'high',
-        currentLevel: 1,
-        maxLevel: 2,
-        assignedTo: 'Senior Support',
-        escalatedAt: '2026-01-27T13:15:00Z',
-        resolvedAt: '2026-01-27T14:00:00Z',
-        status: 'resolved',
-        escalationReason: 'Multiple customer complaints received',
-        timeToResolve: 45
-      }
-    ]
-
-    setRules(mockRules)
-    setEvents(mockEvents)
-    setStats({
-      activeEscalations: mockEvents.filter(e => e.status === 'active').length,
-      resolvedToday: mockEvents.filter(e => e.status === 'resolved').length,
-      avgResolutionTime: '42m',
-      criticalEscalations: mockEvents.filter(e => e.priority === 'critical' && e.status === 'active').length
-    })
   }
 
   const getPriorityColor = (priority: string) => {
@@ -279,6 +165,13 @@ export default function EscalationMatrixPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadEscalationData} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

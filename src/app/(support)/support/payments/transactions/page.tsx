@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   CreditCard,
   Search,
@@ -81,6 +82,34 @@ export default function TransactionLookupPage() {
     totalAmount: 0,
     failureRate: 0
   })
+  const [error, setError] = useState<string | null>(null)
+
+  const mapToTransaction = (issue: any): Transaction => ({
+    id: issue._id || issue.id,
+    transactionId: issue.paymentId || issue.transactionId || `TXN-${String(issue._id).slice(-6)}`,
+    externalTransactionId: issue.externalTransactionId,
+    orderId: issue.orderId?._id,
+    orderNumber: issue.orderId?.orderNumber,
+    customerId: issue.customerId?._id || issue.customer?._id,
+    customer: {
+      name: issue.customerId?.name || issue.customer?.name || 'Unknown',
+      email: issue.customerId?.email || issue.customer?.email || 'N/A',
+      phone: issue.customerId?.phone || issue.customer?.phone || 'N/A'
+    },
+    tenancy: issue.tenancy ? { name: issue.tenancy.name || 'Unknown', slug: issue.tenancy.slug || 'unknown' } : undefined,
+    type: (issue.type || 'payment') as Transaction['type'],
+    amount: issue.amount || issue.pricing?.total || 0,
+    currency: issue.currency || 'INR',
+    status: (issue.status || issue.paymentStatus) as Transaction['status'],
+    paymentMethod: issue.paymentMethod || 'Unknown',
+    paymentGateway: issue.paymentGateway || 'Unknown',
+    gatewayTransactionId: issue.externalTransactionId,
+    failureReason: issue.failureReason,
+    retryCount: issue.retryCount || 0,
+    createdAt: issue.createdAt,
+    updatedAt: issue.updatedAt,
+    metadata: issue.metadata
+  })
 
   useEffect(() => {
     loadRecentTransactions()
@@ -89,153 +118,35 @@ export default function TransactionLookupPage() {
   const loadRecentTransactions = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
+      setError(null)
+      const response = await api.get('/support/payments', { params: { limit: 10 } })
+      const data = response.data
+      const payload = data?.data || data
+      const raw = payload?.paymentIssues || payload?.transactions || []
+      const transactions = raw.map(mapToTransaction)
 
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
+      setRecentTransactions(transactions)
+      const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0)
+      const successful = transactions.filter(t => t.status === 'completed').length
+      const failed = transactions.filter(t => t.status === 'failed').length
+      const pending = transactions.filter(t => t.status === 'pending').length
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      // Load recent transactions for context
-      const response = await fetch(`${API_URL}/support/payments?limit=10`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+      setStats({
+        total: transactions.length,
+        successful,
+        failed,
+        pending,
+        totalAmount,
+        failureRate: transactions.length > 0 ? (failed / transactions.length) * 100 : 0
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('💳 Recent transactions data:', data)
-        
-        if (data.success) {
-          // Transform payment issues to transaction format
-          const transactions = (data.data.paymentIssues || []).map((issue: any) => ({
-            id: issue._id,
-            transactionId: issue.paymentId || `TXN-${issue._id.slice(-6)}`,
-            orderId: issue._id,
-            orderNumber: issue.orderNumber,
-            customerId: issue.customer?._id,
-            customer: {
-              name: issue.customer?.name || 'Unknown',
-              email: issue.customer?.email || 'unknown@email.com',
-              phone: issue.customer?.phone || 'N/A'
-            },
-            tenancy: {
-              name: issue.tenancy?.name || 'Unknown Tenant',
-              slug: issue.tenancy?.slug || 'unknown'
-            },
-            type: 'payment' as const,
-            amount: issue.pricing?.total || 0,
-            currency: 'INR',
-            status: issue.paymentStatus === 'failed' ? 'failed' : 
-                   issue.paymentStatus === 'pending' ? 'pending' : 'completed',
-            paymentMethod: issue.paymentMethod || 'Unknown',
-            paymentGateway: issue.paymentGateway || 'Razorpay',
-            retryCount: 0,
-            createdAt: issue.createdAt,
-            updatedAt: issue.updatedAt
-          }))
-          
-          setRecentTransactions(transactions)
-          
-          // Calculate stats
-          const totalAmount = transactions.reduce((sum: number, t: Transaction) => sum + t.amount, 0)
-          const successful = transactions.filter((t: Transaction) => t.status === 'completed').length
-          const failed = transactions.filter((t: Transaction) => t.status === 'failed').length
-          const pending = transactions.filter((t: Transaction) => t.status === 'pending').length
-          
-          setStats({
-            total: transactions.length,
-            successful,
-            failed,
-            pending,
-            totalAmount,
-            failureRate: transactions.length > 0 ? (failed / transactions.length) * 100 : 0
-          })
-        }
-      } else {
-        console.error('Failed to load recent transactions:', response.status)
-        setMockData()
-      }
-    } catch (error) {
-      console.error('Error loading recent transactions:', error)
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading recent transactions:', err)
+      setError(err?.response?.data?.message || 'Failed to load transactions')
+      setRecentTransactions([])
+      setStats({ total: 0, successful: 0, failed: 0, pending: 0, totalAmount: 0, failureRate: 0 })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockTransactions: Transaction[] = [
-      {
-        id: '1',
-        transactionId: 'TXN-2026-001',
-        externalTransactionId: 'rzp_live_1234567890',
-        orderId: 'order_001',
-        orderNumber: 'ORD-2026-001',
-        customerId: 'cust_001',
-        customer: {
-          name: 'Rajesh Kumar',
-          email: 'rajesh@example.com',
-          phone: '+91 98765 43210'
-        },
-        tenancy: {
-          name: 'CleanWash Laundry',
-          slug: 'cleanwash'
-        },
-        type: 'payment',
-        amount: 450,
-        currency: 'INR',
-        status: 'failed',
-        paymentMethod: 'card',
-        paymentGateway: 'Razorpay',
-        gatewayTransactionId: 'rzp_live_1234567890',
-        failureReason: 'Insufficient funds',
-        retryCount: 2,
-        createdAt: '2026-01-27T10:30:00Z',
-        updatedAt: '2026-01-27T10:35:00Z'
-      },
-      {
-        id: '2',
-        transactionId: 'TXN-2026-002',
-        externalTransactionId: 'rzp_live_0987654321',
-        orderId: 'order_002',
-        orderNumber: 'ORD-2026-002',
-        customerId: 'cust_002',
-        customer: {
-          name: 'Priya Sharma',
-          email: 'priya@example.com',
-          phone: '+91 87654 32109'
-        },
-        tenancy: {
-          name: 'QuickClean Services',
-          slug: 'quickclean'
-        },
-        type: 'payment',
-        amount: 320,
-        currency: 'INR',
-        status: 'completed',
-        paymentMethod: 'upi',
-        paymentGateway: 'Razorpay',
-        gatewayTransactionId: 'rzp_live_0987654321',
-        retryCount: 0,
-        createdAt: '2026-01-27T09:15:00Z',
-        updatedAt: '2026-01-27T09:16:00Z'
-      }
-    ]
-
-    setRecentTransactions(mockTransactions)
-    setStats({
-      total: mockTransactions.length,
-      successful: 1,
-      failed: 1,
-      pending: 0,
-      totalAmount: 770,
-      failureRate: 50
-    })
   }
 
   const searchTransaction = async () => {
@@ -243,75 +154,23 @@ export default function TransactionLookupPage() {
 
     try {
       setSearchLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
-
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      const response = await fetch(`${API_URL}/support/payments/transactions/${encodeURIComponent(searchTerm)}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('🔍 Transaction lookup data:', data)
-        
-        if (data.success && data.data.transaction) {
-          const txn = data.data.transaction
-          setTransaction({
-            id: txn._id,
-            transactionId: txn.transactionId,
-            externalTransactionId: txn.externalTransactionId,
-            orderId: txn.orderId?._id,
-            orderNumber: txn.orderId?.orderNumber,
-            customerId: txn.customerId?._id,
-            customer: {
-              name: txn.customerId?.name || 'Unknown',
-              email: txn.customerId?.email || 'unknown@email.com',
-              phone: txn.customerId?.phone || 'N/A'
-            },
-            branch: txn.branchId ? {
-              name: txn.branchId.name,
-              location: txn.branchId.location
-            } : undefined,
-            type: txn.type,
-            amount: txn.amount,
-            currency: txn.currency || 'INR',
-            status: txn.status,
-            paymentMethod: txn.paymentMethod,
-            paymentGateway: txn.paymentGateway,
-            gatewayTransactionId: txn.gatewayTransactionId,
-            failureReason: txn.failureReason,
-            retryCount: txn.retryCount || 0,
-            createdAt: txn.createdAt,
-            updatedAt: txn.updatedAt,
-            metadata: txn.metadata
-          })
-        } else {
-          setTransaction(null)
-          alert('Transaction not found')
-        }
-      } else {
-        console.error('Failed to lookup transaction:', response.status)
-        // Use mock data for demo
-        if (searchTerm.toLowerCase().includes('txn-2026-001') || searchTerm.includes('rzp_live_1234567890')) {
-          setTransaction(recentTransactions[0] || null)
-        } else {
-          setTransaction(null)
-          alert('Transaction not found')
-        }
-      }
-    } catch (error) {
-      console.error('Error searching transaction:', error)
       setTransaction(null)
-      alert('Error searching transaction')
+      const response = await api.get(`/support/payments/transactions/${encodeURIComponent(searchTerm.trim())}`)
+      const data = response.data
+      const payload = data?.data || data
+      const txn = payload?.transaction || payload
+
+      if (txn) {
+        setTransaction(mapToTransaction(txn))
+      } else {
+        setTransaction(null)
+      }
+    } catch (err: any) {
+      console.error('Error searching transaction:', err)
+      setTransaction(null)
+      if (err?.response?.status !== 404) {
+        alert(err?.response?.data?.message || 'Error searching transaction')
+      }
     } finally {
       setSearchLoading(false)
     }
@@ -363,6 +222,13 @@ export default function TransactionLookupPage() {
           <span>Refresh</span>
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadRecentTransactions} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

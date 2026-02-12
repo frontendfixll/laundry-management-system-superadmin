@@ -41,7 +41,7 @@ export default function SupportLayout({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { isAuthenticated, logout } = useAuthStore()
+  const { isAuthenticated, logout, _hasHydrated } = useAuthStore()
   const { user, userType, roleName, email, name } = useAuthInfo()
   const { isValidating } = useAuthValidation()
 
@@ -49,38 +49,18 @@ export default function SupportLayout({
   useNotificationsWebSocket()
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isHydrated, setIsHydrated] = useState(false)
 
-  // Wait for Zustand to hydrate from localStorage
+  // Wait for Zustand persist to finish hydrating from localStorage before auth checks
   useEffect(() => {
-    setIsHydrated(true)
-  }, [])
+    if (!_hasHydrated) return
 
-  useEffect(() => {
-    if (!isHydrated) return
-
-    const timer = setTimeout(() => {
-      const currentState = useAuthStore.getState()
-
-      console.log('🔐 Support Layout Auth Check:', {
-        isAuthenticated: currentState.isAuthenticated,
-        userType: currentState.userType,
-        isValidating,
-        hasToken: !!currentState.token,
-        hasUser: !!currentState.user
-      })
-
-      if (!isValidating && !currentState.isAuthenticated && !currentState.token) {
-        console.log('🔐 Not authenticated, redirecting to login')
-        router.push('/auth/login')
-      } else if (!isValidating && currentState.userType !== 'support' && currentState.userType !== 'superadmin') {
-        console.log('🔐 Wrong user type, redirecting to dashboard')
-        router.push('/dashboard')
-      }
-    }, 200)
-
-    return () => clearTimeout(timer)
-  }, [isAuthenticated, userType, router, isValidating, isHydrated])
+    const currentState = useAuthStore.getState()
+    if (!isValidating && !currentState.isAuthenticated && !currentState.token) {
+      router.push('/auth/login')
+    } else if (!isValidating && currentState.userType !== 'support' && currentState.userType !== 'superadmin') {
+      router.push('/dashboard')
+    }
+  }, [_hasHydrated, isAuthenticated, userType, router, isValidating])
 
   const handleLogout = () => {
     logout()
@@ -170,8 +150,8 @@ export default function SupportLayout({
     return hasPermission(item.permission)
   })
 
-  // Show loading while hydrating or validating auth
-  const isReady = !isValidating && isHydrated && isAuthenticated && (userType === 'support' || userType === 'superadmin')
+  // Show loading until persist has hydrated and auth is validated
+  const isReady = _hasHydrated && !isValidating && isAuthenticated && (userType === 'support' || userType === 'superadmin')
   const { progress, message, subMessage } = useLoadingProgress(isReady)
 
   if (!isReady || progress < 100) {

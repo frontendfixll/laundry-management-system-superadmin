@@ -33,6 +33,7 @@ import {
 interface SupportStats {
   tickets: {
     total: number
+    today: number
     open: number
     inProgress: number
     resolved: number
@@ -70,32 +71,38 @@ export default function SupportDashboardPage() {
       
       if (response.data.success && response.data.data) {
         const backendData = response.data.data
-        
-        // Transform backend data to frontend format
+        const metrics = backendData.metrics || {}
+        const ticketStats = backendData.ticketStats || {}
+        const byStatus = (s: string) => ticketStats.byStatus?.find((x: { _id: string }) => x._id === s)?.count ?? 0
+        const total = metrics.totalTickets ?? ticketStats.total ?? 0
+        const open = metrics.openTickets ?? byStatus('open') ?? 0
+        const inProgress = metrics.inProgressTickets ?? byStatus('in_progress') ?? 0
+        const resolved = metrics.resolvedTickets ?? byStatus('resolved') ?? 0
+        const closed = metrics.closedTickets ?? byStatus('closed') ?? 0
+
         const transformedStats: SupportStats = {
           tickets: {
-            total: backendData.metrics?.totalTickets || 0,
-            open: backendData.metrics?.openTickets || 0,
-            inProgress: backendData.metrics?.inProgressTickets || 0,
-            resolved: backendData.metrics?.resolvedTickets || 0,
-            closed: backendData.metrics?.totalTickets - (backendData.metrics?.openTickets || 0) - (backendData.metrics?.inProgressTickets || 0) - (backendData.metrics?.resolvedTickets || 0) || 0
+            total,
+            today: metrics.todayTickets ?? 0,
+            open,
+            inProgress,
+            resolved,
+            closed: closed || Math.max(0, total - open - inProgress - resolved)
           },
           performance: {
-            avgResponseTime: backendData.metrics?.avgResolutionTime || 0,
-            avgResolutionTime: backendData.metrics?.avgResolutionTime || 0,
-            satisfactionScore: 4.2, // This would come from customer feedback system
-            firstContactResolution: backendData.metrics?.resolvedTickets && backendData.metrics?.totalTickets 
-              ? Math.round((backendData.metrics.resolvedTickets / backendData.metrics.totalTickets) * 100) 
-              : 0
+            avgResponseTime: metrics.avgResponseTime ?? metrics.avgResolutionTime ?? 0,
+            avgResolutionTime: metrics.avgResolutionTime ?? 0,
+            satisfactionScore: metrics.satisfactionScore ?? 0,
+            firstContactResolution: total > 0 ? Math.round((resolved / total) * 100) : 0
           },
           agents: {
-            online: 5, // This would come from real-time agent status
-            busy: 2,
-            away: 1,
-            total: 8
+            online: backendData.totalSupportUsers ?? 0,
+            busy: 0,
+            away: 0,
+            total: backendData.totalSupportUsers ?? 0
           }
         }
-        
+
         setStats(transformedStats)
         console.log('✅ Support dashboard data loaded from API:', transformedStats);
       } else {
@@ -104,9 +111,8 @@ export default function SupportDashboardPage() {
     } catch (error) {
       console.error('Error fetching support data:', error)
       
-      // Use fallback data when API fails
       setStats({
-        tickets: { total: 0, open: 0, inProgress: 0, resolved: 0, closed: 0 },
+        tickets: { total: 0, today: 0, open: 0, inProgress: 0, resolved: 0, closed: 0 },
         performance: { avgResponseTime: 0, avgResolutionTime: 0, satisfactionScore: 0, firstContactResolution: 0 },
         agents: { online: 0, busy: 0, away: 0, total: 0 }
       })
@@ -130,11 +136,10 @@ export default function SupportDashboardPage() {
     { name: 'Closed', value: stats?.tickets.closed || 0, color: '#6B7280' }
   ]
 
-  const agentStatusData = [
-    { name: 'Online', value: stats?.agents.online || 0, color: '#10B981' },
-    { name: 'Busy', value: stats?.agents.busy || 0, color: '#F59E0B' },
-    { name: 'Away', value: stats?.agents.away || 0, color: '#6B7280' }
-  ]
+  const agentTotal = stats?.agents.total ?? 0
+  const agentStatusData = agentTotal > 0
+    ? [{ name: 'Support Agents', value: agentTotal, color: '#10B981' }]
+    : [{ name: 'No agents', value: 1, color: '#E5E7EB' }]
 
   return (
     <div className="space-y-6">
@@ -167,7 +172,7 @@ export default function SupportDashboardPage() {
                 {stats?.tickets.total || 0}
               </p>
               <p className="text-sm text-green-600 mt-1">
-                +{stats?.tickets.open || 0} new today
+                +{stats?.tickets.today ?? 0} new today
               </p>
             </div>
             <div className="bg-blue-500 p-3 rounded-lg">
@@ -183,8 +188,8 @@ export default function SupportDashboardPage() {
               <p className="text-3xl font-bold text-gray-900 mt-2">
                 {stats?.performance.avgResponseTime || 0}h
               </p>
-              <p className="text-sm text-green-600 mt-1">
-                -15% from last week
+              <p className="text-sm text-gray-500 mt-1">
+                Avg first response
               </p>
             </div>
             <div className="bg-green-500 p-3 rounded-lg">
@@ -198,15 +203,19 @@ export default function SupportDashboardPage() {
             <div>
               <p className="text-sm font-medium text-gray-600">Satisfaction Score</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {stats?.performance.satisfactionScore || 0}/5
+                {(stats?.performance.satisfactionScore ?? 0) > 0 ? `${stats?.performance.satisfactionScore}/5` : 'N/A'}
               </p>
               <div className="flex items-center mt-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star 
-                    key={star} 
-                    className={`w-4 h-4 ${star <= (stats?.performance.satisfactionScore || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                  />
-                ))}
+                {(stats?.performance.satisfactionScore ?? 0) > 0 ? (
+                  [1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-4 h-4 ${star <= (stats?.performance.satisfactionScore || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                    />
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-400">No feedback yet</span>
+                )}
               </div>
             </div>
             <div className="bg-yellow-500 p-3 rounded-lg">
@@ -218,12 +227,12 @@ export default function SupportDashboardPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Online Agents</p>
+              <p className="text-sm font-medium text-gray-600">Support Agents</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {stats?.agents.online || 0}/{stats?.agents.total || 0}
+                {stats?.agents.total ?? 0}
               </p>
-              <p className="text-sm text-blue-600 mt-1">
-                {stats?.agents.busy || 0} busy
+              <p className="text-sm text-gray-500 mt-1">
+                Active agents
               </p>
             </div>
             <div className="bg-purple-500 p-3 rounded-lg">

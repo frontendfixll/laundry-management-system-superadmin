@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   Shield,
   Search,
@@ -75,6 +76,7 @@ export default function AccountRecoveryPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedRequest, setSelectedRequest] = useState<RecoveryRequest | null>(null)
   const [showVerificationCode, setShowVerificationCode] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadRecoveryRequests()
@@ -83,155 +85,32 @@ export default function AccountRecoveryPage() {
   const loadRecoveryRequests = async () => {
     try {
       setLoading(true)
-      
-      // Build query parameters
+      setError(null)
       const params = new URLSearchParams()
       if (typeFilter !== 'all') params.append('type', typeFilter)
       if (statusFilter !== 'all') params.append('status', statusFilter)
-      
-      const response = await fetch(`/api/support/users/recovery-requests?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+
+      const response = await api.get(`/support/users/recovery-requests?${params}`)
+      const data = response.data
+      const payload = data?.data || data
+
+      setRequests(payload?.requests || [])
+      setStats(payload?.stats || {
+        total: 0,
+        pending: 0,
+        completed: 0,
+        failed: 0,
+        byType: {},
+        avgResolutionTime: '0h'
       })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch recovery requests')
-      }
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        setRequests(data.data.requests || [])
-        setStats(data.data.stats || {
-          total: 0,
-          pending: 0,
-          completed: 0,
-          failed: 0,
-          byType: {},
-          avgResolutionTime: '0h'
-        })
-      } else {
-        throw new Error(data.message || 'Failed to load recovery requests')
-      }
-    } catch (error) {
-      console.error('Error loading recovery requests:', error)
-      // Fallback to mock data on error
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading recovery requests:', err)
+      setError(err?.response?.data?.message || 'Failed to load recovery requests')
+      setRequests([])
+      setStats({ total: 0, pending: 0, completed: 0, failed: 0, byType: {}, avgResolutionTime: '0h' })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockRequests: RecoveryRequest[] = [
-      {
-        id: '1',
-        userId: 'user_001',
-        user: {
-          name: 'Rajesh Kumar',
-          email: 'rajesh@cleanwash.com',
-          phone: '+91 98765 43210',
-          role: 'tenant_admin',
-          tenancy: {
-            name: 'CleanWash Laundry',
-            slug: 'cleanwash'
-          }
-        },
-        requestType: 'password_reset',
-        status: 'pending',
-        requestedBy: 'user',
-        reason: 'Forgot password, unable to login',
-        verificationMethod: 'email',
-        verificationCode: '123456',
-        verificationExpiry: '2026-01-27T13:30:00Z',
-        createdAt: '2026-01-27T12:30:00Z',
-        updatedAt: '2026-01-27T12:30:00Z'
-      },
-      {
-        id: '2',
-        userId: 'user_002',
-        user: {
-          name: 'Priya Sharma',
-          email: 'priya@quickclean.in',
-          phone: '+91 87654 32109',
-          role: 'tenant_staff',
-          tenancy: {
-            name: 'QuickClean Services',
-            slug: 'quickclean'
-          }
-        },
-        requestType: 'account_unlock',
-        status: 'completed',
-        requestedBy: 'tenant_admin',
-        reason: 'Account locked due to multiple failed login attempts',
-        verificationMethod: 'admin_override',
-        completedBy: 'support@gmail.com',
-        completedAt: '2026-01-27T11:45:00Z',
-        createdAt: '2026-01-27T11:00:00Z',
-        updatedAt: '2026-01-27T11:45:00Z'
-      },
-      {
-        id: '3',
-        userId: 'user_003',
-        user: {
-          name: 'Amit Singh',
-          email: 'amit@express.com',
-          phone: '+91 76543 21098',
-          role: 'customer'
-        },
-        requestType: 'phone_verification',
-        status: 'in_progress',
-        requestedBy: 'platform_support',
-        reason: 'Customer unable to receive OTP on registered phone',
-        verificationMethod: 'manual',
-        createdAt: '2026-01-27T10:15:00Z',
-        updatedAt: '2026-01-27T12:00:00Z'
-      },
-      {
-        id: '4',
-        userId: 'user_004',
-        user: {
-          name: 'Sneha Patel',
-          email: 'sneha@freshlaundry.com',
-          phone: '+91 65432 10987',
-          role: 'tenant_admin',
-          tenancy: {
-            name: 'Fresh Laundry Co',
-            slug: 'freshlaundry'
-          }
-        },
-        requestType: 'email_verification',
-        status: 'failed',
-        requestedBy: 'user',
-        reason: 'Email not received, possible spam filter issue',
-        verificationMethod: 'email',
-        createdAt: '2026-01-26T16:20:00Z',
-        updatedAt: '2026-01-26T18:30:00Z'
-      }
-    ]
-
-    setRequests(mockRequests)
-    
-    const totalRequests = mockRequests.length
-    const pending = mockRequests.filter(req => req.status === 'pending').length
-    const completed = mockRequests.filter(req => req.status === 'completed').length
-    const failed = mockRequests.filter(req => req.status === 'failed').length
-
-    setStats({
-      total: totalRequests,
-      pending,
-      completed,
-      failed,
-      byType: {
-        password_reset: mockRequests.filter(req => req.requestType === 'password_reset').length,
-        account_unlock: mockRequests.filter(req => req.requestType === 'account_unlock').length,
-        email_verification: mockRequests.filter(req => req.requestType === 'email_verification').length,
-        phone_verification: mockRequests.filter(req => req.requestType === 'phone_verification').length
-      },
-      avgResolutionTime: '1.5h'
-    })
   }
 
   const getStatusColor = (status: string) => {
@@ -273,36 +152,21 @@ export default function AccountRecoveryPage() {
   const handleRecoveryAction = async (requestId: string, action: 'approve' | 'reject' | 'resend') => {
     try {
       const endpoint = action === 'approve' ? 'approve' : action === 'reject' ? 'reject' : 'resend'
-      const method = 'POST'
-      
-      const response = await fetch(`/api/support/users/recovery-requests/${requestId}/${endpoint}`, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          reason: `${action} by platform support`,
-          action: action
-        })
+      const response = await api.post(`/support/users/recovery-requests/${requestId}/${endpoint}`, {
+        reason: `${action} by platform support`,
+        action
       })
-      
-      if (!response.ok) {
-        throw new Error(`Failed to ${action} recovery request`)
-      }
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        // Reload the requests to get updated data
+      const data = response.data
+      if (data?.success) {
         await loadRecoveryRequests()
         alert(`Recovery request ${action}ed successfully`)
       } else {
         throw new Error(data.message || `Failed to ${action} recovery request`)
       }
-    } catch (error) {
-      console.error(`Error ${action}ing recovery request:`, error)
-      alert(`Failed to ${action} recovery request: ${error.message}`)
+    } catch (err: any) {
+      console.error(`Error ${action}ing recovery request:`, err)
+      const msg = err?.response?.data?.message || err?.message || `Failed to ${action} recovery request`
+      alert(msg)
     }
   }
 
@@ -362,6 +226,13 @@ export default function AccountRecoveryPage() {
           <span>Refresh</span>
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadRecoveryRequests} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

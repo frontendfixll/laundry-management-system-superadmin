@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   AlertTriangle,
   CheckCircle,
@@ -70,6 +71,7 @@ export default function SystemAlertsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedAlert, setSelectedAlert] = useState<SystemAlert | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadSystemAlerts()
@@ -82,139 +84,28 @@ export default function SystemAlertsPage() {
   const loadSystemAlerts = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
+      setError(null)
+      const response = await api.get('/support/system/alerts')
+      const data = response.data
+      const payload = data?.data || data
 
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      // Load system alerts
-      const response = await fetch(`${API_URL}/support/system/alerts`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+      setAlerts(payload?.alerts || [])
+      setStats(payload?.stats || {
+        totalAlerts: 0,
+        activeAlerts: 0,
+        criticalAlerts: 0,
+        resolvedToday: 0,
+        avgResolutionTime: '0m',
+        systemHealth: 100
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('🚨 System alerts data:', data)
-        
-        if (data.success) {
-          setAlerts(data.data.alerts || [])
-          setStats(data.data.stats || stats)
-        }
-      } else {
-        console.error('Failed to load system alerts:', response.status)
-        setMockData()
-      }
-    } catch (error) {
-      console.error('Error loading system alerts:', error)
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading system alerts:', err)
+      setError(err?.response?.data?.message || 'Failed to load system alerts')
+      setAlerts([])
+      setStats({ totalAlerts: 0, activeAlerts: 0, criticalAlerts: 0, resolvedToday: 0, avgResolutionTime: '0m', systemHealth: 100 })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockAlerts: SystemAlert[] = [
-      {
-        id: '1',
-        title: 'High Database Connection Pool Usage',
-        description: 'Database connection pool is at 85% capacity, approaching critical threshold',
-        severity: 'high',
-        category: 'database',
-        status: 'active',
-        source: 'Database Monitor',
-        affectedServices: ['User Authentication', 'Order Processing', 'Payment Gateway'],
-        createdAt: '2026-01-27T15:30:00Z',
-        metadata: {
-          threshold: 80,
-          currentValue: 85,
-          expectedValue: 60
-        }
-      },
-      {
-        id: '2',
-        title: 'API Response Time Degradation',
-        description: 'Average API response time has increased by 40% in the last 15 minutes',
-        severity: 'medium',
-        category: 'performance',
-        status: 'acknowledged',
-        source: 'Performance Monitor',
-        affectedServices: ['REST API', 'Mobile App', 'Web Dashboard'],
-        createdAt: '2026-01-27T15:15:00Z',
-        acknowledgedAt: '2026-01-27T15:20:00Z',
-        acknowledgedBy: 'Platform Support',
-        metadata: {
-          threshold: 500,
-          currentValue: 700,
-          expectedValue: 300
-        }
-      },
-      {
-        id: '3',
-        title: 'Failed Login Attempts Spike',
-        description: 'Unusual spike in failed login attempts detected - possible brute force attack',
-        severity: 'critical',
-        category: 'security',
-        status: 'active',
-        source: 'Security Monitor',
-        affectedServices: ['Authentication Service'],
-        createdAt: '2026-01-27T15:00:00Z',
-        metadata: {
-          errorCount: 150,
-          threshold: 50,
-          affectedUsers: 25
-        }
-      },
-      {
-        id: '4',
-        title: 'Payment Gateway Timeout',
-        description: 'Payment gateway is experiencing intermittent timeouts',
-        severity: 'high',
-        category: 'service',
-        status: 'resolved',
-        source: 'Payment Monitor',
-        affectedServices: ['Payment Processing', 'Subscription Billing'],
-        createdAt: '2026-01-27T14:30:00Z',
-        resolvedAt: '2026-01-27T14:45:00Z',
-        resolvedBy: 'Technical Team',
-        metadata: {
-          errorCount: 12,
-          affectedUsers: 8
-        }
-      },
-      {
-        id: '5',
-        title: 'Disk Space Warning',
-        description: 'Server disk space usage is at 75% capacity',
-        severity: 'medium',
-        category: 'infrastructure',
-        status: 'active',
-        source: 'Infrastructure Monitor',
-        affectedServices: ['File Storage', 'Log Management'],
-        createdAt: '2026-01-27T14:00:00Z',
-        metadata: {
-          threshold: 70,
-          currentValue: 75,
-          expectedValue: 50
-        }
-      }
-    ]
-
-    setAlerts(mockAlerts)
-    setStats({
-      totalAlerts: mockAlerts.length,
-      activeAlerts: mockAlerts.filter(a => a.status === 'active').length,
-      criticalAlerts: mockAlerts.filter(a => a.severity === 'critical' && a.status === 'active').length,
-      resolvedToday: mockAlerts.filter(a => a.status === 'resolved').length,
-      avgResolutionTime: '15m',
-      systemHealth: 92
-    })
   }
 
   const getSeverityColor = (severity: string) => {
@@ -341,6 +232,13 @@ export default function SystemAlertsPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadSystemAlerts} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">

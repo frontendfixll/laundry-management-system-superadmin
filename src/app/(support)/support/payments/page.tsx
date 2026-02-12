@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   CreditCard, 
   Search, 
@@ -75,6 +76,7 @@ export default function PaymentSupportPage() {
   const [transactionLookup, setTransactionLookup] = useState('')
   const [transactionDetails, setTransactionDetails] = useState<TransactionDetails | null>(null)
   const [lookupLoading, setLookupLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadPaymentIssues()
@@ -82,102 +84,16 @@ export default function PaymentSupportPage() {
 
   const loadPaymentIssues = async () => {
     try {
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
-
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      const response = await fetch(`${API_URL}/support/payments?limit=50`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setPaymentIssues(data.data.paymentIssues || [])
-        }
-      } else {
-        // Mock data for demo - using Transaction model structure
-        setPaymentIssues([
-          {
-            _id: '1',
-            transactionId: 'TXN_20260127_001',
-            orderId: {
-              orderNumber: 'ORD260127001',
-              _id: 'order_1'
-            },
-            customerId: {
-              name: 'Rajesh Kumar',
-              email: 'rajesh@example.com'
-            },
-            branchId: {
-              name: 'CleanWash Laundry'
-            },
-            amount: 450,
-            status: 'failed',
-            type: 'payment',
-            paymentMethod: 'upi',
-            paymentGateway: 'razorpay',
-            failureReason: 'Insufficient funds',
-            createdAt: '2026-01-27T08:30:00Z',
-            externalTransactionId: 'rzp_20260127_001'
-          },
-          {
-            _id: '2',
-            transactionId: 'TXN_20260127_002',
-            orderId: {
-              orderNumber: 'ORD260127002',
-              _id: 'order_2'
-            },
-            customerId: {
-              name: 'Priya Sharma',
-              email: 'priya@example.com'
-            },
-            branchId: {
-              name: 'QuickClean Services'
-            },
-            amount: 320,
-            status: 'pending',
-            type: 'payment',
-            paymentMethod: 'card',
-            paymentGateway: 'stripe',
-            createdAt: '2026-01-27T07:45:00Z',
-            externalTransactionId: 'pi_20260127_002'
-          },
-          {
-            _id: '3',
-            transactionId: 'TXN_20260126_015',
-            orderId: {
-              orderNumber: 'ORD260126015',
-              _id: 'order_3'
-            },
-            customerId: {
-              name: 'Amit Patel',
-              email: 'amit@example.com'
-            },
-            branchId: {
-              name: 'FreshClean Express'
-            },
-            amount: 680,
-            status: 'cancelled',
-            type: 'refund',
-            paymentMethod: 'net_banking',
-            paymentGateway: 'razorpay',
-            failureReason: 'Customer requested cancellation',
-            createdAt: '2026-01-26T15:20:00Z',
-            externalTransactionId: 'rzp_20260126_015'
-          }
-        ])
-      }
-    } catch (error) {
-      console.error('Failed to load payment issues:', error)
+      setLoading(true)
+      setError(null)
+      const response = await api.get('/support/payments', { params: { limit: 50 } })
+      const data = response.data
+      const payload = data?.data || data
+      setPaymentIssues(payload?.paymentIssues || [])
+    } catch (err: any) {
+      console.error('Failed to load payment issues:', err)
+      setError(err?.response?.data?.message || 'Failed to load payment issues')
+      setPaymentIssues([])
     } finally {
       setLoading(false)
     }
@@ -187,53 +103,15 @@ export default function PaymentSupportPage() {
     if (!transactionLookup.trim()) return
 
     setLookupLoading(true)
+    setTransactionDetails(null)
     try {
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
-
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      const response = await fetch(`${API_URL}/support/payments/transactions/${transactionLookup}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setTransactionDetails(data.data)
-        }
-      } else {
-        // Mock transaction details
-        setTransactionDetails({
-          transactionId: transactionLookup,
-          orderId: 'ORD260127001',
-          amount: 450,
-          status: 'failed',
-          paymentMethod: 'Credit Card',
-          gatewayResponse: {
-            error_code: 'INSUFFICIENT_FUNDS',
-            error_description: 'The card has insufficient funds',
-            gateway_transaction_id: 'pay_' + transactionLookup
-          },
-          createdAt: '2026-01-27T08:30:00Z',
-          customer: {
-            name: 'Rajesh Kumar',
-            email: 'rajesh.kumar@email.com'
-          },
-          tenant: {
-            name: 'CleanWash Laundry'
-          }
-        })
-      }
-    } catch (error) {
-      console.error('Failed to lookup transaction:', error)
+      const response = await api.get(`/support/payments/transactions/${encodeURIComponent(transactionLookup.trim())}`)
+      const data = response.data
+      const payload = data?.data || data
+      setTransactionDetails(payload)
+    } catch (err: any) {
+      console.error('Failed to lookup transaction:', err)
+      setTransactionDetails(null)
     } finally {
       setLookupLoading(false)
     }
@@ -310,12 +188,23 @@ export default function PaymentSupportPage() {
         </div>
         
         <div className="flex items-center space-x-3">
+          <button onClick={loadPaymentIssues} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2">
+            <RefreshCw className="w-4 h-4" />
+            <span>Refresh</span>
+          </button>
           <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
             <Download className="w-4 h-4" />
             <span>Export Report</span>
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadPaymentIssues} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

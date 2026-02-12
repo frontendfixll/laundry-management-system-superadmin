@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   FileText,
   User,
@@ -64,6 +65,7 @@ export default function SupportAuditLogsPage() {
   const [severityFilter, setSeverityFilter] = useState('all')
   const [outcomeFilter, setOutcomeFilter] = useState('all')
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadAuditLogs()
@@ -72,142 +74,28 @@ export default function SupportAuditLogsPage() {
   const loadAuditLogs = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('auth-storage')
-      if (!token) return
+      setError(null)
+      const response = await api.get('/support/audit')
+      const data = response.data
+      const payload = data?.data || data
 
-      const parsed = JSON.parse(token)
-      const authToken = parsed.state?.token
-      if (!authToken) return
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://laundrylobby-backend-1.vercel.app/api'
-      
-      // Load audit logs
-      const response = await fetch(`${API_URL}/support/audit-logs`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+      setLogs(payload?.logs || [])
+      setStats(payload?.stats || {
+        totalLogs: 0,
+        todayLogs: 0,
+        failedActions: 0,
+        criticalEvents: 0,
+        topActions: [],
+        topUsers: []
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('📋 Support audit logs data:', data)
-        
-        if (data.success) {
-          setLogs(data.data.logs || [])
-          setStats(data.data.stats || stats)
-        }
-      } else {
-        console.error('Failed to load audit logs:', response.status)
-        setMockData()
-      }
-    } catch (error) {
-      console.error('Error loading audit logs:', error)
-      setMockData()
+    } catch (err: any) {
+      console.error('Error loading audit logs:', err)
+      setError(err?.response?.data?.message || 'Failed to load audit logs')
+      setLogs([])
+      setStats({ totalLogs: 0, todayLogs: 0, failedActions: 0, criticalEvents: 0, topActions: [], topUsers: [] })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockLogs: AuditLog[] = [
-      {
-        id: '1',
-        timestamp: '2026-01-27T15:30:00Z',
-        userId: 'support_001',
-        userName: 'Platform Support',
-        userEmail: 'support@gmail.com',
-        action: 'Impersonate User',
-        resource: 'User Account',
-        resourceId: 'user_123',
-        details: 'Started impersonation session for customer support issue',
-        ipAddress: '103.21.58.66',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        outcome: 'success',
-        category: 'security',
-        severity: 'high',
-        metadata: {
-          targetUser: 'rajesh@cleanwash.com',
-          reason: 'Customer unable to explain issue',
-          sessionDuration: 30
-        }
-      },
-      {
-        id: '2',
-        timestamp: '2026-01-27T15:15:00Z',
-        userId: 'support_001',
-        userName: 'Platform Support',
-        userEmail: 'support@gmail.com',
-        action: 'View Payment Details',
-        resource: 'Payment Record',
-        resourceId: 'pay_456',
-        details: 'Accessed payment details for refund investigation',
-        ipAddress: '103.21.58.66',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        outcome: 'success',
-        category: 'data_access',
-        severity: 'medium',
-        metadata: {
-          paymentAmount: 1250,
-          customerEmail: 'customer@example.com'
-        }
-      },
-      {
-        id: '3',
-        timestamp: '2026-01-27T14:45:00Z',
-        userId: 'support_001',
-        userName: 'Platform Support',
-        userEmail: 'support@gmail.com',
-        action: 'Reset User Password',
-        resource: 'User Account',
-        resourceId: 'user_789',
-        details: 'Password reset requested by customer via support ticket',
-        ipAddress: '103.21.58.66',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        outcome: 'success',
-        category: 'user_action',
-        severity: 'medium',
-        metadata: {
-          ticketId: 'TKT-2026-001',
-          resetMethod: 'email'
-        }
-      },
-      {
-        id: '4',
-        timestamp: '2026-01-27T14:30:00Z',
-        userId: 'support_002',
-        userName: 'Support Agent',
-        userEmail: 'agent@gmail.com',
-        action: 'Failed Login Attempt',
-        resource: 'Authentication',
-        details: 'Invalid credentials provided',
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        outcome: 'failure',
-        category: 'authentication',
-        severity: 'low',
-        metadata: {
-          reason: 'invalid_password'
-        }
-      }
-    ]
-
-    setLogs(mockLogs)
-    setStats({
-      totalLogs: mockLogs.length,
-      todayLogs: mockLogs.length,
-      failedActions: mockLogs.filter(log => log.outcome === 'failure').length,
-      criticalEvents: mockLogs.filter(log => log.severity === 'critical').length,
-      topActions: [
-        { action: 'View Payment Details', count: 15 },
-        { action: 'Reset User Password', count: 8 },
-        { action: 'Impersonate User', count: 3 }
-      ],
-      topUsers: [
-        { user: 'Platform Support', count: 25 },
-        { user: 'Support Agent', count: 12 }
-      ]
-    })
   }
 
   const getCategoryColor = (category: string) => {
@@ -303,6 +191,13 @@ export default function SupportAuditLogsPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-red-700">{error}</p>
+          <button onClick={loadAuditLogs} className="text-red-600 hover:text-red-800 font-medium">Retry</button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

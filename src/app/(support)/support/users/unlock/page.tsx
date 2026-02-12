@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 import { 
   Unlock,
   Search,
@@ -86,6 +87,7 @@ export default function UnlockAccountsPage() {
   const [reasonFilter, setReasonFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedAccount, setSelectedAccount] = useState<LockedAccount | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadLockedAccounts()
@@ -94,207 +96,29 @@ export default function UnlockAccountsPage() {
   const loadLockedAccounts = async () => {
     try {
       setLoading(true)
-      
-      // Build query parameters
+      setError(null)
       const params = new URLSearchParams()
       if (reasonFilter !== 'all') params.append('reason', reasonFilter)
       if (statusFilter !== 'all') params.append('status', statusFilter)
-      
-      const response = await fetch(`/api/support/users/locked-accounts?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch locked accounts')
-      }
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        setLockedAccounts(data.data.accounts || [])
-        setStats(data.data.stats || {
-          totalLocked: 0,
-          autoLocked: 0,
-          manualLocked: 0,
-          unlocked: 0,
-          permanentlyBanned: 0,
-          byReason: {},
-          avgLockDuration: '0h'
-        })
-      } else {
-        throw new Error(data.message || 'Failed to load locked accounts')
-      }
-    } catch (error) {
-      console.error('Error loading locked accounts:', error)
-      // Fallback to mock data on error
-      setMockData()
+
+      const response = await api.get(`/support/users/locked-accounts?${params}`)
+      const payload = response.data?.data || response.data
+      const accounts = payload?.accounts || []
+      const mapped = accounts.map((acc: any) => ({
+        ...acc,
+        id: acc.id || acc.userId,
+        user: acc.user || { name: acc.userName, email: acc.userEmail, phone: acc.userPhone, tenancy: { name: acc.tenantName } }
+      }))
+      setLockedAccounts(mapped)
+      setStats(payload?.stats || { totalLocked: 0, autoLocked: 0, manualLocked: 0, unlocked: 0, permanentlyBanned: 0, byReason: {}, avgLockDuration: '0h' })
+    } catch (err: any) {
+      console.error('Error loading locked accounts:', err)
+      setError(err?.response?.data?.message || 'Failed to load locked accounts')
+      setLockedAccounts([])
+      setStats({ totalLocked: 0, autoLocked: 0, manualLocked: 0, unlocked: 0, permanentlyBanned: 0, byReason: {}, avgLockDuration: '0h' })
     } finally {
       setLoading(false)
     }
-  }
-
-  const setMockData = () => {
-    const mockAccounts: LockedAccount[] = [
-      {
-        id: '1',
-        userId: 'user_001',
-        user: {
-          name: 'Rajesh Kumar',
-          email: 'rajesh@cleanwash.com',
-          phone: '+91 98765 43210',
-          role: 'tenant_admin',
-          tenancy: {
-            name: 'CleanWash Laundry',
-            slug: 'cleanwash'
-          }
-        },
-        lockReason: 'failed_attempts',
-        lockStatus: 'locked',
-        failedAttempts: 5,
-        maxAttempts: 5,
-        lockDuration: 30,
-        lockedAt: '2026-01-27T12:00:00Z',
-        lockedUntil: '2026-01-27T12:30:00Z',
-        lockDetails: {
-          ipAddresses: ['192.168.1.100', '192.168.1.101'],
-          userAgents: ['Mozilla/5.0 (Windows NT 10.0; Win64; x64)'],
-          suspiciousPatterns: ['Multiple rapid login attempts'],
-          lastSuccessfulLogin: '2026-01-25T09:15:00Z'
-        },
-        unlockRequests: [
-          {
-            requestedBy: 'tenant_admin',
-            requestedAt: '2026-01-27T12:15:00Z',
-            reason: 'Legitimate user, forgot password',
-            status: 'pending'
-          }
-        ]
-      },
-      {
-        id: '2',
-        userId: 'user_002',
-        user: {
-          name: 'Priya Sharma',
-          email: 'priya@quickclean.in',
-          phone: '+91 87654 32109',
-          role: 'tenant_staff',
-          tenancy: {
-            name: 'QuickClean Services',
-            slug: 'quickclean'
-          }
-        },
-        lockReason: 'suspicious_activity',
-        lockStatus: 'pending_review',
-        failedAttempts: 3,
-        maxAttempts: 5,
-        lockedAt: '2026-01-27T10:30:00Z',
-        lockDetails: {
-          ipAddresses: ['45.123.67.89', '203.45.78.90', '157.32.45.78'],
-          userAgents: [
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-            'curl/7.68.0'
-          ],
-          suspiciousPatterns: [
-            'Login from multiple countries',
-            'Unusual user agent patterns',
-            'API access attempts'
-          ],
-          lastSuccessfulLogin: '2026-01-24T16:30:00Z'
-        },
-        unlockRequests: [],
-        securityNotes: 'Potential account compromise detected. Review required before unlock.'
-      },
-      {
-        id: '3',
-        userId: 'user_003',
-        user: {
-          name: 'Amit Singh',
-          email: 'amit@express.com',
-          phone: '+91 76543 21098',
-          role: 'customer'
-        },
-        lockReason: 'admin_action',
-        lockStatus: 'unlocked',
-        failedAttempts: 0,
-        maxAttempts: 5,
-        lockedAt: '2026-01-26T14:20:00Z',
-        unlockedAt: '2026-01-27T09:30:00Z',
-        unlockedBy: 'support@gmail.com',
-        lockDetails: {
-          ipAddresses: ['157.32.45.78'],
-          userAgents: ['Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)'],
-          suspiciousPatterns: [],
-          lastSuccessfulLogin: '2026-01-26T20:45:00Z'
-        },
-        unlockRequests: [
-          {
-            requestedBy: 'user',
-            requestedAt: '2026-01-27T08:00:00Z',
-            reason: 'Account locked by mistake, need access for business',
-            status: 'approved'
-          }
-        ]
-      },
-      {
-        id: '4',
-        userId: 'user_004',
-        user: {
-          name: 'Malicious User',
-          email: 'suspicious@example.com',
-          phone: '+91 00000 00000',
-          role: 'customer'
-        },
-        lockReason: 'security_breach',
-        lockStatus: 'permanently_banned',
-        failedAttempts: 15,
-        maxAttempts: 5,
-        lockedAt: '2026-01-25T08:00:00Z',
-        lockDetails: {
-          ipAddresses: ['1.2.3.4', '5.6.7.8', '9.10.11.12', '13.14.15.16'],
-          userAgents: [
-            'curl/7.68.0',
-            'python-requests/2.25.1',
-            'Automated Bot'
-          ],
-          suspiciousPatterns: [
-            'Brute force attack detected',
-            'SQL injection attempts',
-            'Multiple account creation attempts',
-            'Automated behavior patterns'
-          ]
-        },
-        unlockRequests: [],
-        securityNotes: 'Confirmed malicious activity. Permanent ban enforced.'
-      }
-    ]
-
-    setLockedAccounts(mockAccounts)
-    
-    const totalLocked = mockAccounts.filter(acc => acc.lockStatus === 'locked' || acc.lockStatus === 'pending_review').length
-    const autoLocked = mockAccounts.filter(acc => acc.lockReason === 'failed_attempts').length
-    const manualLocked = mockAccounts.filter(acc => acc.lockReason === 'admin_action').length
-    const unlocked = mockAccounts.filter(acc => acc.lockStatus === 'unlocked').length
-    const permanentlyBanned = mockAccounts.filter(acc => acc.lockStatus === 'permanently_banned').length
-
-    setStats({
-      totalLocked,
-      autoLocked,
-      manualLocked,
-      unlocked,
-      permanentlyBanned,
-      byReason: {
-        failed_attempts: mockAccounts.filter(acc => acc.lockReason === 'failed_attempts').length,
-        suspicious_activity: mockAccounts.filter(acc => acc.lockReason === 'suspicious_activity').length,
-        admin_action: mockAccounts.filter(acc => acc.lockReason === 'admin_action').length,
-        security_breach: mockAccounts.filter(acc => acc.lockReason === 'security_breach').length,
-        policy_violation: mockAccounts.filter(acc => acc.lockReason === 'policy_violation').length
-      },
-      avgLockDuration: '2.5h'
-    })
   }
 
   const getStatusColor = (status: string) => {
@@ -343,53 +167,29 @@ export default function UnlockAccountsPage() {
 
   const handleUnlockAction = async (accountId: string, action: 'unlock' | 'review' | 'ban' | 'approve_request') => {
     try {
-      const method = 'POST'
-      let endpoint = ''
-      
-      switch (action) {
-        case 'unlock':
-          endpoint = 'unlock'
-          break
-        case 'review':
-          endpoint = 'review'
-          break
-        case 'ban':
-          endpoint = 'ban'
-          break
-        case 'approve_request':
-          endpoint = 'approve-request'
-          break
-      }
-      
-      const response = await fetch(`/api/support/users/locked-accounts/${accountId}/${endpoint}`, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          reason: `${action} by platform support`,
-          notes: `Account ${action}ed via platform support dashboard`,
-          permanent: action === 'ban' ? true : false
-        })
+      const endpointMap = {
+        unlock: 'unlock',
+        review: 'review',
+        ban: 'ban',
+        approve_request: 'approve-request'
+      } as const
+      const endpoint = endpointMap[action]
+      const response = await api.post(`/support/users/locked-accounts/${accountId}/${endpoint}`, {
+        reason: `${action} by platform support`,
+        notes: `Account ${action}ed via platform support dashboard`,
+        permanent: action === 'ban' ? true : false
       })
-      
-      if (!response.ok) {
-        throw new Error(`Failed to ${action} account`)
-      }
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        // Reload the accounts to get updated data
+      const data = response.data
+      if (data?.success) {
         await loadLockedAccounts()
         alert(`Account ${action}ed successfully`)
       } else {
-        throw new Error(data.message || `Failed to ${action} account`)
+        throw new Error(data?.message || `Failed to ${action} account`)
       }
-    } catch (error) {
-      console.error(`Error ${action}ing account:`, error)
-      alert(`Failed to ${action} account: ${error.message}`)
+    } catch (err: any) {
+      console.error(`Error ${action}ing account:`, err)
+      const msg = err?.response?.data?.message || err?.message || `Failed to ${action} account`
+      alert(msg)
     }
   }
 
