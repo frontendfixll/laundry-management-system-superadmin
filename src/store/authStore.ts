@@ -104,6 +104,7 @@ interface AuthState {
   userType: 'superadmin' | 'sales' | 'support' | 'auditor' | 'finance' | null
   sidebarCollapsed: boolean
   newLeadsCount: number
+  _hasHydrated: boolean
 
   setUser: (user: User) => void
   setToken: (token: string) => void
@@ -124,6 +125,7 @@ export const useAuthStore = create<AuthState>()(
       userType: null,
       sidebarCollapsed: false,
       newLeadsCount: 0,
+      _hasHydrated: false,
 
       setUser: (user) => {
         // Determine user type based on role and RBAC roles
@@ -221,7 +223,10 @@ export const useAuthStore = create<AuthState>()(
         userType: state.userType,
         sidebarCollapsed: state.sidebarCollapsed,
         newLeadsCount: state.newLeadsCount
-      })
+      }),
+      onRehydrateStorage: () => () => {
+        setTimeout(() => useAuthStore.setState({ _hasHydrated: true }), 0)
+      }
     }
   )
 )

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useAuthStore, useSalesUser } from '@/store/authStore'
@@ -98,6 +98,7 @@ export default function DashboardPage() {
   const [expiringTrials, setExpiringTrials] = useState<ExpiringTrial[]>([])
   const [chartData, setChartData] = useState<ChartData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Add a small delay to ensure token is properly stored
@@ -109,20 +110,14 @@ export default function DashboardPage() {
   }, [])
 
   const fetchDashboardData = async () => {
+    setError(null)
     try {
-      console.log('🔄 Fetching dashboard data...');
-
-      // Make API calls sequentially instead of parallel to avoid race conditions
-      console.log('📊 Fetching stats...');
-      const statsRes = await api.get('/sales/analytics/dashboard-stats');
-
-      console.log('⏰ Fetching trials...');
-      const trialsRes = await api.get('/sales/analytics/expiring-trials');
-
-      console.log('💰 Fetching revenue...');
-      const revenueRes = await api.get('/sales/analytics/monthly-revenue');
-
-      console.log('✅ All API calls completed successfully');
+      // API calls - all use real data from backend (Lead, TenancyPayment, Tenancy)
+      const [statsRes, trialsRes, revenueRes] = await Promise.all([
+        api.get('/sales/analytics/dashboard-stats'),
+        api.get('/sales/analytics/expiring-trials'),
+        api.get('/sales/analytics/monthly-revenue')
+      ])
 
       if (statsRes.data?.data) {
         const statsData = statsRes.data.data
@@ -164,11 +159,20 @@ export default function DashboardPage() {
         })
       }
 
-      if (trialsRes.data?.data) {
-        setExpiringTrials(trialsRes.data.data)
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error)
+      // Expiring trials: API returns { data: [...] }
+      const trialsData = Array.isArray(trialsRes.data?.data)
+        ? trialsRes.data.data
+        : []
+      setExpiringTrials(trialsData)
+    } catch (err: any) {
+      console.error('Error fetching dashboard data:', err)
+      setError(err?.response?.data?.message || 'Failed to load dashboard. Please try again.')
+      setStats({
+        leads: { total: 0, new: 0, contacted: 0, qualified: 0, converted: 0, demo_scheduled: 0, negotiation: 0, lost: 0 },
+        trials: { active: 0, expiringSoon: 0, expired: 0 },
+        revenue: { total: 0, thisMonth: 0, target: 100000, targetAchieved: 0 },
+        performance: { conversionRate: 0, avgDealSize: 0, leadsAssigned: 0, leadsConverted: 0, totalRevenue: 0, currentMonthRevenue: 0, targetAchieved: 0 }
+      })
     } finally {
       setLoading(false)
     }
@@ -192,6 +196,19 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center justify-between">
+          <p className="text-sm text-red-800">{error}</p>
+          <button
+            onClick={() => { setError(null); fetchDashboardData(); }}
+            className="text-sm font-medium text-red-600 hover:text-red-800"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Welcome Section - Compact */}
       <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-xl shadow-md p-4 text-white">
         <div className="flex items-center justify-between">
@@ -293,7 +310,7 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <Pie
-                    data={chartData.leadStatusData}
+                    data={chartData.leadStatusData.length > 0 ? chartData.leadStatusData : [{ name: 'No leads yet', value: 1, color: '#E5E7EB' }]}
                     cx="50%"
                     cy="50%"
                     innerRadius={40}
@@ -301,7 +318,7 @@ export default function DashboardPage() {
                     paddingAngle={2}
                     dataKey="value"
                   >
-                    {chartData.leadStatusData.map((entry, index) => (
+                    {(chartData.leadStatusData.length > 0 ? chartData.leadStatusData : [{ name: 'No leads yet', value: 1, color: '#E5E7EB' }]).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>

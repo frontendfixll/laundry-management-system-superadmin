@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import api from '@/lib/api'
@@ -51,21 +51,26 @@ export default function SubscriptionsPage() {
           const billingCycle = tenancy.subscription?.billingCycle || 'monthly'
           const planPrice = tenancy.subscription?.planId?.price
           const price = planPrice ? (planPrice[billingCycle] || planPrice.monthly || 0) : 0
+          const isTrial = tenancy.subscription?.status === 'trial'
+          const trialEndsAt = tenancy.subscription?.trialEndsAt
+          const daysRemaining = trialEndsAt && isTrial
+            ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+            : 0
           
           return {
             _id: tenancy._id,
             tenancyName: tenancy.name || tenancy.businessName || 'Unknown Business',
             plan: {
-              name: tenancy.subscription?.planId?.displayName || tenancy.subscription?.planId?.name || 'No Plan',
+              name: tenancy.subscription?.planId?.displayName || tenancy.subscription?.planId?.name || tenancy.subscription?.plan || 'No Plan',
               price: price,
               billingCycle: billingCycle
             },
             status: tenancy.subscription?.status || 'inactive',
             trial: {
-              isActive: tenancy.subscription?.trial?.isActive || false,
-              daysRemaining: tenancy.subscription?.trial?.daysRemaining || 0
+              isActive: isTrial,
+              daysRemaining
             },
-            nextBillingDate: tenancy.subscription?.nextBillingDate || new Date().toISOString(),
+            nextBillingDate: tenancy.subscription?.nextBillingDate || tenancy.subscription?.trialEndsAt || new Date().toISOString(),
             createdAt: tenancy.createdAt
           }
         })
