@@ -88,19 +88,16 @@ export default function RevenueReportsPage() {
 
       const data = await superAdminApi.getRevenueReports(params)
       
-      if (data.success) {
-        setReports(data.data.reports)
-        if (data.data.reports.length > 0) {
-          setSelectedReport(data.data.reports[0])
-        }
+      if (data?.success && data?.data) {
+        const list = Array.isArray(data.data.reports) ? data.data.reports : []
+        setReports(list)
+        setSelectedReport(list.length > 0 ? list[0] : null)
       } else {
-        throw new Error(data.message || 'Failed to fetch revenue reports')
+        throw new Error(data?.message || 'Failed to fetch revenue reports')
       }
       
     } catch (error) {
       console.error('Error fetching revenue reports:', error)
-      
-      // Show empty state instead of mock data
       setReports([])
       setSelectedReport(null)
     } finally {
@@ -270,7 +267,9 @@ export default function RevenueReportsPage() {
                   {formatCurrency(selectedReport.platformCommission)}
                 </p>
                 <p className="text-xs text-green-600">
-                  {((selectedReport.platformCommission / selectedReport.totalRevenue) * 100).toFixed(1)}% of total
+                  {selectedReport.totalRevenue > 0
+                    ? ((selectedReport.platformCommission / selectedReport.totalRevenue) * 100).toFixed(1) + '% of total'
+                    : '—'}
                 </p>
               </div>
               <div className="bg-green-500 p-3 rounded-lg">
@@ -318,6 +317,7 @@ export default function RevenueReportsPage() {
           Revenue Trends Over Time
         </h3>
         <div className="h-80">
+          {reports.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={reports}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -338,6 +338,11 @@ export default function RevenueReportsPage() {
               <Bar yAxisId="right" dataKey="transactionCount" fill="#F59E0B" />
             </ComposedChart>
           </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+              No revenue data for the selected period. Adjust filters or date range.
+            </div>
+          )}
         </div>
       </div>
 
@@ -401,7 +406,7 @@ export default function RevenueReportsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {formatCurrency(tenant.revenue / tenant.transactions)}
+                        {formatCurrency(tenant.transactions > 0 ? tenant.revenue / tenant.transactions : 0)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

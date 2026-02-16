@@ -90,7 +90,7 @@ export default function TenantAnomaliesPage() {
         range: dateRange
       })
 
-      const response = await fetch(`/api/superadmin/audit/tenants/anomalies?${params}`, {
+      const response = await fetch(`${API_BASE}/superadmin/audit/tenants/anomalies?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

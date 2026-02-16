@@ -51,7 +51,7 @@ export default function PaymentIntegrityPage() {
     try {
       setLoading(true)
       
-      const response = await fetch('/api/superadmin/audit/financial/payments', {
+      const response = await fetch(`${API_BASE}/superadmin/audit/financial/payments`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -107,7 +107,7 @@ export default function PermissionMappingsPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`/api/superadmin/audit/rbac/permissions?${params}`, {
+      const response = await fetch(`${API_BASE}/superadmin/audit/rbac/permissions?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

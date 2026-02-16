@@ -40,6 +40,10 @@ export default function FinancesPage() {
       setLoading(true)
       setError('')
       const response = await superAdminApi.getFinancialOverview(timeframe)
+      if (!response?.success || !response?.data?.overview) {
+        setStats(null)
+        return
+      }
       const data = response.data.overview
       setStats({
         totalRevenue: data.totalRevenue || 0,
@@ -50,7 +54,8 @@ export default function FinancesPage() {
         totalTransactions: data.totalTransactions || 0
       })
     } catch (err: any) {
-      setError(err.message)
+      setError(err?.message || 'Failed to load finances')
+      setStats(null)
     } finally {
       setLoading(false)
     }

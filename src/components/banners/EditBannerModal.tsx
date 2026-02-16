@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Upload, Calendar } from 'lucide-react';
+import { Upload, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { SlidePanel } from '@/components/ui/slide-panel';
 import { useSuperAdminStore } from '@/store/superAdminStore';
 
 interface EditBannerModalProps {
@@ -121,18 +122,7 @@ export default function EditBannerModal({ isOpen, onClose, banner, onSuccess }: 
   if (!isOpen || !banner) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Edit Banner</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
+    <SlidePanel open={isOpen} onClose={onClose} title={banner?.title ? `Edit: ${banner.title}` : 'Edit Banner'} width="2xl" accentBar="bg-blue-500">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Title */}
           <div>
@@ -316,7 +306,6 @@ export default function EditBannerModal({ isOpen, onClose, banner, onSuccess }: 
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </SlidePanel>
   );
 }

@@ -90,7 +90,7 @@ export default function TenantPatternsPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`/api/superadmin/audit/tenants/patterns?${params}`, {
+      const response = await fetch(`${API_BASE}/superadmin/audit/tenants/patterns?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

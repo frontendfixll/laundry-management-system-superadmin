@@ -54,10 +54,17 @@ export default function FinancialOverviewPage() {
       setLoading(true)
       setError('')
       const response = await superAdminApi.getFinancialOverview(timeframe)
-      setOverview(response.data.overview)
-      setRevenueTrend(response.data.revenueTrend)
+      if (response?.success && response?.data) {
+        setOverview(response.data.overview ?? null)
+        setRevenueTrend(Array.isArray(response.data.revenueTrend) ? response.data.revenueTrend : [])
+      } else {
+        setOverview(null)
+        setRevenueTrend([])
+      }
     } catch (err: any) {
-      setError(err.message)
+      setError(err?.message || 'Failed to load financial overview')
+      setOverview(null)
+      setRevenueTrend([])
     } finally {
       setLoading(false)
     }
@@ -238,8 +245,9 @@ export default function FinancialOverviewPage() {
           </div>
 
           {/* Revenue Trend Chart - Modern Design */}
-          {revenueTrend.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            {revenueTrend.length > 0 ? (
+              <>
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between">
                   <div>
@@ -374,8 +382,14 @@ export default function FinancialOverviewPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            </>
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-gray-500 text-sm">No revenue data for the selected period</p>
+                <p className="text-gray-400 text-xs mt-1">Revenue trend will appear when there are orders in this timeframe</p>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

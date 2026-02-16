@@ -79,7 +79,7 @@ export default function FinancialAuditReportsPage() {
     try {
       setLoading(true)
       
-      const response = await fetch(`/api/support/audit/reports/financial?range=${dateRange}`, {
+      const response = await fetch(`${API_BASE}/support/audit/reports/financial?range=${dateRange}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { Campaign, useUpdateCampaign } from '@/hooks/useCampaigns'
 import { useTenancies } from '@/hooks/useCampaigns'
 import {
-  X,
   Calendar,
   DollarSign,
   Plus,
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import { SlidePanel } from '@/components/ui/slide-panel'
 
 interface EditCampaignModalProps {
   isOpen: boolean
@@ -156,21 +156,7 @@ export default function EditCampaignModal({
   const canEdit = !(campaign.status === 'ACTIVE' && campaign.limits.usedCount > 0)
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
-          <div>
-            <h2 className="text-xl font-semibold">Edit Campaign</h2>
-            <p className="text-sm text-gray-600 mt-1">{campaign.name}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
+    <SlidePanel open={isOpen} onClose={onClose} title={campaign?.name ? `Edit: ${campaign.name}` : 'Edit Campaign'} width="2xl" accentBar="bg-purple-500">
         {!canEdit && (
           <div className="mx-6 mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
@@ -527,7 +513,6 @@ export default function EditCampaignModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </SlidePanel>
   )
 }

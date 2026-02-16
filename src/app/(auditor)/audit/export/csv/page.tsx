@@ -51,7 +51,7 @@ export default function CSVExportPage() {
 
   const fetchExportHistory = async () => {
     try {
-      const response = await fetch('/api/superadmin/audit/export/history?format=csv', {
+      const response = await fetch(`${API_BASE}/superadmin/audit/export/history?format=csv`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }
@@ -116,7 +116,7 @@ export default function CSVExportPage() {
         filters
       }
 
-      const response = await fetch('/api/superadmin/audit/export/csv', {
+      const response = await fetch(`${API_BASE}/superadmin/audit/export/csv`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

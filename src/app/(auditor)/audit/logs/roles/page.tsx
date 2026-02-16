@@ -64,7 +64,7 @@ export default function RoleAssignmentLogsPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`/api/superadmin/audit/logs/roles?${params}`, {
+      const response = await fetch(`${API_BASE}/superadmin/audit/logs/roles?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

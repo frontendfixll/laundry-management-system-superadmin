@@ -67,10 +67,24 @@ export function useNotifications(): UseNotificationsReturn {
     // }
   }, []);
 
+  // Get token (support auth-storage from unified/sales login)
+  const getToken = useCallback((): string | null => {
+    if (typeof window === 'undefined') return null;
+    const authStorage = localStorage.getItem('auth-storage');
+    if (authStorage) {
+      try {
+        const parsed = JSON.parse(authStorage);
+        const token = parsed?.state?.token ?? parsed?.token;
+        if (token) return token;
+      } catch (_) {}
+    }
+    return localStorage.getItem('token');
+  }, []);
+
   // Fetch notifications from API
   const fetchNotifications = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getToken();
       if (!token) return;
 
       const response = await fetch(`${API_URL}/api/superadmin/notifications`, {
@@ -87,11 +101,11 @@ export function useNotifications(): UseNotificationsReturn {
     } catch (error) {
       // console.error('Failed to fetch notifications:', error);
     }
-  }, []);
+  }, [getToken]);
 
   // Initialize Socket.IO connection
   const initializeSocket = useCallback(() => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (!token) {
       // console.log('No token found, skipping socket connection');
       return;
@@ -228,7 +242,7 @@ export function useNotifications(): UseNotificationsReturn {
     });
 
     return socket;
-  }, [fetchNotifications, playNotificationSound]);
+  }, [getToken, fetchNotifications, playNotificationSound]);
 
   // Mark notification as read
   const markAsRead = useCallback((notificationId: string) => {
@@ -247,7 +261,7 @@ export function useNotifications(): UseNotificationsReturn {
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getToken();
       if (!token) return;
 
       const response = await fetch(`${API_URL}/api/superadmin/notifications/read-all`, {
@@ -264,7 +278,7 @@ export function useNotifications(): UseNotificationsReturn {
     } catch (error) {
       // console.error('Failed to mark all as read:', error);
     }
-  }, []);
+  }, [getToken]);
 
   // Initialize on mount
   useEffect(() => {

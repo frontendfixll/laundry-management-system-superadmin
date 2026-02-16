@@ -46,7 +46,7 @@ export default function CrossTenantOverviewPage() {
     try {
       setLoading(true)
       
-      const response = await fetch('/api/superadmin/audit/tenants', {
+      const response = await fetch(`${API_BASE}/superadmin/audit/tenants`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import { SlidePanel } from '@/components/ui/slide-panel'
 
 interface Tenancy {
   _id: string
@@ -332,21 +333,7 @@ export default function CreateCampaignModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Target className="w-5 h-5 text-purple-600" />
-            {step === 'scope' ? 'Create New Campaign' : `Create ${selectedScope} Campaign`}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
+    <SlidePanel open={isOpen} onClose={onClose} title={step === 'scope' ? 'Create New Campaign' : `Create ${selectedScope} Campaign`} width="2xl" accentBar="bg-purple-500">
         {step === 'scope' ? (
           <div className="p-6">
             <div className="mb-6">
@@ -759,7 +746,6 @@ export default function CreateCampaignModal({
             </div>
           </form>
         )}
-      </div>
-    </div>
+    </SlidePanel>
   )
 }

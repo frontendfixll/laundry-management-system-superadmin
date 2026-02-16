@@ -120,10 +120,17 @@ export function useFinancialOverview(timeframe: string = '30d') {
       setLoading(true)
       setError(null)
       const response = await superAdminApi.getFinancialOverview(timeframe)
-      setOverview(response.data.overview)
-      setRevenueTrend(response.data.revenueTrend)
+      if (response?.success && response?.data) {
+        setOverview(response.data.overview ?? null)
+        setRevenueTrend(Array.isArray(response.data.revenueTrend) ? response.data.revenueTrend : [])
+      } else {
+        setOverview(null)
+        setRevenueTrend([])
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch financial overview')
+      setError(err?.message || 'Failed to fetch financial overview')
+      setOverview(null)
+      setRevenueTrend([])
     } finally {
       setLoading(false)
     }

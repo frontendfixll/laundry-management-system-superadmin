@@ -150,7 +150,7 @@ export default function SecurityReportsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`/api/superadmin/audit/reports/security?${params}`, {
+      const response = await fetch(`${API_BASE}/superadmin/audit/reports/security?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

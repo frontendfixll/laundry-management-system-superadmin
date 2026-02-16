@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, TrendingUp, MousePointer, Eye, Target, Calendar, Users, DollarSign } from 'lucide-react';
+import { TrendingUp, MousePointer, Eye, Target, Calendar, Users, DollarSign } from 'lucide-react';
+import { SlidePanel } from '@/components/ui/slide-panel';
 import { useSuperAdminStore } from '@/store/superAdminStore';
 
 interface BannerAnalyticsModalProps {
@@ -57,21 +58,7 @@ export default function BannerAnalyticsModal({ isOpen, onClose, banner }: Banner
   const revenue = stats.revenue || 0;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Banner Analytics</h2>
-            <p className="text-sm text-gray-600 mt-1">{banner.content?.title}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
+    <SlidePanel open={isOpen} onClose={onClose} title={banner?.content?.title ? `Analytics: ${banner.content.title}` : 'Banner Analytics'} width="2xl" accentBar="bg-blue-500">
         <div className="p-6">
           {/* Time Range Filter */}
           <div className="flex items-center gap-2 mb-6">
@@ -268,7 +255,6 @@ export default function BannerAnalyticsModal({ isOpen, onClose, banner }: Banner
             </>
           )}
         </div>
-      </div>
-    </div>
+    </SlidePanel>
   );
 }

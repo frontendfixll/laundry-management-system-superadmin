@@ -1653,7 +1653,7 @@ class SuperAdminAPI {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/superadmin/finances/reports/revenue?${searchParams}`,
+      `${API_BASE_URL}/superadmin/financial/reports/revenue?${searchParams}`,
       { headers: this.getAuthHeaders() }
     )
 

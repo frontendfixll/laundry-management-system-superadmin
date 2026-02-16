@@ -1,6 +1,6 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { SlidePanel } from '@/components/ui/slide-panel';
 
 interface BannerPreviewModalProps {
   isOpen: boolean;
@@ -201,23 +201,7 @@ export default function BannerPreviewModal({ isOpen, onClose, banner }: BannerPr
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Banner Preview</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              {banner.templateType} • {banner.position}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
+    <SlidePanel open={isOpen} onClose={onClose} title={`Banner Preview: ${banner.templateType} • ${banner.position}`} width="2xl" accentBar="bg-purple-500">
         <div className="p-6">
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
@@ -248,7 +232,6 @@ export default function BannerPreviewModal({ isOpen, onClose, banner }: BannerPr
             {renderBannerPreview()}
           </div>
         </div>
-      </div>
-    </div>
+    </SlidePanel>
   );
 }

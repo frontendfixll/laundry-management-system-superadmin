@@ -155,7 +155,7 @@ export default function SupportEscalationsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`/api/superadmin/audit/support/escalations?${params}`, {
+      const response = await fetch(`${API_BASE}/superadmin/audit/support/escalations?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

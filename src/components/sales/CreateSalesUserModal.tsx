@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { X, User, Mail, Lock, Phone, CheckCircle } from 'lucide-react'
+import { User, Mail, Lock, Phone, CheckCircle } from 'lucide-react'
 import axios from 'axios'
+import { SlidePanel } from '@/components/ui/slide-panel'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
@@ -75,38 +76,19 @@ export default function CreateSalesUserModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform transition-all">
-        {/* Header */}
-        <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-t-2xl">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <User className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white">Add Sales User</h2>
-              <p className="text-blue-100 text-sm">Create a new sales team member</p>
-            </div>
-          </div>
-
-          {/* Progress Steps */}
-          <div className="flex items-center gap-2 mt-6">
-            <div className={`flex-1 h-1 rounded-full transition-all ${step >= 1 ? 'bg-white' : 'bg-white/30'}`} />
-            <div className={`flex-1 h-1 rounded-full transition-all ${step >= 2 ? 'bg-white' : 'bg-white/30'}`} />
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-white/80">Basic Info</span>
-            <span className="text-xs text-white/80">Additional Details</span>
-          </div>
+    <SlidePanel open={isOpen} onClose={onClose} title="Add Sales User" width="lg" accentBar="bg-blue-600">
+      <div className="rounded-2xl w-full max-w-lg">
+        {/* Progress Steps */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className={`flex-1 h-1 rounded-full transition-all ${step >= 1 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+          <div className={`flex-1 h-1 rounded-full transition-all ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+        </div>
+        <div className="flex justify-between mb-4 text-sm text-muted-foreground">
+          <span>Basic Info</span>
+          <span>Additional Details</span>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-0">
           {error && (
             <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
               <div className="flex items-center gap-2">
@@ -304,6 +286,6 @@ export default function CreateSalesUserModal({
           )}
         </form>
       </div>
-    </div>
+    </SlidePanel>
   )
 }

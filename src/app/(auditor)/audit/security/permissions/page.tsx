@@ -94,7 +94,7 @@ export default function PermissionDenialsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`/api/superadmin/audit/security/permissions?${params}`, {
+      const response = await fetch(`${API_BASE}/superadmin/audit/security/permissions?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

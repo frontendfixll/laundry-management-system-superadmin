@@ -56,7 +56,7 @@ export default function RBACRolesPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`/api/superadmin/audit/rbac/roles?${params}`, {
+      const response = await fetch(`${API_BASE}/superadmin/audit/rbac/roles?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

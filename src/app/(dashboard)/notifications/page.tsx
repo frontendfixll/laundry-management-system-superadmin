@@ -17,7 +17,6 @@ import {
   UserPlus,
   RefreshCw,
   Clock,
-  ExternalLink,
   ChevronRight,
   ShieldAlert,
   CreditCard,
@@ -26,7 +25,7 @@ import {
   Info
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import Link from 'next/link'
+import { NotificationDetailDrawer } from '@/components/notifications/NotificationDetailDrawer'
 
 interface Notification {
   _id: string
@@ -325,93 +324,27 @@ function NotificationsContent() {
         )}
       </div>
 
-      {/* Main Content: Detailed View */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 p-8">
-        {selectedNotification ? (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-              <div className={`h-2 ${notifPriorityColor(selectedNotification.priority)
-                }`} />
-
-              <div className="p-8">
-                <div className="flex items-center justify-between mb-8">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${notifTypeBg(selectedNotification.priority)
-                    }`}>
-                    {getIcon(selectedNotification)}
-                  </div>
-                  <div className="text-right">
-                    <span className={`text-[10px] font-black uppercase tracking-widest border px-3 py-1 rounded-full ${PRIORITY_CONFIG[selectedNotification.priority as keyof typeof PRIORITY_CONFIG]?.bg || 'bg-gray-50'
-                      } ${PRIORITY_CONFIG[selectedNotification.priority as keyof typeof PRIORITY_CONFIG]?.color || 'text-gray-400'
-                      } ${PRIORITY_CONFIG[selectedNotification.priority as keyof typeof PRIORITY_CONFIG]?.border || 'border-gray-100'
-                      }`}>
-                      {selectedNotification.priority || 'P3'} Priority
-                    </span>
-                    <p className="text-xs text-gray-400 mt-2 font-medium">
-                      Received at {formatTime(selectedNotification.createdAt)}
-                    </p>
-                  </div>
-                </div>
-
-                <h2 className="text-2xl font-black text-gray-900 leading-tight mb-4">
-                  {selectedNotification.title}
-                </h2>
-                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                  <p className="text-gray-700 leading-relaxed font-medium">
-                    {selectedNotification.message}
-                  </p>
-                </div>
-
-                {/* Meta Information / Actions */}
-                <div className="mt-8 space-y-4">
-                  <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Related Information</h5>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-white border border-gray-100 rounded-2xl">
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Type</p>
-                      <p className="text-sm font-bold text-gray-700">{selectedNotification.type.replace(/_/g, ' ')}</p>
-                    </div>
-                    {selectedNotification.data?.tenancyId && (
-                      <div className="p-4 bg-white border border-gray-100 rounded-2xl">
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Tenancy ID</p>
-                        <p className="text-xs font-mono font-bold text-purple-600 truncate">{selectedNotification.data.tenancyId}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {selectedNotification.data?.link && (
-                    <Link
-                      href={selectedNotification.data.link}
-                      className="flex items-center justify-center gap-2 w-full mt-6 py-4 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-[0.98]"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Take Action / View Details
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Admin Controls */}
-            <div className="flex items-center justify-center gap-4 py-4">
-              <button
-                onClick={() => setSelectedNotification(null)}
-                className="text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
-              >
-                Close View
-              </button>
-            </div>
+      {/* Main: Empty state (details open in right-to-left drawer, Microsoft 365 style) */}
+      <div className="flex-1 overflow-y-auto bg-gray-50 p-8 flex flex-col items-center justify-center min-h-0">
+        <div className="flex flex-col items-center justify-center text-center">
+          <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/10 mb-8 border border-purple-50">
+            <Bell className="w-12 h-12 text-purple-200" />
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/10 mb-8 border border-purple-50">
-              <Bell className="w-12 h-12 text-purple-200 animate-bounce" />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">Select a notification</h3>
-            <p className="text-gray-400 text-sm max-w-xs mx-auto">
-              Click on any notification in the list to see the detailed breakdown and available actions.
-            </p>
-          </div>
-        )}
+          <h3 className="text-2xl font-black text-gray-900 mb-2">Notifications</h3>
+          <p className="text-gray-400 text-sm max-w-xs mx-auto">
+            Click a notification on the left to open its full details in the side panel (Microsoft 365 style).
+          </p>
+          <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mt-4">Real-time updates</p>
+        </div>
       </div>
+
+      {/* Microsoft 365 style: right-to-left detail drawer */}
+      <NotificationDetailDrawer
+        notification={selectedNotification}
+        open={!!selectedNotification}
+        onClose={() => setSelectedNotification(null)}
+        onMarkAsRead={(id) => handleMarkAsRead([id])}
+      />
     </div>
   )
 }
@@ -426,25 +359,4 @@ export default function NotificationsPage() {
       <NotificationsContent />
     </Suspense>
   )
-}
-
-// Helper styling functions
-function notifPriorityColor(priority?: string) {
-  switch (priority) {
-    case 'P0': return 'bg-red-500'
-    case 'P1': return 'bg-orange-500'
-    case 'P2': return 'bg-blue-500'
-    case 'P3': return 'bg-purple-500'
-    default: return 'bg-gray-300'
-  }
-}
-
-function notifTypeBg(priority?: string) {
-  switch (priority) {
-    case 'P0': return 'bg-red-50'
-    case 'P1': return 'bg-orange-50'
-    case 'P2': return 'bg-blue-50'
-    case 'P3': return 'bg-purple-50'
-    default: return 'bg-gray-50'
-  }
 }

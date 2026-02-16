@@ -103,7 +103,7 @@ export default function RefundOversightPage() {
         range: dateRange
       })
 
-      const response = await fetch(`/api/support/audit/financial/refunds?${params}`, {
+      const response = await fetch(`${API_BASE}/support/audit/financial/refunds?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }

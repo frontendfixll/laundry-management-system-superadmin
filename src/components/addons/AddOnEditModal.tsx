@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { X, Plus, Trash2, Info, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, Info, AlertTriangle } from 'lucide-react'
+import { SlidePanel } from '@/components/ui/slide-panel'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -183,22 +184,7 @@ export function AddOnEditModal({ open, addOn, onClose, onSubmit }: AddOnEditModa
   if (!open || !addOn) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[90vh] flex flex-col">
-        {/* Fixed Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-white flex-shrink-0">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-semibold truncate">Edit Add-on</h2>
-            <p className="text-sm text-muted-foreground truncate">
-              {addOn.displayName} • Version {addOn.version}
-            </p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Scrollable Content */}
+    <SlidePanel open={open} onClose={onClose} title={addOn?.displayName ? `Edit: ${addOn.displayName}` : 'Edit Add-on'} width="2xl" accentBar="bg-purple-500">
         <div className="flex-1 overflow-y-auto">
           {hasActiveSubscriptions && (
             <Alert className="m-4">
@@ -918,8 +904,7 @@ export function AddOnEditModal({ open, addOn, onClose, onSubmit }: AddOnEditModa
             </div>
           </form>
         </div>
-      </div>
-    </div>
+    </SlidePanel>
   )
 }
 

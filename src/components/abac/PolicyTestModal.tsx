@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SlidePanel } from '@/components/ui/slide-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -228,15 +228,7 @@ export default function PolicyTestModal({ isOpen, onClose }: PolicyTestModalProp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Test ABAC Policies</DialogTitle>
-          <div className="sr-only">
-            Test interface for evaluating ABAC policies against different contexts and scenarios.
-          </div>
-        </DialogHeader>
-
+    <SlidePanel open={isOpen} onClose={onClose} title="Test ABAC Policies" width="2xl" accentBar="bg-indigo-500">
         <div className="grid grid-cols-2 gap-6">
           {/* Test Configuration */}
           <div className="space-y-4">
@@ -672,7 +664,6 @@ export default function PolicyTestModal({ isOpen, onClose }: PolicyTestModalProp
             Close
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+    </SlidePanel>
   );
 }

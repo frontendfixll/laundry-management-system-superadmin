@@ -109,7 +109,7 @@ export default function FinanceDashboardPage() {
             successful: overview.successfulTransactions || 0,
             pendingRefunds: overview.pendingRefunds || 0,
             successRate: overview.successRate || 0,
-            avgTransactionValue: overview.avgTransactionValue || 0
+            avgTransactionValue: overview.avgTransactionValue ?? overview.averageOrderValue ?? 0
           }
         })
       }

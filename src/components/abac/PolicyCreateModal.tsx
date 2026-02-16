@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SlidePanel } from '@/components/ui/slide-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -295,15 +295,7 @@ export default function PolicyCreateModal({ isOpen, onClose, onSuccess }: Policy
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create ABAC Policy</DialogTitle>
-          <div className="sr-only">
-            Create a new Attribute-Based Access Control policy by defining subject, action, resource, and environment attributes.
-          </div>
-        </DialogHeader>
-
+    <SlidePanel open={isOpen} onClose={onClose} title="Create ABAC Policy" width="2xl" accentBar="bg-indigo-500">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="grid grid-cols-2 gap-4">
@@ -434,7 +426,6 @@ export default function PolicyCreateModal({ isOpen, onClose, onSuccess }: Policy
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+    </SlidePanel>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SlidePanel } from '@/components/ui/slide-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -358,12 +358,7 @@ export default function CreatePlatformRuleModal({ open, onClose, onSuccess, init
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{initialData ? 'Edit' : 'Create'} Platform Automation Rule</DialogTitle>
-        </DialogHeader>
-
+    <SlidePanel open={open} onClose={onClose} title={initialData ? 'Edit Platform Automation Rule' : 'Create Platform Automation Rule'} width="2xl" accentBar="bg-indigo-500">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <Card>
@@ -601,7 +596,6 @@ export default function CreatePlatformRuleModal({ open, onClose, onSuccess, init
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+    </SlidePanel>
   );
 }

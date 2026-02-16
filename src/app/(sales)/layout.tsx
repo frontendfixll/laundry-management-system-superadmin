@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -20,6 +20,7 @@ import NotificationContainer from '@/components/NotificationContainer'
 import NotificationBell from '@/components/layout/NotificationBell'
 import ProgressLoader from '@/components/ui/ProgressLoader'
 import { useLoadingProgress } from '@/hooks/useLoadingProgress'
+import { useNotificationsWebSocket } from '@/hooks/useNotificationsWebSocket'
 
 import { APP_VERSION } from '@/lib/version'
 
@@ -37,6 +38,9 @@ export default function SalesLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const [isHydrated, setIsHydrated] = useState(false)
+
+  // Start WebSocket for real-time notifications (sales dashboard)
+  useNotificationsWebSocket()
 
   // Wait for Zustand to hydrate from localStorage
   useEffect(() => {

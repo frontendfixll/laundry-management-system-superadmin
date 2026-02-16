@@ -3,14 +3,7 @@
 import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from '@/components/ui/dialog'
+import { SlidePanel } from '@/components/ui/slide-panel'
 import { Badge } from '@/components/ui/badge'
 
 interface AddOnDeleteModalProps {
@@ -49,18 +42,10 @@ export function AddOnDeleteModal({ open, addOn, onClose, onConfirm }: AddOnDelet
   const canDelete = !hasActiveSubscriptions && addOn.status !== 'active'
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
-            Delete Add-on
-          </DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this add-on? This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-
+    <SlidePanel open={open} onClose={onClose} title="Delete Add-on" width="md" accentBar="bg-red-500">
+        <p className="text-sm text-muted-foreground mb-4">
+          Are you sure you want to delete this add-on? This action cannot be undone.
+        </p>
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="space-y-2">
@@ -111,7 +96,7 @@ export function AddOnDeleteModal({ open, addOn, onClose, onConfirm }: AddOnDelet
           )}
         </div>
 
-        <DialogFooter>
+        <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
@@ -122,8 +107,7 @@ export function AddOnDeleteModal({ open, addOn, onClose, onConfirm }: AddOnDelet
           >
             {loading ? 'Deleting...' : 'Delete Add-on'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+    </SlidePanel>
   )
 }

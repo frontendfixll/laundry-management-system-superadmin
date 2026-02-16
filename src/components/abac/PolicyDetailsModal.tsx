@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SlidePanel } from '@/components/ui/slide-panel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -153,32 +153,21 @@ export default function PolicyDetailsModal({
     : '0';
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-3">
-              {getCategoryIcon(policy.category)}
-              {policy.name}
-            </DialogTitle>
-            <div className="sr-only">
-              Details and statistics for ABAC policy: {policy.name}
-            </div>
-            <div className="flex items-center gap-2">
-              {policy.isActive ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              ) : (
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-              )}
-              <span className={`text-sm font-medium ${policy.isActive ? 'text-green-600' : 'text-red-600'
-                }`}>
-                {policy.isActive ? 'Active' : 'Inactive'}
-              </span>
-            </div>
-          </div>
-        </DialogHeader>
-
-        <div className="space-y-6">
+    <SlidePanel open={isOpen} onClose={onClose} title={policy.name} width="2xl" accentBar="bg-indigo-500">
+      <div className="p-4 pb-0">
+        <div className="flex items-center gap-2 mb-4">
+          {getCategoryIcon(policy.category)}
+          {policy.isActive ? (
+            <CheckCircle className="h-5 w-5 text-green-500" />
+          ) : (
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+          )}
+          <span className={`text-sm font-medium ${policy.isActive ? 'text-green-600' : 'text-red-600'}`}>
+            {policy.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+      </div>
+      <div className="p-4 pt-0 space-y-6">
           {/* Policy Overview */}
           <Card>
             <CardHeader>
@@ -357,7 +346,6 @@ export default function PolicyDetailsModal({
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+    </SlidePanel>
   );
 }

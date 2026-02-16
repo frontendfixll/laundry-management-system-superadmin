@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { X, TrendingUp, Users, DollarSign, Eye, Download } from 'lucide-react'
+import { TrendingUp, Users, DollarSign, Eye, Download } from 'lucide-react'
+import { SlidePanel } from '@/components/ui/slide-panel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -21,43 +22,26 @@ export function AddOnAnalyticsModal({ open, addOn, onClose }: AddOnAnalyticsModa
   const [period, setPeriod] = useState('30d')
   const { analytics, loading, error } = useAddOnAnalytics(addOn?._id, period)
 
-  if (!open || !addOn) return null
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col">
-        {/* Fixed Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-white flex-shrink-0">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-semibold truncate">Add-on Analytics</h2>
-            <p className="text-sm text-muted-foreground truncate">
-              {addOn.displayName} • {addOn.category}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
-                <SelectItem value="1y">Last year</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+    <SlidePanel open={open} onClose={onClose} title={addOn?.displayName ? `Analytics: ${addOn.displayName}` : 'Add-on Analytics'} width="2xl" accentBar="bg-purple-500">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="90d">Last 90 days</SelectItem>
+              <SelectItem value="1y">Last year</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </div>
-
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -316,7 +300,6 @@ export function AddOnAnalyticsModal({ open, addOn, onClose }: AddOnAnalyticsModa
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </SlidePanel>
   )
 }

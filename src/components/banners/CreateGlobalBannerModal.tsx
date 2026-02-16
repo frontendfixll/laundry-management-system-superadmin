@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
+import { SlidePanel } from '@/components/ui/slide-panel';
 import { useCreateGlobalBanner } from '@/hooks/useSuperAdminBanners';
 import api from '@/lib/api';
 
@@ -294,15 +295,7 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
-          <h2 className="text-2xl font-bold text-gray-900">Create Global Banner</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
-            <X size={24} />
-          </button>
-        </div>
-
+    <SlidePanel open={isOpen} onClose={onClose} title="Create Global Banner" width="2xl" accentBar="bg-purple-500">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {loadingData ? (
             <div className="text-center py-8">
@@ -718,7 +711,6 @@ export default function CreateGlobalBannerModal({ isOpen, onClose, onSuccess }: 
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </SlidePanel>
   );
 }

@@ -50,7 +50,7 @@ export default function PDFExportPage() {
 
   const fetchExportHistory = async () => {
     try {
-      const response = await fetch('/api/superadmin/audit/export/history', {
+      const response = await fetch(`${API_BASE}/superadmin/audit/export/history`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }
@@ -115,7 +115,7 @@ export default function PDFExportPage() {
         filters
       }
 
-      const response = await fetch('/api/superadmin/audit/export/pdf', {
+      const response = await fetch(`${API_BASE}/superadmin/audit/export/pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

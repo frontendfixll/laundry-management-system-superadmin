@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { X, Plus, Trash2, Info } from 'lucide-react'
+import { Plus, Trash2, Info } from 'lucide-react'
+import { SlidePanel } from '@/components/ui/slide-panel'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -242,18 +243,8 @@ export function AddOnCreateModal({ open, onClose, onSubmit }: AddOnCreateModalPr
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[90vh] flex flex-col">
+    <SlidePanel open={open} onClose={onClose} title="Create New Add-on" width="2xl" accentBar="bg-purple-500">
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col h-full">
-          {/* Fixed Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-white flex-shrink-0">
-            <h2 className="text-lg font-semibold">Create New Add-on</h2>
-            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Scrollable Content */}
           <div className="flex-1 overflow-y-auto">
             <div className="flex-1 p-4">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -777,8 +768,7 @@ export function AddOnCreateModal({ open, onClose, onSubmit }: AddOnCreateModalPr
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </SlidePanel>
   )
 }
 

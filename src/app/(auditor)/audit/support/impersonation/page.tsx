@@ -148,7 +148,7 @@ export default function ImpersonationLogsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`/api/superadmin/audit/support/impersonation?${params}`, {
+      const response = await fetch(`${API_BASE}/superadmin/audit/support/impersonation?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
         }
