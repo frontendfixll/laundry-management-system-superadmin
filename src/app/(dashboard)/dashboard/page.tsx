@@ -31,8 +31,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  AreaChart,
-  Area,
 } from 'recharts'
 
 import { useRouter } from 'next/navigation'
@@ -52,7 +50,7 @@ export default function SuperAdminDashboard() {
     clearError
   } = useSuperAdminDashboard()
 
-  const [timeframe, setTimeframe] = useState('30d')
+  const [timeframe, setTimeframe] = useState('90d')
 
   // Role-based redirection logic
   useEffect(() => {
@@ -496,72 +494,10 @@ export default function SuperAdminDashboard() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          {/* Revenue Trend Chart - Large Version */}
-          <div className="bg-white/90 backdrop-blur-sm border border-gray-100 rounded-xl p-6 shadow-sm hover:bg-white transition-all duration-200">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
-              <p className="text-sm text-gray-600 mt-1">Revenue analysis over time</p>
-            </div>
-            <div className="h-64">
-              {dashboardData?.revenue && dashboardData.revenue.daily && Array.isArray(dashboardData.revenue.daily) && dashboardData.revenue.daily.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={dashboardData.revenue.daily.map((item: any, index: number) => ({
-                      date: item._id ? `${item._id.day}/${item._id.month}` : `Day ${index + 1}`,
-                      revenue: item.revenue || 0,
-                      orders: item.orders || 0
-                    }))}
-                    margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
-                  >
-                    <defs>
-                      <linearGradient id="revenueGradientLarge" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                    <XAxis
-                      dataKey="date"
-                      stroke="#6b7280"
-                      fontSize={12}
-                    />
-                    <YAxis
-                      stroke="#6b7280"
-                      fontSize={12}
-                      tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                        fontSize: '12px'
-                      }}
-                      formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Revenue']}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      fill="url(#revenueGradientLarge)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                      <TrendingUp className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-900 mb-1">No Revenue Data</p>
-                    <p className="text-xs text-gray-600">Data will appear once orders are processed</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Revenue Trend Chart */}
+          {dashboardData?.revenue && (
+            <RevenueChart data={dashboardData.revenue} loading={loading} />
+          )}
         </div>
         <div>
           {dashboardData && (

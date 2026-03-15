@@ -70,10 +70,10 @@ export const useSuperAdminDashboard = () => {
   const [error, setError] = useState<string | null>(null)
 
   // Fetch dashboard overview
-  const fetchDashboardOverview = useCallback(async (timeframe: string = '30d') => {
+  const fetchDashboardOverview = useCallback(async (timeframe: string = '90d') => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await superAdminApi.getDashboardOverview(timeframe)
       setDashboardData(response.data)

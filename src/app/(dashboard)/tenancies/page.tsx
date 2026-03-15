@@ -511,7 +511,12 @@ export default function TenanciesPage() {
                   <TableRow key={tenancy._id}>
                     <TableCell className="font-medium">
                       <div>
-                        <div className="font-medium text-sm">{tenancy.name}</div>
+                        <div
+                          className="font-medium text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                          onClick={() => router.push(`/tenancies/${tenancy._id}`)}
+                        >
+                          {tenancy.name}
+                        </div>
                         <div className="text-[11px] text-muted-foreground">
                           <code className="bg-muted px-2 py-1 rounded text-xs">{tenancy.subdomain}</code>
                         </div>
