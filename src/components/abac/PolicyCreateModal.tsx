@@ -294,9 +294,22 @@ export default function PolicyCreateModal({ isOpen, onClose, onSuccess }: Policy
     </Card>
   );
 
+  const footer = (
+    <div className="flex justify-end gap-2">
+      <Button type="button" variant="outline" onClick={onClose}>
+        <X className="h-4 w-4 mr-2" />
+        Cancel
+      </Button>
+      <Button type="submit" form="abac-policy-form" disabled={loading}>
+        <Save className="h-4 w-4 mr-2" />
+        {loading ? 'Creating...' : 'Create Policy'}
+      </Button>
+    </div>
+  )
+
   return (
-    <SlidePanel open={isOpen} onClose={onClose} title="Create ABAC Policy" width="2xl" accentBar="bg-indigo-500">
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <SlidePanel open={isOpen} onClose={onClose} title="Create ABAC Policy" width="2xl" accentBar="bg-indigo-500" footer={footer}>
+        <form id="abac-policy-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -414,17 +427,6 @@ export default function PolicyCreateModal({ isOpen, onClose, onSuccess }: Policy
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? 'Creating...' : 'Create Policy'}
-            </Button>
-          </div>
         </form>
     </SlidePanel>
   );

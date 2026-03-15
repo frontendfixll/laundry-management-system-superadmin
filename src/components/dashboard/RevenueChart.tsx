@@ -75,11 +75,26 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
     }))
   }
 
-  const dailyChartData = formatDailyData(data.daily)
+  const allDailyData = formatDailyData(data.daily)
+
+  // Filter daily data based on selected time range
+  const dailyChartData = (() => {
+    const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - days)
+    return allDailyData.filter(item => item.fullDate >= cutoff)
+  })()
+
   const serviceChartData = formatServiceData(data.byService)
 
-  const totalRevenue = dailyChartData.reduce((sum, item) => sum + item.revenue, 0)
-  const totalOrders = dailyChartData.reduce((sum, item) => sum + item.orders, 0)
+  // Summary uses full dataset (not filtered by local timeRange) so header always reflects real totals
+  let totalRevenue = 0
+  let totalOrders = 0
+  if (chartType === 'pie') {
+    serviceChartData.forEach(s => { totalRevenue += s.value; totalOrders += s.orders })
+  } else {
+    allDailyData.forEach(item => { totalRevenue += item.revenue; totalOrders += item.orders })
+  }
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
   if (loading) {
@@ -166,6 +181,16 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
 
       {/* Chart */}
       <div className="h-96">
+        {dailyChartData.length === 0 && chartType !== 'pie' && (
+          <div className="h-full flex items-center justify-center text-gray-400">
+            <div className="text-center">
+              <TrendingUp className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium text-gray-500">No orders in this period</p>
+              <p className="text-xs text-gray-400 mt-1">Try selecting a wider time range</p>
+            </div>
+          </div>
+        )}
+        {(dailyChartData.length > 0 || chartType === 'pie') && (
         <ResponsiveContainer width="100%" height="100%">
           {chartType === 'area' && (
             <AreaChart 
@@ -271,6 +296,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
             </PieChart>
           )}
         </ResponsiveContainer>
+        )}
       </div>
 
       {/* Service Legend for Pie Chart */}

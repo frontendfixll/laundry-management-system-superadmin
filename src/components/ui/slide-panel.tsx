@@ -17,6 +17,7 @@ export interface SlidePanelProps {
   className?: string
   hideHeader?: boolean
   accentBar?: string
+  footer?: React.ReactNode
   children: React.ReactNode
 }
 
@@ -37,6 +38,7 @@ export function SlidePanel({
   className,
   hideHeader = false,
   accentBar,
+  footer,
   children,
 }: SlidePanelProps) {
   useEffect(() => {
@@ -58,13 +60,13 @@ export function SlidePanel({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
+        className="fixed inset-0 bg-black/20 z-[200] transition-opacity duration-300"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
         className={cn(
-          'fixed top-0 right-0 h-full w-full bg-white shadow-2xl z-50 flex flex-col',
+          'fixed top-0 right-0 h-full w-full bg-white shadow-2xl z-[201] flex flex-col',
           'transform transition-transform duration-300 ease-out',
           open ? 'translate-x-0' : 'translate-x-full',
           widthClasses[width],
@@ -76,9 +78,9 @@ export function SlidePanel({
       >
         {accentBar && <div className={cn('h-1 w-full shrink-0', accentBar)} />}
         {!hideHeader && (
-          <div className="flex items-center justify-between p-4 border-b border-gray-100 shrink-0 bg-white">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0 bg-white gap-3">
             {title != null && (
-              <h2 className="text-lg font-semibold text-gray-900 truncate pr-2">{title}</h2>
+              <h2 className="text-lg font-semibold text-gray-900 min-w-0 flex-1">{title}</h2>
             )}
             <button
               type="button"
@@ -90,7 +92,12 @@ export function SlidePanel({
             </button>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto min-h-0">{children}</div>
+        <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4">{children}</div>
+        {footer && (
+          <div className="shrink-0 border-t border-gray-100 bg-white px-6 py-4">
+            {footer}
+          </div>
+        )}
       </div>
     </>
   )

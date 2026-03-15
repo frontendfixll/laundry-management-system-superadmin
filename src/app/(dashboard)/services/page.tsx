@@ -328,11 +328,11 @@ export default function SuperAdminServicesPage() {
       })
 
       if (response.ok) {
-        // Update state locally instead of re-fetching
         setServices(prev => prev.filter(s => s._id !== deleteServiceId))
         showToast('Service deleted successfully!')
       } else {
-        showToast('Failed to delete service', 'error')
+        const data = await response.json().catch(() => ({}))
+        showToast(data.message || 'Failed to delete service', 'error')
       }
     } catch (err) {
       showToast('Failed to delete service', 'error')
