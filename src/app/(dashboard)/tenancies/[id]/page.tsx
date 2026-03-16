@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   ArrowLeft, Building2, User, Settings, Shield, Save,
   RefreshCw, CheckCircle, XCircle, Users, Search,
-  ShoppingCart, GitBranch, TrendingUp, IndianRupee
+  ShoppingCart, GitBranch, TrendingUp, IndianRupee,
+  UserPlus, X, Eye, EyeOff
 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import toast from 'react-hot-toast';
 import { superAdminApi } from '@/lib/superAdminApi';
 import { useNotificationsWebSocket } from '@/hooks/useNotificationsWebSocket';
@@ -139,6 +141,12 @@ export default function TenancyDetailPage() {
   const [orderStatus, setOrderStatus] = useState('all');
   const [ordersPage, setOrdersPage] = useState(1);
 
+  // create user modal
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', phone: '', password: '', role: 'customer' });
+
   const { isConnected } = useNotificationsWebSocket();
 
   useEffect(() => { fetchOverview(); }, [tenancyId]);
@@ -221,6 +229,36 @@ export default function TenancyDetailPage() {
       if (res?.success) { setOrdersData(res.data); setOrdersPage(page); }
     } catch (err: any) { toast.error(err.message || 'Failed to load orders'); }
     finally { setOrdersLoading(false); }
+  };
+
+  // ── Create tenancy user ───────────────────────────────────────────────────
+  const handleCreateUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.phone || !newUser.password) {
+      toast.error('All fields are required');
+      return;
+    }
+    if (newUser.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    try {
+      setCreateUserLoading(true);
+      const res = await superAdminApi.post(`/tenancies/${tenancyId}/users`, newUser);
+      if (res?.success) {
+        toast.success(res.message || 'User created successfully');
+        setShowCreateUser(false);
+        setNewUser({ name: '', email: '', phone: '', password: '', role: 'customer' });
+        setShowPassword(false);
+        fetchUsers(1);
+        fetchOverview();
+      } else {
+        toast.error(res?.message || 'Failed to create user');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create user');
+    } finally {
+      setCreateUserLoading(false);
+    }
   };
 
   // ── Permission helpers ─────────────────────────────────────────────────────
@@ -498,9 +536,14 @@ export default function TenancyDetailPage() {
                   <CardTitle className="text-base">All Users</CardTitle>
                   <CardDescription>{usersData ? `${usersData.pagination.total} users` : 'Loading…'}</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => fetchUsers(1)} disabled={usersLoading}>
-                  <RefreshCw className={`w-4 h-4 mr-1 ${usersLoading ? 'animate-spin' : ''}`} />Refresh
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => fetchUsers(1)} disabled={usersLoading}>
+                    <RefreshCw className={`w-4 h-4 mr-1 ${usersLoading ? 'animate-spin' : ''}`} />Refresh
+                  </Button>
+                  <Button size="sm" onClick={() => setShowCreateUser(true)}>
+                    <UserPlus className="w-4 h-4 mr-1" />Add User
+                  </Button>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2 pt-2">
                 <div className="relative flex-1 min-w-[200px]">
@@ -779,6 +822,68 @@ export default function TenancyDetailPage() {
         </TabsContent>
 
       </Tabs>
+
+      {/* Create User Modal */}
+      {showCreateUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateUser(false)}>
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Add User to {tenancy.name}</h2>
+              <button onClick={() => setShowCreateUser(false)} className="p-1 hover:bg-gray-100 rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="cu-name">Full Name *</Label>
+                <Input id="cu-name" placeholder="Enter full name" value={newUser.name}
+                  onChange={e => setNewUser(p => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cu-email">Email *</Label>
+                <Input id="cu-email" type="email" placeholder="user@example.com" value={newUser.email}
+                  onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cu-phone">Phone (10 digits) *</Label>
+                <Input id="cu-phone" placeholder="9876543210" value={newUser.phone} maxLength={10}
+                  onChange={e => setNewUser(p => ({ ...p, phone: e.target.value.replace(/\D/g, '') }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cu-password">Password *</Label>
+                <div className="relative">
+                  <Input id="cu-password" type={showPassword ? 'text' : 'password'} placeholder="Min 6 characters" value={newUser.password}
+                    onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-2.5 text-muted-foreground hover:text-gray-700">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cu-role">Role *</Label>
+                <Select value={newUser.role} onValueChange={v => setNewUser(p => ({ ...p, role: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="customer">Customer</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="branch_admin">Branch Admin</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
+                    <SelectItem value="support">Support</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 p-4 border-t">
+              <Button variant="outline" onClick={() => setShowCreateUser(false)}>Cancel</Button>
+              <Button onClick={handleCreateUser} disabled={createUserLoading}>
+                {createUserLoading ? <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> : <UserPlus className="w-4 h-4 mr-1" />}
+                Create User
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
