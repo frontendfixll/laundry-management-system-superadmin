@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   FileText,
   Download,
@@ -50,17 +51,7 @@ export default function PDFExportPage() {
 
   const fetchExportHistory = async () => {
     try {
-      const response = await fetch(`${API_BASE}/superadmin/audit/export/history`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch export history')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/export/history`)
       
       if (data.success) {
         setExportRequests(data.data.exports || [])
@@ -115,20 +106,7 @@ export default function PDFExportPage() {
         filters
       }
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/export/pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        },
-        body: JSON.stringify(exportData)
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to request export')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.post(`/audit/export/pdf`, exportData)
       
       if (data.success) {
         // Add new export request to the list
@@ -395,14 +373,14 @@ export default function PDFExportPage() {
                     {request.recordCount.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>{request.requestedAt.toLocaleDateString()}</div>
-                    <div className="text-gray-500 text-xs">{request.requestedAt.toLocaleTimeString()}</div>
+                    <div>{new Date(request.requestedAt).toLocaleDateString()}</div>
+                    <div className="text-gray-500 text-xs">{new Date(request.requestedAt).toLocaleTimeString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {request.completedAt ? (
                       <div>
-                        <div>{request.completedAt.toLocaleDateString()}</div>
-                        <div className="text-gray-500 text-xs">{request.completedAt.toLocaleTimeString()}</div>
+                        <div>{new Date(request.completedAt).toLocaleDateString()}</div>
+                        <div className="text-gray-500 text-xs">{new Date(request.completedAt).toLocaleTimeString()}</div>
                       </div>
                     ) : (
                       <span className="text-gray-400">-</span>
@@ -411,8 +389,8 @@ export default function PDFExportPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {request.expiresAt ? (
                       <div>
-                        <div>{request.expiresAt.toLocaleDateString()}</div>
-                        <div className="text-gray-500 text-xs">{request.expiresAt.toLocaleTimeString()}</div>
+                        <div>{new Date(request.expiresAt).toLocaleDateString()}</div>
+                        <div className="text-gray-500 text-xs">{new Date(request.expiresAt).toLocaleTimeString()}</div>
                       </div>
                     ) : (
                       <span className="text-gray-400">-</span>

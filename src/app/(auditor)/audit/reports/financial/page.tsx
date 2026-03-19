@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   DollarSign,
   TrendingUp,
@@ -79,17 +80,7 @@ export default function FinancialAuditReportsPage() {
     try {
       setLoading(true)
       
-      const response = await fetch(`${API_BASE}/support/audit/reports/financial?range=${dateRange}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch financial reports')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/reports/financial?range=${dateRange}`)
       
       if (data.success) {
         setMetrics(data.data.metrics)

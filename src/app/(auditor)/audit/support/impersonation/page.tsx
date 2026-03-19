@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   UserCircle,
   Search,
@@ -148,17 +149,7 @@ export default function ImpersonationLogsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/support/impersonation?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch impersonation logs')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/support/impersonation?${params}`)
       
       if (data.success) {
         setLogs(data.data.logs)
@@ -719,7 +710,7 @@ export default function ImpersonationLogsPage() {
                             <span className={`px-2 py-1 rounded text-xs ${getActivityRiskColor(activity.riskLevel)}`}>
                               {activity.riskLevel}
                             </span>
-                            <span className="text-xs text-gray-500">{activity.timestamp.toLocaleTimeString()}</span>
+                            <span className="text-xs text-gray-500">{new Date(activity.timestamp).toLocaleTimeString()}</span>
                           </div>
                         </div>
                         <p className="text-sm text-gray-700">{activity.details}</p>
@@ -854,13 +845,13 @@ export default function ImpersonationLogsPage() {
                 </button>
                 <div className="text-xs text-gray-500 text-right">
                   <div>Started:</div>
-                  <div>{log.session.startedAt.toLocaleDateString()}</div>
-                  <div className="text-gray-400">{log.session.startedAt.toLocaleTimeString()}</div>
+                  <div>{new Date(log.session.startedAt).toLocaleDateString()}</div>
+                  <div className="text-gray-400">{new Date(log.session.startedAt).toLocaleTimeString()}</div>
                   {log.session.endedAt && (
                     <>
                       <div className="mt-1">Ended:</div>
-                      <div>{log.session.endedAt.toLocaleDateString()}</div>
-                      <div className="text-gray-400">{log.session.endedAt.toLocaleTimeString()}</div>
+                      <div>{new Date(log.session.endedAt).toLocaleDateString()}</div>
+                      <div className="text-gray-400">{new Date(log.session.endedAt).toLocaleTimeString()}</div>
                     </>
                   )}
                 </div>

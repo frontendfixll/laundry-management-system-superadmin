@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Shield,
   Search,
@@ -94,17 +95,7 @@ export default function PermissionDenialsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/security/permissions?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch permission denials')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/security/permissions?${params}`)
       
       if (data.success) {
         setDenials(data.data.denials)
@@ -554,8 +545,8 @@ export default function PermissionDenialsPage() {
                   <Eye className="w-4 h-4" />
                 </button>
                 <div className="text-xs text-gray-500 text-right">
-                  <div>{denial.timestamp.toLocaleDateString()}</div>
-                  <div>{denial.timestamp.toLocaleTimeString()}</div>
+                  <div>{new Date(denial.timestamp).toLocaleDateString()}</div>
+                  <div>{new Date(denial.timestamp).toLocaleTimeString()}</div>
                 </div>
               </div>
             </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Settings,
   Search,
@@ -107,17 +108,7 @@ export default function PermissionMappingsPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/rbac/permissions?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch permission mappings')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/rbac/permissions?${params}`)
       
       if (data.success) {
         setPermissions(data.data.permissions)
@@ -656,15 +647,15 @@ export default function PermissionMappingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <p className="text-gray-600">Created by: <span className="font-medium">{permission.auditInfo.createdBy}</span></p>
-                        <p className="text-gray-600">Created: {permission.createdAt.toLocaleDateString()}</p>
+                        <p className="text-gray-600">Created: {new Date(permission.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div>
                         <p className="text-gray-600">Last modified by: <span className="font-medium">{permission.auditInfo.lastModifiedBy}</span></p>
-                        <p className="text-gray-600">Updated: {permission.updatedAt.toLocaleDateString()}</p>
+                        <p className="text-gray-600">Updated: {new Date(permission.updatedAt).toLocaleDateString()}</p>
                       </div>
                     </div>
                     {permission.usage.lastUsed && (
-                      <p className="text-gray-600 mt-2">Last used: {permission.usage.lastUsed.toLocaleDateString()} {permission.usage.lastUsed.toLocaleTimeString()}</p>
+                      <p className="text-gray-600 mt-2">Last used: {new Date(permission.usage.lastUsed).toLocaleDateString()} {new Date(permission.usage.lastUsed).toLocaleTimeString()}</p>
                     )}
                   </div>
                 </div>
@@ -679,7 +670,7 @@ export default function PermissionMappingsPage() {
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-sm font-medium text-yellow-900">{change.action.replace('_', ' ')}</span>
                             <span className="text-xs text-yellow-600">
-                              {change.timestamp.toLocaleDateString()}
+                              {new Date(change.timestamp).toLocaleDateString()}
                             </span>
                           </div>
                           <p className="text-sm text-yellow-800">By: {change.performedBy}</p>

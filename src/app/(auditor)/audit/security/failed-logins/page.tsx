@@ -136,9 +136,9 @@ export default function FailedLoginsPage() {
         <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm p-5 border border-red-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Blocked IPs</p>
+              <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Critical</p>
               <p className="text-2xl font-bold text-red-900 mt-1">
-                {failedLogins.filter(f => f.blocked).length}
+                {failedLogins.filter((f: any) => f.severity === 'critical' || f.blocked).length}
               </p>
             </div>
             <div className="bg-red-500 p-3 rounded-lg">
@@ -152,7 +152,7 @@ export default function FailedLoginsPage() {
             <div>
               <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide">High Risk</p>
               <p className="text-2xl font-bold text-orange-900 mt-1">
-                {failedLogins.filter(f => f.attempts >= 10).length}
+                {failedLogins.filter((f: any) => (f.riskScore || 0) >= 60 || f.severity === 'high').length}
               </p>
             </div>
             <div className="bg-orange-500 p-3 rounded-lg">
@@ -164,9 +164,9 @@ export default function FailedLoginsPage() {
         <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm p-5 border border-yellow-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wide">Total Attempts</p>
+              <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wide">Total Events</p>
               <p className="text-2xl font-bold text-yellow-900 mt-1">
-                {failedLogins.reduce((sum, f) => sum + f.attempts, 0)}
+                {failedLogins.length}
               </p>
             </div>
             <div className="bg-yellow-500 p-3 rounded-lg">
@@ -180,7 +180,7 @@ export default function FailedLoginsPage() {
             <div>
               <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Unique IPs</p>
               <p className="text-2xl font-bold text-blue-900 mt-1">
-                {new Set(failedLogins.map(f => f.ipAddress)).size}
+                {new Set(failedLogins.map((f: any) => f.sourceIp || f.ipAddress)).size}
               </p>
             </div>
             <div className="bg-blue-500 p-3 rounded-lg">
@@ -273,31 +273,41 @@ export default function FailedLoginsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {failedLogins.map((attempt) => {
-                const riskLevel = getRiskLevel(attempt.attempts, attempt.blocked)
+              {failedLogins.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                    <Shield className="w-8 h-8 mx-auto mb-2 text-green-400" />
+                    <p className="font-medium text-green-700">No Failed Login Attempts</p>
+                    <p className="text-sm text-gray-400">No security events found in the selected period</p>
+                  </td>
+                </tr>
+              )}
+              {failedLogins.map((attempt: any) => {
+                const riskScore = attempt.riskScore || 0
+                const riskLevel = riskScore >= 80 ? 'Critical' : riskScore >= 60 ? 'High' : riskScore >= 30 ? 'Medium' : 'Low'
                 return (
-                  <tr key={attempt._id} className="hover:bg-gray-50">
+                  <tr key={attempt._id || attempt.eventId} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div>
-                        <div className="font-medium">{attempt.timestamp.toLocaleDateString()}</div>
-                        <div className="text-gray-500">{attempt.timestamp.toLocaleTimeString()}</div>
+                        <div className="font-medium">{new Date(attempt.timestamp).toLocaleDateString()}</div>
+                        <div className="text-gray-500">{new Date(attempt.timestamp).toLocaleTimeString()}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{attempt.email}</div>
-                      <div className="text-sm text-gray-500">{attempt.reason}</div>
+                      <div className="text-sm font-medium text-gray-900">{attempt.userEmail || attempt.email || attempt.username || '-'}</div>
+                      <div className="text-sm text-gray-500">{attempt.description || attempt.reason || ''}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-mono text-gray-900">{attempt.ipAddress}</div>
+                      <div className="text-sm font-mono text-gray-900">{attempt.sourceIp || attempt.ipAddress || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900">
                         <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                        {attempt.location || 'Unknown'}
+                        {attempt.sourceCity ? `${attempt.sourceCity}, ${attempt.sourceCountry || ''}` : attempt.location || 'Unknown'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900">{attempt.attempts}</div>
+                      <div className="text-sm font-bold text-gray-900">{attempt.riskScore || attempt.attempts || 1}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(riskLevel)}`}>
@@ -305,8 +315,12 @@ export default function FailedLoginsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(attempt.blocked, attempt.attempts)}`}>
-                        {attempt.blocked ? 'BLOCKED' : 'ACTIVE'}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        attempt.resolved || attempt.status === 'resolved' ? 'text-green-700 bg-green-100' :
+                        attempt.severity === 'critical' || attempt.blocked ? 'text-red-700 bg-red-100' :
+                        'text-orange-700 bg-orange-100'
+                      }`}>
+                        {attempt.resolved ? 'RESOLVED' : attempt.blocked ? 'BLOCKED' : (attempt.status || 'DETECTED').toUpperCase()}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

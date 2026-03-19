@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   AlertCircle,
   Search,
@@ -124,17 +125,7 @@ export default function SuspiciousPatternsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/security/suspicious?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch suspicious patterns')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/security/suspicious?${params}`)
       
       if (data.success) {
         setPatterns(data.data.patterns)
@@ -737,7 +728,7 @@ export default function SuspiciousPatternsPage() {
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-gray-900">{event.event.replace('_', ' ')}</span>
                             <span className="text-xs text-gray-500">
-                              {event.timestamp.toLocaleTimeString()}
+                              {new Date(event.timestamp).toLocaleTimeString()}
                             </span>
                           </div>
                           <p className="text-gray-600">{event.details}</p>
@@ -755,8 +746,8 @@ export default function SuspiciousPatternsPage() {
                 </button>
                 <div className="text-xs text-gray-500 text-right">
                   <div>Detected:</div>
-                  <div>{pattern.detectedAt.toLocaleDateString()}</div>
-                  <div>{pattern.detectedAt.toLocaleTimeString()}</div>
+                  <div>{new Date(pattern.detectedAt).toLocaleDateString()}</div>
+                  <div>{new Date(pattern.detectedAt).toLocaleTimeString()}</div>
                 </div>
               </div>
             </div>

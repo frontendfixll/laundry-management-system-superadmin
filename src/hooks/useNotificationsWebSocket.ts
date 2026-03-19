@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-// Properly handle API URL - remove /api if present for socket, keep for API calls
+// Socket connects to relay server, API calls go to backend
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-const SOCKET_URL = BASE_URL.replace('/api', '');
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || BASE_URL.replace('/api', '');
 const API_BASE_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
 export interface Notification {

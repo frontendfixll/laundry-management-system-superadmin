@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Download,
   Search,
@@ -139,17 +140,7 @@ export default function DataExportEventsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/security/exports?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch data export events')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/security/exports?${params}`)
       
       if (data.success) {
         setExports(data.data.exports)
@@ -711,17 +702,17 @@ export default function DataExportEventsPage() {
                   <div className="flex items-center space-x-4 text-xs text-gray-600">
                     <div>
                       <span className="font-medium">Requested:</span>
-                      <span className="ml-1">{exportEvent.timeline.requestedAt.toLocaleString()}</span>
+                      <span className="ml-1">{new Date(exportEvent.timeline.requestedAt).toLocaleString()}</span>
                     </div>
                     {exportEvent.timeline.completedAt && (
                       <div>
                         <span className="font-medium">Completed:</span>
-                        <span className="ml-1">{exportEvent.timeline.completedAt.toLocaleString()}</span>
+                        <span className="ml-1">{new Date(exportEvent.timeline.completedAt).toLocaleString()}</span>
                       </div>
                     )}
                     <div>
                       <span className="font-medium">Expires:</span>
-                      <span className="ml-1">{exportEvent.timeline.expiresAt.toLocaleString()}</span>
+                      <span className="ml-1">{new Date(exportEvent.timeline.expiresAt).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -734,7 +725,7 @@ export default function DataExportEventsPage() {
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-700">Downloads: {exportEvent.downloadInfo.downloadCount}</span>
                         <span className="text-xs text-gray-500">
-                          Last: {exportEvent.downloadInfo.lastDownloadAt?.toLocaleString()}
+                          Last: {exportEvent.downloadInfo.lastDownloadAt ? new Date(exportEvent.downloadInfo.lastDownloadAt).toLocaleString() : ''}
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-1">
@@ -777,8 +768,8 @@ export default function DataExportEventsPage() {
                 </button>
                 <div className="text-xs text-gray-500 text-right">
                   <div>Requested:</div>
-                  <div>{exportEvent.timeline.requestedAt.toLocaleDateString()}</div>
-                  <div className="text-gray-400">{exportEvent.timeline.requestedAt.toLocaleTimeString()}</div>
+                  <div>{new Date(exportEvent.timeline.requestedAt).toLocaleDateString()}</div>
+                  <div className="text-gray-400">{new Date(exportEvent.timeline.requestedAt).toLocaleTimeString()}</div>
                 </div>
               </div>
             </div>

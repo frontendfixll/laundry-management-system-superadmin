@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   CheckCircle,
   Search,
@@ -126,162 +127,30 @@ export default function SettlementRecordsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/financial/settlements?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch settlements')
-      }
-      
-      const data = await response.json()
-      
+      const data = await superAdminApi.get(`/audit/financial/settlements?${params}`)
+
       if (data.success) {
-        setSettlements(data.data.settlements)
-        setStats(data.data.stats)
-        setTotalPages(data.data.pagination.pages)
+        const list = data.data.settlements || data.data.data || []
+        setSettlements(list)
+        if (data.data.pagination) setTotalPages(data.data.pagination.pages || 1)
+
+        // Calculate stats from real data
+        setStats({
+          totalSettlements: list.length,
+          pendingSettlements: list.filter((s: any) => s.status === 'pending' || s.status === 'partial').length,
+          completedSettlements: list.filter((s: any) => s.status === 'completed').length,
+          totalSettlementAmount: list.reduce((sum: number, s: any) => sum + (s.amount || 0), 0),
+          totalFees: 0,
+          discrepancies: list.filter((s: any) => s.failedCount > 0).length,
+          avgSettlementTime: 0
+        })
       } else {
         throw new Error(data.message || 'Failed to fetch settlements')
       }
-      
-    } catch (error) {
-      console.error('Error fetching settlements:', error)
-      // Fallback to mock data
-      const mockSettlements: Settlement[] = [
-        {
-          _id: '1',
-          settlementId: 'STL-2024-001',
-          tenantId: 'tenant_001',
-          tenantName: 'clean-fresh',
-          businessName: 'Clean & Fresh Laundry',
-          period: {
-            startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-            endDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-          },
-          transactions: {
-            totalCount: 0,
-            totalAmount: 234500,
-            successfulCount: 148,
-            successfulAmount: 225600,
-            failedCount: 8,
-            failedAmount: 8900,
-            refundCount: 3,
-            refundAmount: 4500
-          },
-          fees: {
-            platformFee: 11280,
-            paymentGatewayFee: 4512,
-            processingFee: 1128,
-            totalFees: 16920
-          },
-          settlement: {
-            grossAmount: 225600,
-            netAmount: 208680,
-            status: 'completed',
-            scheduledDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            processedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            bankAccount: {
-              accountNumber: '****1234',
-              ifscCode: 'HDFC0001234',
-              bankName: 'HDFC Bank',
-              accountHolderName: 'Clean & Fresh Laundry Pvt Ltd'
-            },
-            utrNumber: 'UTR123456789'
-          },
-          reconciliation: {
-            isReconciled: true,
-            reconciledAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
-            reconciledBy: 'finance@laundrylobby.com',
-            discrepancies: []
-          },
-          auditTrail: [
-            {
-              action: 'SETTLEMENT_CREATED',
-              performedBy: 'system',
-              timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-              details: 'Settlement created for period'
-            },
-            {
-              action: 'SETTLEMENT_PROCESSED',
-              performedBy: 'payment-gateway',
-              timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-              details: 'Settlement processed successfully'
-            }
-          ]
-        },
-        {
-          _id: '2',
-          settlementId: 'STL-2024-002',
-          tenantId: 'tenant_002',
-          tenantName: 'quickwash',
-          businessName: 'QuickWash Services',
-          period: {
-            startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-            endDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-          },
-          transactions: {
-            totalCount: 89,
-            totalAmount: 134500,
-            successfulCount: 82,
-            successfulAmount: 125600,
-            failedCount: 7,
-            failedAmount: 8900,
-            refundCount: 2,
-            refundAmount: 3200
-          },
-          fees: {
-            platformFee: 6280,
-            paymentGatewayFee: 2512,
-            processingFee: 628,
-            totalFees: 9420
-          },
-          settlement: {
-            grossAmount: 125600,
-            netAmount: 116180,
-            status: 'pending',
-            scheduledDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-            bankAccount: {
-              accountNumber: '****5678',
-              ifscCode: 'ICICI0005678',
-              bankName: 'ICICI Bank',
-              accountHolderName: 'QuickWash Services Pvt Ltd'
-            }
-          },
-          reconciliation: {
-            isReconciled: false,
-            discrepancies: [
-              {
-                type: 'AMOUNT_MISMATCH',
-                amount: 500,
-                description: 'Transaction amount mismatch in payment gateway records'
-              }
-            ]
-          },
-          auditTrail: [
-            {
-              action: 'SETTLEMENT_CREATED',
-              performedBy: 'system',
-              timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-              details: 'Settlement created for period'
-            }
-          ]
-        }
-      ]
 
-      const mockStats = {
-        totalSettlements: 0,
-        pendingSettlements: 23,
-        completedSettlements: 1198,
-        totalSettlementAmount: 0,
-        totalFees: 1234567,
-        discrepancies: 8,
-        avgSettlementTime: 2.3
-      }
-
-      setSettlements(mockSettlements)
-      setStats(mockStats)
+    } catch (error: any) {
+      console.error('Error fetching settlements:', error?.message || error)
+      setSettlements([])
       setTotalPages(1)
     } finally {
       setLoading(false)
@@ -527,163 +396,61 @@ export default function SettlementRecordsPage() {
 
       {/* Settlements List */}
       <div className="space-y-4">
-        {settlements.map((settlement) => (
+        {(settlements || []).length === 0 && !loading && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-gray-600">No Settlement Records</h3>
+            <p className="text-gray-400 mt-1">No settlement data found for the selected period</p>
+          </div>
+        )}
+        {(settlements || []).map((settlement: any) => (
           <div key={settlement._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {/* Header */}
                 <div className="flex items-center space-x-3 mb-3">
-                  <span className="font-mono text-sm text-gray-600">{settlement.settlementId}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(settlement.settlement.status)}`}>
-                    {settlement.settlement.status.toUpperCase()}
+                  <span className="font-mono text-sm text-gray-600">{settlement.date || 'N/A'}</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(settlement.status || 'completed')}`}>
+                    {(settlement.status || 'completed').toUpperCase()}
                   </span>
-                  {settlement.reconciliation.discrepancies.length > 0 && (
+                  {(settlement.failedCount || 0) > 0 && (
                     <span className="px-2 py-1 rounded-full text-xs font-medium text-red-700 bg-red-100">
-                      DISCREPANCY
-                    </span>
-                  )}
-                  {settlement.reconciliation.isReconciled && (
-                    <span className="px-2 py-1 rounded-full text-xs font-medium text-green-700 bg-green-100">
-                      RECONCILED
+                      {settlement.failedCount} FAILED
                     </span>
                   )}
                 </div>
 
                 {/* Tenant Info */}
                 <div className="mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">{settlement.businessName}</h3>
-                  <p className="text-sm text-gray-600">{settlement.tenantName} • {settlement.tenantId}</p>
-                  <p className="text-sm text-gray-500">
-                    Period: {settlement.period.startDate.toLocaleDateString()} - {settlement.period.endDate.toLocaleDateString()}
-                  </p>
+                  <h3 className="text-lg font-bold text-gray-900">{settlement.tenantName || 'Unknown Tenant'}</h3>
                 </div>
 
                 {/* Financial Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <p className="text-xs text-blue-700 font-medium">Gross Amount</p>
-                    <p className="text-lg font-bold text-blue-900">{formatCurrency(settlement.settlement.grossAmount)}</p>
-                    <p className="text-xs text-blue-600">{settlement.transactions.successfulCount} transactions</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-blue-700 font-medium">Total Amount</p>
+                    <p className="text-lg font-bold text-blue-900">{formatCurrency(settlement.amount || 0)}</p>
                   </div>
-                  <div className="bg-orange-50 p-3 rounded-lg">
-                    <p className="text-xs text-orange-700 font-medium">Total Fees</p>
-                    <p className="text-lg font-bold text-orange-900">{formatCurrency(settlement.fees.totalFees)}</p>
-                    <p className="text-xs text-orange-600">Platform + Gateway</p>
+                  <div className="bg-green-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-green-700 font-medium">Transactions</p>
+                    <p className="text-lg font-bold text-green-900">{settlement.transactionCount || 0}</p>
                   </div>
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <p className="text-xs text-green-700 font-medium">Net Amount</p>
-                    <p className="text-lg font-bold text-green-900">{formatCurrency(settlement.settlement.netAmount)}</p>
-                    <p className="text-xs text-green-600">To be settled</p>
+                  <div className="bg-emerald-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-emerald-700 font-medium">Successful</p>
+                    <p className="text-lg font-bold text-emerald-900">{settlement.successCount || 0}</p>
                   </div>
-                  <div className="bg-purple-50 p-3 rounded-lg">
-                    <p className="text-xs text-purple-700 font-medium">Refunds</p>
-                    <p className="text-lg font-bold text-purple-900">{formatCurrency(settlement.transactions.refundAmount)}</p>
-                    <p className="text-xs text-purple-600">{settlement.transactions.refundCount} refunds</p>
+                  <div className="bg-red-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-red-700 font-medium">Failed</p>
+                    <p className="text-lg font-bold text-red-900">{settlement.failedCount || 0}</p>
                   </div>
                 </div>
-
-                {/* Bank Details & Status */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <h4 className="text-xs font-medium text-gray-700 mb-2">Bank Account</h4>
-                    <p className="text-sm font-medium text-gray-900">{settlement.settlement.bankAccount.accountHolderName}</p>
-                    <p className="text-sm text-gray-600">{settlement.settlement.bankAccount.bankName}</p>
-                    <p className="text-sm text-gray-600">{settlement.settlement.bankAccount.accountNumber}</p>
-                    <p className="text-sm text-gray-600">{settlement.settlement.bankAccount.ifscCode}</p>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <h4 className="text-xs font-medium text-gray-700 mb-2">Settlement Details</h4>
-                    <p className="text-sm text-gray-600">
-                      <strong>Scheduled:</strong> {settlement.settlement.scheduledDate.toLocaleDateString()}
-                    </p>
-                    {settlement.settlement.processedDate && (
-                      <p className="text-sm text-gray-600">
-                        <strong>Processed:</strong> {settlement.settlement.processedDate.toLocaleDateString()}
-                      </p>
-                    )}
-                    {settlement.settlement.utrNumber && (
-                      <p className="text-sm text-gray-600">
-                        <strong>UTR:</strong> {settlement.settlement.utrNumber}
-                      </p>
-                    )}
-                    {settlement.settlement.failureReason && (
-                      <p className="text-sm text-red-600">
-                        <strong>Failure:</strong> {settlement.settlement.failureReason}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Discrepancies */}
-                {settlement.reconciliation.discrepancies.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                      <AlertTriangle className="w-4 h-4 mr-1 text-red-600" />
-                      Reconciliation Discrepancies
-                    </h4>
-                    <div className="space-y-2">
-                      {settlement.reconciliation.discrepancies.map((discrepancy, index) => (
-                        <div key={index} className="bg-red-50 p-3 rounded-lg">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-red-900">{discrepancy.type.replace('_', ' ')}</span>
-                            <span className="text-sm font-bold text-red-700">{formatCurrency(discrepancy.amount)}</span>
-                          </div>
-                          <p className="text-sm text-red-700 mt-1">{discrepancy.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Fee Breakdown */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Fee Breakdown</h4>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <p className="text-gray-600">Platform Fee</p>
-                      <p className="font-medium">{formatCurrency(settlement.fees.platformFee)}</p>
-                    </div>
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <p className="text-gray-600">Gateway Fee</p>
-                      <p className="font-medium">{formatCurrency(settlement.fees.paymentGatewayFee)}</p>
-                    </div>
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <p className="text-gray-600">Processing Fee</p>
-                      <p className="font-medium">{formatCurrency(settlement.fees.processingFee)}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Audit Trail */}
-                {settlement.auditTrail.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Activity</h4>
-                    <div className="space-y-1">
-                      {settlement.auditTrail.slice(-2).map((entry, index) => (
-                        <div key={index} className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                          <span className="font-medium">{entry.action.replace('_', ' ')}</span> by {entry.performedBy}
-                          <span className="text-gray-500 ml-2">
-                            {entry.timestamp.toLocaleDateString()} {entry.timestamp.toLocaleTimeString()}
-                          </span>
-                          {entry.details && <p className="mt-1">{entry.details}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
-              {/* Actions & Timestamp */}
+              {/* Actions */}
               <div className="flex flex-col items-end space-y-2 ml-4">
                 <button className="text-blue-600 hover:text-blue-800 p-2 rounded-md hover:bg-blue-50">
                   <Eye className="w-4 h-4" />
                 </button>
-                <div className="text-xs text-gray-500 text-right">
-                  <div>Created: {settlement.period.startDate.toLocaleDateString()}</div>
-                  {settlement.settlement.processedDate && (
-                    <div className="text-green-600">Settled: {settlement.settlement.processedDate.toLocaleDateString()}</div>
-                  )}
-                </div>
               </div>
             </div>
           </div>

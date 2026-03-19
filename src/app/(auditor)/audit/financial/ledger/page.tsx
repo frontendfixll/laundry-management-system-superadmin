@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   BarChart3,
   Search,
@@ -134,30 +135,33 @@ export default function LedgerBalancePage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/financial/ledger?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch ledger data')
-      }
-      
-      const data = await response.json()
-      
+      const data = await superAdminApi.get(`/audit/financial/ledger?${params}`)
+
       if (data.success) {
-        setLedgerEntries(data.data.ledgerEntries)
-        setStats(data.data.stats)
-        setTotalPages(data.data.pagination.pages)
+        const list = data.data.ledgerEntries || data.data.data || []
+        setLedgerEntries(list)
+        if (data.data.pagination) setTotalPages(data.data.pagination.pages || 1)
+
+        // Calculate stats from real data
+        setStats({
+          totalTenants: list.length,
+          totalBalance: list.reduce((sum: number, e: any) => sum + (e.balance || 0), 0),
+          positiveBalances: list.filter((e: any) => (e.balance || 0) >= 0).length,
+          negativeBalances: list.filter((e: any) => (e.balance || 0) < 0).length,
+          discrepancies: 0,
+          pendingReconciliation: list.filter((e: any) => (e.pendingOrders || 0) > 0).length,
+          avgBalance: list.length > 0 ? Math.round(list.reduce((sum: number, e: any) => sum + (e.balance || 0), 0) / list.length) : 0
+        })
       } else {
         throw new Error(data.message || 'Failed to fetch ledger data')
       }
-      
-    } catch (error) {
-      console.error('Error fetching ledger data:', error)
-      // Fallback to mock data
-      const mockLedgerEntries: LedgerEntry[] = [
+
+    } catch (error: any) {
+      console.error('Error fetching ledger data:', error?.message || error)
+      setLedgerEntries([])
+      setTotalPages(1)
+      // REMOVED mock data - show empty state instead
+      const removedMock: LedgerEntry[] = [
         {
           _id: '1',
           tenantId: 'tenant_001',
@@ -347,9 +351,9 @@ export default function LedgerBalancePage() {
         avgBalance: 63500
       }
 
-      setLedgerEntries(mockLedgerEntries)
-      setStats(mockStats)
-      setTotalPages(1)
+      // Mock data disabled - using empty state
+      // setLedgerEntries(removedMock)
+      // setStats(mockStats)
     } finally {
       setLoading(false)
     }
@@ -578,206 +582,59 @@ export default function LedgerBalancePage() {
 
       {/* Ledger Entries List */}
       <div className="space-y-4">
-        {ledgerEntries.map((entry) => (
+        {(ledgerEntries || []).length === 0 && !loading && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <DollarSign className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-gray-600">No Ledger Data</h3>
+            <p className="text-gray-400 mt-1">No order/payment data found for ledger balances</p>
+          </div>
+        )}
+        {(ledgerEntries || []).map((entry: any) => (
           <div key={entry._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {/* Header */}
                 <div className="flex items-center space-x-3 mb-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getReconciliationColor(entry.ledger.reconciliationStatus)}`}>
-                    {entry.ledger.reconciliationStatus.toUpperCase()}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${(entry.balance || 0) >= 0 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
+                    {(entry.balance || 0) >= 0 ? 'POSITIVE' : 'NEGATIVE'}
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(entry.riskMetrics.riskScore)}`}>
-                    Risk: {entry.riskMetrics.riskScore}/5
-                  </span>
-                  {entry.ledger.closingBalance < 0 && (
-                    <span className="px-2 py-1 rounded-full text-xs font-medium text-red-700 bg-red-100">
-                      NEGATIVE BALANCE
-                    </span>
-                  )}
-                  {entry.discrepancies.length > 0 && (
-                    <span className="px-2 py-1 rounded-full text-xs font-medium text-orange-700 bg-orange-100">
-                      DISCREPANCIES
+                  {(entry.pendingOrders || 0) > 0 && (
+                    <span className="px-2 py-1 rounded-full text-xs font-medium text-yellow-700 bg-yellow-100">
+                      {entry.pendingOrders} PENDING
                     </span>
                   )}
                 </div>
 
                 {/* Tenant Info */}
                 <div className="mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">{entry.businessName}</h3>
-                  <p className="text-sm text-gray-600">{entry.tenantName} • {entry.tenantId}</p>
+                  <h3 className="text-lg font-bold text-gray-900">{entry.tenantName || 'Unknown Tenant'}</h3>
                 </div>
 
                 {/* Balance Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-700 font-medium">Opening Balance</p>
-                    <p className={`text-lg font-bold ${entry.ledger.openingBalance >= 0 ? 'text-green-900' : 'text-red-900'}`}>
-                      {formatCurrency(entry.ledger.openingBalance)}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="bg-green-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-green-700 font-medium">Credits (Paid)</p>
+                    <p className="text-lg font-bold text-green-900">{formatCurrency(entry.totalCredits || 0)}</p>
+                    <p className="text-xs text-green-600">{entry.paidOrders || 0} orders</p>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-red-700 font-medium">Debits (Refunded)</p>
+                    <p className="text-lg font-bold text-red-900">{formatCurrency(entry.totalDebits || 0)}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg text-center ${(entry.balance || 0) >= 0 ? 'bg-blue-50' : 'bg-red-50'}`}>
+                    <p className={`text-xs font-medium ${(entry.balance || 0) >= 0 ? 'text-blue-700' : 'text-red-700'}`}>Net Balance</p>
+                    <p className={`text-lg font-bold ${(entry.balance || 0) >= 0 ? 'text-blue-900' : 'text-red-900'}`}>
+                      {formatCurrency(entry.balance || 0)}
                     </p>
                   </div>
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <p className="text-xs text-blue-700 font-medium">Total Credits</p>
-                    <p className="text-lg font-bold text-blue-900">{formatCurrency(entry.ledger.totalCredits)}</p>
-                    <p className="text-xs text-blue-600">{entry.transactions.creditTransactions.count} txns</p>
+                  <div className="bg-gray-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-gray-700 font-medium">Total Orders</p>
+                    <p className="text-lg font-bold text-gray-900">{entry.totalOrders || 0}</p>
                   </div>
-                  <div className="bg-orange-50 p-3 rounded-lg">
-                    <p className="text-xs text-orange-700 font-medium">Total Debits</p>
-                    <p className="text-lg font-bold text-orange-900">{formatCurrency(entry.ledger.totalDebits)}</p>
-                    <p className="text-xs text-orange-600">{entry.transactions.debitTransactions.count} txns</p>
+                  <div className="bg-yellow-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-yellow-700 font-medium">Pending</p>
+                    <p className="text-lg font-bold text-yellow-900">{entry.pendingOrders || 0}</p>
                   </div>
-                  <div className="bg-purple-50 p-3 rounded-lg">
-                    <p className="text-xs text-purple-700 font-medium">Net Movement</p>
-                    <p className={`text-lg font-bold ${entry.ledger.netMovement >= 0 ? 'text-green-900' : 'text-red-900'}`}>
-                      {entry.ledger.netMovement >= 0 ? '+' : ''}{formatCurrency(entry.ledger.netMovement)}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${entry.ledger.closingBalance >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                    <p className={`text-xs font-medium ${entry.ledger.closingBalance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                      Closing Balance
-                    </p>
-                    <p className={`text-lg font-bold ${entry.ledger.closingBalance >= 0 ? 'text-green-900' : 'text-red-900'}`}>
-                      {formatCurrency(entry.ledger.closingBalance)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Transaction Categories */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <h4 className="text-sm font-medium text-blue-700 mb-2">Credit Categories</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-blue-600">Payments:</span>
-                        <span className="font-medium">{formatCurrency(entry.transactions.creditTransactions.categories.payments)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-blue-600">Refunds:</span>
-                        <span className="font-medium">{formatCurrency(entry.transactions.creditTransactions.categories.refunds)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-blue-600">Adjustments:</span>
-                        <span className="font-medium">{formatCurrency(entry.transactions.creditTransactions.categories.adjustments)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-orange-50 p-3 rounded-lg">
-                    <h4 className="text-sm font-medium text-orange-700 mb-2">Debit Categories</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-orange-600">Fees:</span>
-                        <span className="font-medium">{formatCurrency(entry.transactions.debitTransactions.categories.fees)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-orange-600">Chargebacks:</span>
-                        <span className="font-medium">{formatCurrency(entry.transactions.debitTransactions.categories.chargebacks)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-orange-600">Penalties:</span>
-                        <span className="font-medium">{formatCurrency(entry.transactions.debitTransactions.categories.penalties)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Risk Metrics */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Risk Metrics</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <p className="text-gray-600">Volatility</p>
-                      <p className="font-medium">{entry.riskMetrics.balanceVolatility}%</p>
-                    </div>
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <p className="text-gray-600">Negative Days</p>
-                      <p className="font-medium">{entry.riskMetrics.negativeBalanceDays}</p>
-                    </div>
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <p className="text-gray-600">Large Txns</p>
-                      <p className="font-medium">{entry.riskMetrics.largeTransactionCount}</p>
-                    </div>
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <p className="text-gray-600">Risk Score</p>
-                      <p className={`font-medium ${entry.riskMetrics.riskScore >= 4 ? 'text-red-600' : entry.riskMetrics.riskScore >= 3 ? 'text-orange-600' : 'text-green-600'}`}>
-                        {entry.riskMetrics.riskScore}/5
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Discrepancies */}
-                {entry.discrepancies.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                      <AlertTriangle className="w-4 h-4 mr-1 text-red-600" />
-                      Discrepancies
-                    </h4>
-                    <div className="space-y-2">
-                      {entry.discrepancies.map((discrepancy, index) => (
-                        <div key={index} className="bg-red-50 p-3 rounded-lg">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-red-900">{discrepancy.type.replace('_', ' ')}</span>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm font-bold text-red-700">{formatCurrency(Math.abs(discrepancy.amount))}</span>
-                              <span className={`px-1 py-0.5 rounded text-xs ${getDiscrepancyStatusColor(discrepancy.status)}`}>
-                                {discrepancy.status.toUpperCase()}
-                              </span>
-                            </div>
-                          </div>
-                          <p className="text-sm text-red-700">{discrepancy.description}</p>
-                          <p className="text-xs text-red-600 mt-1">
-                            Detected: {discrepancy.detectedAt.toLocaleDateString()}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Audit Status */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Audit Status</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                    <div className="flex items-center space-x-2">
-                      {entry.auditChecks.balanceIntegrity ? (
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4 text-red-600" />
-                      )}
-                      <span>Balance Integrity</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {entry.auditChecks.transactionMatching ? (
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4 text-red-600" />
-                      )}
-                      <span>Transaction Matching</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {entry.auditChecks.reconciliationCurrent ? (
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4 text-red-600" />
-                      )}
-                      <span>Reconciliation Current</span>
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-600">
-                    Last Audit: {entry.auditChecks.lastAuditDate.toLocaleDateString()} • 
-                    Next Due: {entry.auditChecks.nextAuditDue.toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions & Timestamp */}
-              <div className="flex flex-col items-end space-y-2 ml-4">
-                <button className="text-blue-600 hover:text-blue-800 p-2 rounded-md hover:bg-blue-50">
-                  <Eye className="w-4 h-4" />
-                </button>
-                <div className="text-xs text-gray-500 text-right">
-                  <div>Last Reconciled:</div>
-                  <div>{entry.ledger.lastReconciled.toLocaleDateString()}</div>
                 </div>
               </div>
             </div>

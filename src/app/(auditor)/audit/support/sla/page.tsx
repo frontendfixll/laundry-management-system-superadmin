@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Timer,
   Search,
@@ -147,17 +148,7 @@ export default function SLACompliancePage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/support/sla?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch SLA compliance data')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/support/sla?${params}`)
       
       if (data.success) {
         setSlaRecords(data.data.slaRecords)
@@ -752,7 +743,7 @@ export default function SLACompliancePage() {
                           Rating: {record.customerSatisfaction.rating}/5
                         </span>
                         <span className="text-xs text-blue-600">
-                          {record.customerSatisfaction.submittedAt.toLocaleDateString()}
+                          {new Date(record.customerSatisfaction.submittedAt).toLocaleDateString()}
                         </span>
                       </div>
                       <p className="text-sm text-blue-800">{record.customerSatisfaction.feedback}</p>
@@ -768,8 +759,8 @@ export default function SLACompliancePage() {
                 </button>
                 <div className="text-xs text-gray-500 text-right">
                   <div>Created:</div>
-                  <div>{record.timestamps.createdAt.toLocaleDateString()}</div>
-                  <div>{record.timestamps.createdAt.toLocaleTimeString()}</div>
+                  <div>{new Date(record.timestamps.createdAt).toLocaleDateString()}</div>
+                  <div>{new Date(record.timestamps.createdAt).toLocaleTimeString()}</div>
                 </div>
               </div>
             </div>

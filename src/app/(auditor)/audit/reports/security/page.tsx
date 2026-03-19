@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Shield,
   Search,
@@ -150,17 +151,7 @@ export default function SecurityReportsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/reports/security?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch security reports')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/reports/security?${params}`)
       
       if (data.success) {
         setReports(data.data.reports)

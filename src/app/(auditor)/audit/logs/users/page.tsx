@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Users,
   Search,
@@ -58,17 +59,7 @@ export default function UserAuditLogsPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/logs/users?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch user audit logs')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/logs/users?${params}`)
       
       if (data.success) {
         setLogs(data.data.logs)
@@ -77,8 +68,9 @@ export default function UserAuditLogsPage() {
         throw new Error(data.message || 'Failed to fetch user audit logs')
       }
       
-    } catch (error) {
-      console.error('Error fetching user audit logs:', error)
+    } catch (error: any) {
+      console.error('❌ Error fetching user audit logs:', error?.message || error)
+      console.error('❌ Full error:', error)
       // Fallback to mock data
       const mockLogs: UserAuditLog[] = [
         {
@@ -291,8 +283,8 @@ export default function UserAuditLogsPage() {
                 <tr key={log._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div>
-                      <div className="font-medium">{log.timestamp.toLocaleDateString()}</div>
-                      <div className="text-gray-500">{log.timestamp.toLocaleTimeString()}</div>
+                      <div className="font-medium">{new Date(log.timestamp).toLocaleDateString()}</div>
+                      <div className="text-gray-500">{new Date(log.timestamp).toLocaleTimeString()}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

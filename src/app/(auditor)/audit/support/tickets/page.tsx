@@ -120,12 +120,12 @@ export default function SupportTicketsAuditPage() {
       params.range = dateRange
       
       const data = await superAdminApi.get(`/audit/support/tickets?${new URLSearchParams(params)}`)
-      
+
       if (data.success) {
-        setTickets(data.data.tickets)
-        setStats(data.data.stats)
-        setTotalPages(data.data.pagination.pages)
-        
+        setTickets(data.data.tickets || data.data.logs || [])
+        if (data.data.stats) setStats(data.data.stats)
+        if (data.data.pagination) setTotalPages(data.data.pagination.pages || 1)
+
         console.log('✅ Successfully loaded real support tickets data')
       } else {
         throw new Error(data.message || 'Failed to fetch support tickets')
@@ -356,23 +356,25 @@ export default function SupportTicketsAuditPage() {
 
       {/* Tickets List */}
       <div className="space-y-4">
-        {tickets.map((ticket) => (
+        {(tickets || []).map((ticket) => (
           <div key={ticket._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {/* Header */}
                 <div className="flex items-center space-x-3 mb-3">
-                  <span className="font-mono text-sm text-gray-600">{ticket.ticketId}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                    {ticket.status.replace('_', ' ').toUpperCase()}
+                  <span className="font-mono text-sm text-gray-600">{ticket.ticketId || ticket.entityId || ticket._id}</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status || ticket.outcome || 'open')}`}>
+                    {(ticket.status || ticket.outcome || 'open').replace('_', ' ').toUpperCase()}
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
-                    {ticket.priority.toUpperCase()}
+                  {(ticket.priority || ticket.severity) && (
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority || ticket.severity || 'medium')}`}>
+                    {(ticket.priority || ticket.severity || 'medium').toUpperCase()}
                   </span>
+                  )}
                   <span className="px-2 py-1 rounded-full text-xs font-medium text-gray-700 bg-gray-100">
-                    {ticket.category}
+                    {ticket.category || ticket.action || 'General'}
                   </span>
-                  {ticket.sla.resolutionBreached && (
+                  {ticket.sla?.resolutionBreached && (
                     <span className="px-2 py-1 rounded-full text-xs font-medium text-red-700 bg-red-100">
                       SLA BREACH
                     </span>
@@ -381,24 +383,24 @@ export default function SupportTicketsAuditPage() {
 
                 {/* Title & Description */}
                 <div className="mb-4">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">{ticket.title}</h3>
-                  <p className="text-gray-600 text-sm">{ticket.description}</p>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">{ticket.title || ticket.action || 'Support Ticket'}</h3>
+                  <p className="text-gray-600 text-sm">{ticket.description || ticket.details?.description || ''}</p>
                 </div>
 
                 {/* Customer & Tenant Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <h4 className="text-xs font-medium text-gray-700 mb-1">Customer</h4>
-                    <p className="text-sm font-medium text-gray-900">{ticket.customer.name}</p>
-                    <p className="text-xs text-gray-600">{ticket.customer.email}</p>
-                    {ticket.customer.phone && (
+                    <p className="text-sm font-medium text-gray-900">{ticket.customer?.name || ticket.who || 'N/A'}</p>
+                    <p className="text-xs text-gray-600">{ticket.customer?.email || ''}</p>
+                    {ticket.customer?.phone && (
                       <p className="text-xs text-gray-600">{ticket.customer.phone}</p>
                     )}
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <h4 className="text-xs font-medium text-gray-700 mb-1">Tenant</h4>
-                    <p className="text-sm font-medium text-gray-900">{ticket.tenant.businessName}</p>
-                    <p className="text-xs text-gray-600">{ticket.tenant.name}</p>
+                    <p className="text-sm font-medium text-gray-900">{ticket.tenant?.businessName || ticket.tenantName || 'Platform'}</p>
+                    <p className="text-xs text-gray-600">{ticket.tenant?.name || ''}</p>
                   </div>
                 </div>
 
@@ -412,26 +414,28 @@ export default function SupportTicketsAuditPage() {
                         <p className="text-xs text-gray-600">{ticket.assignedTo.role}</p>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">Unassigned</p>
+                      <p className="text-sm text-gray-500">{ticket.role || 'Unassigned'}</p>
                     )}
                   </div>
                   <div>
                     <h4 className="text-xs font-medium text-gray-700 mb-1">SLA Status</h4>
-                    <p className={`text-sm font-medium ${ticket.sla.resolutionBreached ? 'text-red-600' : 'text-green-600'}`}>
-                      {ticket.sla.resolutionBreached ? 'Breached' : 'On Track'}
+                    <p className={`text-sm font-medium ${ticket.sla?.resolutionBreached ? 'text-red-600' : 'text-green-600'}`}>
+                      {ticket.sla?.resolutionBreached ? 'Breached' : 'On Track'}
                     </p>
-                    <p className="text-xs text-gray-600">
-                      Due: {ticket.sla.resolutionDeadline.toLocaleDateString()}
-                    </p>
+                    {ticket.sla?.resolutionDeadline && (
+                      <p className="text-xs text-gray-600">
+                        Due: {new Date(ticket.sla.resolutionDeadline).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <h4 className="text-xs font-medium text-gray-700 mb-1">Metrics</h4>
-                    {ticket.metrics.firstResponseTime && (
+                    {ticket.metrics?.firstResponseTime && (
                       <p className="text-xs text-gray-600">
                         First Response: {formatDuration(ticket.metrics.firstResponseTime)}
                       </p>
                     )}
-                    {ticket.metrics.escalationCount > 0 && (
+                    {ticket.metrics?.escalationCount > 0 && (
                       <p className="text-xs text-red-600">
                         Escalations: {ticket.metrics.escalationCount}
                       </p>
@@ -440,7 +444,7 @@ export default function SupportTicketsAuditPage() {
                 </div>
 
                 {/* Tags */}
-                {ticket.tags.length > 0 && (
+                {ticket.tags && ticket.tags.length > 0 && (
                   <div className="mb-4">
                     <div className="flex flex-wrap gap-1">
                       {ticket.tags.map((tag, index) => (
@@ -454,7 +458,7 @@ export default function SupportTicketsAuditPage() {
                 )}
 
                 {/* Recent Audit Trail */}
-                {ticket.auditTrail.length > 0 && (
+                {ticket.auditTrail && ticket.auditTrail.length > 0 && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Activity</h4>
                     <div className="space-y-1">
@@ -462,7 +466,7 @@ export default function SupportTicketsAuditPage() {
                         <div key={index} className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
                           <span className="font-medium">{entry.action.replace('_', ' ')}</span> by {entry.performedBy}
                           <span className="text-gray-500 ml-2">
-                            {entry.timestamp.toLocaleDateString()} {entry.timestamp.toLocaleTimeString()}
+                            {new Date(entry.timestamp).toLocaleDateString()} {new Date(entry.timestamp).toLocaleTimeString()}
                           </span>
                           {entry.details && <p className="mt-1">{entry.details}</p>}
                         </div>
@@ -478,10 +482,10 @@ export default function SupportTicketsAuditPage() {
                   <Eye className="w-4 h-4" />
                 </button>
                 <div className="text-xs text-gray-500 text-right">
-                  <div>Created: {ticket.createdAt.toLocaleDateString()}</div>
-                  <div>Updated: {ticket.updatedAt.toLocaleDateString()}</div>
+                  <div>Created: {new Date(ticket.createdAt).toLocaleDateString()}</div>
+                  <div>Updated: {new Date(ticket.updatedAt).toLocaleDateString()}</div>
                   {ticket.resolvedAt && (
-                    <div className="text-green-600">Resolved: {ticket.resolvedAt.toLocaleDateString()}</div>
+                    <div className="text-green-600">Resolved: {new Date(ticket.resolvedAt).toLocaleDateString()}</div>
                   )}
                 </div>
               </div>

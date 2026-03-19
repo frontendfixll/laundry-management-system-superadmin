@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   UserCircle,
   Search,
@@ -66,17 +67,7 @@ export default function AuthEventLogsPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/logs/auth?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch auth event logs')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/logs/auth?${params}`)
       
       if (data.success) {
         setLogs(data.data.logs)
@@ -216,18 +207,20 @@ export default function AuthEventLogsPage() {
   }
 
   const getEventIcon = (event: string) => {
-    if (event.includes('LOGIN')) return <LogIn className="w-4 h-4" />
-    if (event.includes('LOGOUT')) return <LogOut className="w-4 h-4" />
-    if (event.includes('PASSWORD')) return <Key className="w-4 h-4" />
-    if (event.includes('LOCKED')) return <Shield className="w-4 h-4" />
+    const e = (event || '').toUpperCase()
+    if (e.includes('LOGIN')) return <LogIn className="w-4 h-4" />
+    if (e.includes('LOGOUT')) return <LogOut className="w-4 h-4" />
+    if (e.includes('PASSWORD')) return <Key className="w-4 h-4" />
+    if (e.includes('LOCKED') || e.includes('LOCK')) return <Shield className="w-4 h-4" />
     return <UserCircle className="w-4 h-4" />
   }
 
   const getEventColor = (event: string) => {
-    if (event.includes('SUCCESS')) return 'text-green-700 bg-green-100'
-    if (event.includes('FAILURE')) return 'text-red-700 bg-red-100'
-    if (event.includes('LOCKED')) return 'text-orange-700 bg-orange-100'
-    if (event.includes('RESET')) return 'text-blue-700 bg-blue-100'
+    const e = (event || '').toUpperCase()
+    if (e.includes('SUCCESS')) return 'text-green-700 bg-green-100'
+    if (e.includes('FAILURE') || e.includes('FAILED')) return 'text-red-700 bg-red-100'
+    if (e.includes('LOCKED') || e.includes('LOCK')) return 'text-orange-700 bg-orange-100'
+    if (e.includes('RESET')) return 'text-blue-700 bg-blue-100'
     return 'text-gray-700 bg-gray-100'
   }
 
@@ -239,7 +232,7 @@ export default function AuthEventLogsPage() {
   }
 
   const getUserTypeColor = (userType: string) => {
-    switch (userType) {
+    switch ((userType || '').toLowerCase()) {
       case 'superadmin': return 'text-purple-700 bg-purple-100'
       case 'support': return 'text-blue-700 bg-blue-100'
       case 'finance': return 'text-green-700 bg-green-100'
@@ -286,7 +279,7 @@ export default function AuthEventLogsPage() {
             <div>
               <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">Successful Logins</p>
               <p className="text-2xl font-bold text-green-900 mt-1">
-                {logs.filter(l => l.event.includes('SUCCESS')).length}
+                {logs.filter(l => (l.event || l.action || '').includes('SUCCESS') || l.outcome === 'success').length}
               </p>
             </div>
             <div className="bg-green-500 p-3 rounded-lg">
@@ -453,25 +446,25 @@ export default function AuthEventLogsPage() {
                 <tr key={log._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div>
-                      <div className="font-medium">{log.timestamp.toLocaleDateString()}</div>
-                      <div className="text-gray-500">{log.timestamp.toLocaleTimeString()}</div>
+                      <div className="font-medium">{new Date(log.timestamp).toLocaleDateString()}</div>
+                      <div className="text-gray-500">{new Date(log.timestamp).toLocaleTimeString()}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit ${getEventColor(log.event)}`}>
-                      {getEventIcon(log.event)}
-                      <span className="ml-1">{log.event}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit ${getEventColor(log.event || log.action || '')}`}>
+                      {getEventIcon(log.event || log.action || '')}
+                      <span className="ml-1">{log.event || log.action || 'AUTH'}</span>
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{log.email}</div>
-                      <div className="text-sm text-gray-500 font-mono">{log.user}</div>
+                      <div className="text-sm font-medium text-gray-900">{log.email || log.who || '-'}</div>
+                      <div className="text-sm text-gray-500 font-mono">{log.user || log.entityId || ''}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUserTypeColor(log.userType)}`}>
-                      {log.userType.replace('_', ' ').toUpperCase()}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUserTypeColor(log.userType || log.role || '')}`}>
+                      {(log.userType || log.role || 'user').replace('_', ' ').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -485,15 +478,15 @@ export default function AuthEventLogsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getOutcomeColor(log.outcome)}`}>
-                      {log.outcome.toUpperCase()}
+                      {(log.outcome || 'unknown').toUpperCase()}
                     </span>
                     {log.reason && (
                       <div className="text-xs text-gray-500 mt-1">{log.reason}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(log.riskScore)}`}>
-                      {log.riskScore}/5
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(log.riskScore || 0)}`}>
+                      {log.riskScore || 0}/5
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">

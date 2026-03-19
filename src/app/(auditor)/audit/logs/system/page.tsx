@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Activity,
   Search,
@@ -63,17 +64,7 @@ export default function SystemEventLogsPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/logs/system?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch system event logs')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/logs/system?${params}`)
       
       if (data.success) {
         setLogs(data.data.logs)
@@ -182,7 +173,7 @@ export default function SystemEventLogsPage() {
   }
 
   const getSystemIcon = (system: string) => {
-    switch (system.toLowerCase()) {
+    switch ((system || '').toLowerCase()) {
       case 'database': return <Database className="w-4 h-4" />
       case 'payment gateway': return <Zap className="w-4 h-4" />
       case 'websocket': return <Wifi className="w-4 h-4" />
@@ -193,7 +184,7 @@ export default function SystemEventLogsPage() {
   }
 
   const getSystemColor = (system: string) => {
-    switch (system.toLowerCase()) {
+    switch ((system || '').toLowerCase()) {
       case 'database': return 'text-green-700 bg-green-100'
       case 'payment gateway': return 'text-purple-700 bg-purple-100'
       case 'websocket': return 'text-blue-700 bg-blue-100'
@@ -363,34 +354,34 @@ export default function SystemEventLogsPage() {
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full table-fixed">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px]">
                   Timestamp
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px]">
                   System
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[100px]">
                   Event
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[80px]">
                   Level
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Message
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[80px]">
                   Duration
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Affected Users
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[80px]">
+                  Affected
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[90px]">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[100px]">
                   Details
                 </th>
               </tr>
@@ -398,31 +389,39 @@ export default function SystemEventLogsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {logs.map((log) => (
                 <tr key={log._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div>
-                      <div className="font-medium">{log.timestamp.toLocaleDateString()}</div>
-                      <div className="text-gray-500">{log.timestamp.toLocaleTimeString()}</div>
+                      <div className="font-medium">{new Date(log.timestamp).toLocaleDateString()}</div>
+                      <div className="text-gray-500 text-xs">{new Date(log.timestamp).toLocaleTimeString()}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit ${getSystemColor(log.system)}`}>
-                      {getSystemIcon(log.system)}
-                      <span className="ml-1">{log.system}</span>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit ${getSystemColor(log.system || log.entity || '')}`}>
+                      {getSystemIcon(log.system || log.entity || '')}
+                      <span className="ml-1">{log.system || log.entity || 'System'}</span>
                     </span>
-                    <div className="text-xs text-gray-500 mt-1">{log.component}</div>
+                    <div className="text-xs text-gray-500 mt-1">{log.component || log.who || ''}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{log.event}</div>
+                    <div className="text-sm font-medium text-gray-900">{log.event || log.action || ''}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(log.level)}`}>
-                      {log.level.toUpperCase()}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(log.level || log.severity || 'info')}`}>
+                      {(log.level || log.severity || 'info').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 max-w-xs">
-                      {log.message}
+                    <div className="text-sm text-gray-900 max-w-[250px] truncate" title={log.message || log.details?.description || log.action || ''}>
+                      {log.message || log.details?.description || log.action || '-'}
                     </div>
+                    {log.details && (
+                      <details className="cursor-pointer mt-1">
+                        <summary className="text-blue-600 hover:text-blue-800 text-xs">Details</summary>
+                        <pre className="mt-1 p-2 bg-gray-50 rounded text-xs whitespace-pre-wrap max-w-[300px] overflow-auto max-h-32">
+                          {JSON.stringify(log.details, null, 2)}
+                        </pre>
+                      </details>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatDuration(log.duration)}
@@ -439,7 +438,7 @@ export default function SystemEventLogsPage() {
                         </span>
                         {log.resolvedAt && (
                           <div className="text-xs text-gray-500 mt-1">
-                            {log.resolvedAt.toLocaleTimeString()}
+                            {new Date(log.resolvedAt).toLocaleTimeString()}
                           </div>
                         )}
                       </div>

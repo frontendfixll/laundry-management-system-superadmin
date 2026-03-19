@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import {
   Shield,
   Search,
@@ -64,17 +65,7 @@ export default function RoleAssignmentLogsPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/logs/roles?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch role assignment logs')
-      }
-
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/logs/roles?${params}`)
 
       if (data.success) {
         setLogs(data.data.logs)
@@ -386,8 +377,8 @@ export default function RoleAssignmentLogsPage() {
                 <tr key={log._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div>
-                      <div className="font-medium">{log.timestamp.toLocaleDateString()}</div>
-                      <div className="text-gray-500">{log.timestamp.toLocaleTimeString()}</div>
+                      <div className="font-medium">{new Date(log.timestamp).toLocaleDateString()}</div>
+                      <div className="text-gray-500">{new Date(log.timestamp).toLocaleTimeString()}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

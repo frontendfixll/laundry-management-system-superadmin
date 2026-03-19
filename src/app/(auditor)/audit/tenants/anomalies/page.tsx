@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   AlertTriangle,
   Search,
@@ -18,7 +19,8 @@ import {
   Users,
   Activity,
   Zap,
-  Target
+  Target,
+  CheckCircle
 } from 'lucide-react'
 
 interface TenantAnomaly {
@@ -90,168 +92,18 @@ export default function TenantAnomaliesPage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/tenants/anomalies?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch tenant anomalies')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/tenants/anomalies?${params}`)
       
       if (data.success) {
-        setAnomalies(data.data.anomalies)
-        setTotalPages(data.data.pagination.pages)
+        setAnomalies(data.data.anomalies || [])
+        setTotalPages(data.data.pagination?.pages || 1)
       } else {
         throw new Error(data.message || 'Failed to fetch tenant anomalies')
       }
       
-    } catch (error) {
-      console.error('Error fetching tenant anomalies:', error)
-      // Fallback to mock data
-      const mockAnomalies: TenantAnomaly[] = [
-        {
-          _id: '1',
-          tenantId: 'tenant_001',
-          tenantName: 'clean-fresh',
-          businessName: 'Clean & Fresh Laundry',
-          anomaly: {
-            type: 'revenue_spike',
-            severity: 'high',
-            confidence: 95.2,
-            description: 'Revenue increased by 340% compared to historical average',
-            detectedAt: new Date(Date.now() - 3600000),
-            affectedMetric: 'Daily Revenue',
-            normalValue: 15000,
-            anomalousValue: 51000,
-            deviationPercentage: 340,
-            duration: 6,
-            status: 'investigating'
-          },
-          context: {
-            historicalAverage: 15000,
-            seasonalExpected: 16500,
-            peerComparison: 14800,
-            externalFactors: ['Local festival', 'Competitor closure', 'Marketing campaign']
-          },
-          impact: {
-            revenueImpact: 36000,
-            customerImpact: 150,
-            operationalImpact: 'Capacity strain, delayed deliveries',
-            riskLevel: 3
-          },
-          investigation: {
-            assignedTo: 'support@laundrylobby.com',
-            notes: [
-              'Investigating sudden order surge',
-              'Checking for promotional campaigns',
-              'Verifying payment processing'
-            ],
-            actions: [
-              'Contact tenant for explanation',
-              'Review recent marketing activities',
-              'Monitor for fraud indicators'
-            ]
-          },
-          relatedAnomalies: ['anomaly_002', 'anomaly_003']
-        },
-        {
-          _id: '2',
-          tenantId: 'tenant_002',
-          tenantName: 'quickwash',
-          businessName: 'QuickWash Services',
-          anomaly: {
-            type: 'quality_drop',
-            severity: 'critical',
-            confidence: 88.7,
-            description: 'Customer quality ratings dropped from 4.5 to 2.8 in 48 hours',
-            detectedAt: new Date(Date.now() - 7200000),
-            affectedMetric: 'Quality Rating',
-            normalValue: 4.5,
-            anomalousValue: 2.8,
-            deviationPercentage: -37.8,
-            duration: 48,
-            status: 'active'
-          },
-          context: {
-            historicalAverage: 4.4,
-            seasonalExpected: 4.3,
-            peerComparison: 4.2,
-            externalFactors: ['Equipment malfunction', 'Staff shortage', 'Supply chain issues']
-          },
-          impact: {
-            revenueImpact: -8500,
-            customerImpact: 45,
-            operationalImpact: 'High complaint rate, customer churn risk',
-            riskLevel: 5
-          },
-          investigation: {
-            assignedTo: 'support@laundrylobby.com',
-            notes: [
-              'Multiple customer complaints received',
-              'Quality issues reported across all services',
-              'Tenant contacted for immediate action'
-            ],
-            actions: [
-              'Immediate quality audit required',
-              'Suspend new orders until resolved',
-              'Customer compensation plan'
-            ]
-          },
-          relatedAnomalies: []
-        },
-        {
-          _id: '3',
-          tenantId: 'tenant_003',
-          tenantName: 'express-laundry',
-          businessName: 'Express Laundry',
-          anomaly: {
-            type: 'order_decline',
-            severity: 'medium',
-            confidence: 76.3,
-            description: 'Order volume decreased by 45% over the past week',
-            detectedAt: new Date(Date.now() - 86400000),
-            affectedMetric: 'Daily Orders',
-            normalValue: 120,
-            anomalousValue: 66,
-            deviationPercentage: -45,
-            duration: 168,
-            status: 'resolved'
-          },
-          context: {
-            historicalAverage: 118,
-            seasonalExpected: 115,
-            peerComparison: 125,
-            externalFactors: ['Local construction', 'Seasonal slowdown', 'New competitor']
-          },
-          impact: {
-            revenueImpact: -12000,
-            customerImpact: 0,
-            operationalImpact: 'Reduced capacity utilization',
-            riskLevel: 2
-          },
-          investigation: {
-            assignedTo: 'support@laundrylobby.com',
-            notes: [
-              'Confirmed local construction affecting accessibility',
-              'Temporary situation expected to resolve in 2 weeks',
-              'Tenant implementing delivery service'
-            ],
-            actions: [
-              'Monitor recovery progress',
-              'Support marketing initiatives',
-              'Adjust capacity planning'
-            ],
-            resolvedAt: new Date(Date.now() - 3600000),
-            resolution: 'Temporary external factor - construction completed'
-          },
-          relatedAnomalies: []
-        }
-      ]
-      setAnomalies(mockAnomalies)
+    } catch (error: any) {
+      console.error('Error fetching tenant anomalies:', error?.message || error)
+      setAnomalies([])
       setTotalPages(1)
     } finally {
       setLoading(false)
@@ -475,111 +327,70 @@ export default function TenantAnomaliesPage() {
 
       {/* Anomalies List */}
       <div className="space-y-4">
-        {anomalies.map((anomaly) => (
-          <div key={anomaly._id} className={`bg-white rounded-xl shadow-sm border-l-4 p-6 ${getSeverityColor(anomaly.anomaly.severity)}`}>
+        {(anomalies || []).length === 0 && !loading && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-8 text-center">
+            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-green-800">No Anomalies Detected</h3>
+            <p className="text-green-600 mt-1">All tenants are operating within normal parameters</p>
+          </div>
+        )}
+        {(anomalies || []).map((anomaly) => (
+          <div key={anomaly._id} className={`bg-white rounded-xl shadow-sm border-l-4 p-6 ${
+            anomaly.anomalyScore > 10 ? 'border-red-500' : anomaly.anomalyScore > 5 ? 'border-orange-500' : anomaly.anomalyScore > 0 ? 'border-yellow-500' : 'border-green-500'
+          }`}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {/* Header */}
                 <div className="flex items-center space-x-3 mb-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${getTypeColor(anomaly.anomaly.type)}`}>
-                    {getTypeIcon(anomaly.anomaly.type)}
-                    <span className="ml-1">{anomaly.anomaly.type.replace('_', ' ').toUpperCase()}</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    anomaly.anomalyScore > 10 ? 'text-red-700 bg-red-100' : anomaly.anomalyScore > 5 ? 'text-orange-700 bg-orange-100' : 'text-yellow-700 bg-yellow-100'
+                  }`}>
+                    Score: {anomaly.anomalyScore}
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(anomaly.anomaly.severity)}`}>
-                    {anomaly.anomaly.severity.toUpperCase()}
-                  </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(anomaly.anomaly.status)}`}>
-                    {anomaly.anomaly.status.replace('_', ' ').toUpperCase()}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    Confidence: {anomaly.anomaly.confidence}%
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${anomaly.isActive ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
+                    {anomaly.isActive ? 'ACTIVE' : 'INACTIVE'}
                   </span>
                 </div>
 
                 {/* Tenant Info */}
                 <div className="mb-3">
-                  <h3 className="text-lg font-bold text-gray-900">{anomaly.businessName}</h3>
-                  <p className="text-sm text-gray-600">{anomaly.tenantName} • {anomaly.tenantId}</p>
+                  <h3 className="text-lg font-bold text-gray-900">{anomaly.businessName || anomaly.name || anomaly.subdomain || 'N/A'}</h3>
+                  <p className="text-sm text-gray-600">{anomaly.subdomain || ''}</p>
                 </div>
-
-                {/* Description */}
-                <p className="text-gray-800 mb-4">{anomaly.anomaly.description}</p>
 
                 {/* Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600 font-medium">Normal Value</p>
-                    <p className="text-sm font-bold text-gray-900">{anomaly.anomaly.normalValue.toLocaleString()}</p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                  <div className="bg-blue-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-blue-600 font-medium">Recent Orders</p>
+                    <p className="text-lg font-bold text-blue-900">{anomaly.orderCount || 0}</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600 font-medium">Anomalous Value</p>
-                    <p className="text-sm font-bold text-gray-900">{anomaly.anomaly.anomalousValue.toLocaleString()}</p>
+                  <div className="bg-red-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-red-600 font-medium">Cancelled Orders</p>
+                    <p className="text-lg font-bold text-red-900">{anomaly.cancelledOrders || 0}</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600 font-medium">Deviation</p>
-                    <p className={`text-sm font-bold ${anomaly.anomaly.deviationPercentage > 0 ? 'text-green-700' : 'text-red-700'}`}>
-                      {anomaly.anomaly.deviationPercentage > 0 ? '+' : ''}{anomaly.anomaly.deviationPercentage}%
-                    </p>
+                  <div className="bg-orange-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-orange-600 font-medium">Security Events</p>
+                    <p className="text-lg font-bold text-orange-900">{anomaly.securityEventCount || 0}</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600 font-medium">Duration</p>
-                    <p className="text-sm font-bold text-gray-900">{formatDuration(anomaly.anomaly.duration)}</p>
+                  <div className="bg-purple-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-purple-600 font-medium">High Severity</p>
+                    <p className="text-lg font-bold text-purple-900">{anomaly.highSeverityEvents || 0}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg text-center">
+                    <p className="text-xs text-gray-600 font-medium">Failed Actions</p>
+                    <p className="text-lg font-bold text-gray-900">{anomaly.failedActionCount || 0}</p>
                   </div>
                 </div>
-
-                {/* Impact */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Impact Assessment</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="text-sm">
-                      <span className="text-gray-600">Revenue Impact:</span>
-                      <span className={`ml-2 font-medium ${anomaly.impact.revenueImpact >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                        ₹{Math.abs(anomaly.impact.revenueImpact).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="text-sm">
-                      <span className="text-gray-600">Customers Affected:</span>
-                      <span className="ml-2 font-medium text-gray-900">{anomaly.impact.customerImpact}</span>
-                    </div>
-                    <div className="text-sm">
-                      <span className="text-gray-600">Risk Level:</span>
-                      <span className="ml-2 font-medium text-gray-900">{anomaly.impact.riskLevel}/5</span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2">{anomaly.impact.operationalImpact}</p>
-                </div>
-
-                {/* Investigation */}
-                {anomaly.investigation.notes.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Investigation Status</h4>
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <div className="text-xs text-blue-600 mb-1">
-                        Assigned to: {anomaly.investigation.assignedTo || 'Unassigned'}
-                      </div>
-                      <div className="space-y-1">
-                        {anomaly.investigation.notes.slice(0, 2).map((note, index) => (
-                          <p key={index} className="text-sm text-blue-800">• {note}</p>
-                        ))}
-                      </div>
-                      {anomaly.investigation.resolution && (
-                        <div className="mt-2 pt-2 border-t border-blue-200">
-                          <p className="text-sm font-medium text-blue-900">Resolution: {anomaly.investigation.resolution}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
 
-              {/* Actions */}
-              <div className="flex flex-col space-y-2 ml-4">
-                <button className="text-blue-600 hover:text-blue-800 p-2 rounded-md hover:bg-blue-50">
-                  <Eye className="w-4 h-4" />
-                </button>
-                <div className="text-xs text-gray-500 text-center">
-                  {new Date(anomaly.anomaly.detectedAt).toLocaleDateString()}
+              {/* Anomaly Score Visual */}
+              <div className="flex flex-col items-center ml-4">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-lg ${
+                  anomaly.anomalyScore > 10 ? 'bg-red-500' : anomaly.anomalyScore > 5 ? 'bg-orange-500' : anomaly.anomalyScore > 0 ? 'bg-yellow-500' : 'bg-green-500'
+                }`}>
+                  {anomaly.anomalyScore}
                 </div>
+                <span className="text-xs text-gray-500 mt-1">Risk Score</span>
               </div>
             </div>
           </div>

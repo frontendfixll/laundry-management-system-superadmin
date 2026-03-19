@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Receipt,
   DollarSign,
@@ -51,17 +52,9 @@ export default function PaymentIntegrityPage() {
     try {
       setLoading(true)
       
-      const response = await fetch(`${API_BASE}/superadmin/audit/financial/payments`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setPaymentData(data.data.data)
-        }
+      const data = await superAdminApi.get('/audit/financial/payments')
+      if (data.success) {
+        setPaymentData(data.data.data || [])
       }
     } catch (error) {
       console.error('Error fetching payment data:', error)
@@ -113,7 +106,7 @@ export default function PaymentIntegrityPage() {
 
   const totalTransactions = statusData.reduce((sum, item) => sum + item.count, 0)
   const totalAmount = statusData.reduce((sum, item) => sum + item.amount, 0)
-  const successfulTransactions = statusData.find(item => item.status === 'completed')?.count || 0
+  const successfulTransactions = (statusData.find(item => item.status === 'completed')?.count || 0) + (statusData.find(item => item.status === 'paid')?.count || 0)
   const failedTransactions = statusData.find(item => item.status === 'failed')?.count || 0
 
   return (
@@ -244,8 +237,10 @@ export default function PaymentIntegrityPage() {
                   formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Amount']}
                 />
                 <Bar dataKey="completed" fill="#10b981" name="Completed" />
+                <Bar dataKey="paid" fill="#10b981" name="Paid" />
                 <Bar dataKey="failed" fill="#ef4444" name="Failed" />
                 <Bar dataKey="pending" fill="#f59e0b" name="Pending" />
+                <Bar dataKey="refunded" fill="#6366f1" name="Refunded" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -335,11 +330,12 @@ export default function PaymentIntegrityPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      item._id.status === 'completed' ? 'text-green-700 bg-green-100' :
+                      item._id.status === 'completed' || item._id.status === 'paid' ? 'text-green-700 bg-green-100' :
                       item._id.status === 'failed' ? 'text-red-700 bg-red-100' :
+                      item._id.status === 'refunded' ? 'text-indigo-700 bg-indigo-100' :
                       'text-yellow-700 bg-yellow-100'
                     }`}>
-                      {item._id.status.toUpperCase()}
+                      {(item._id.status || 'unknown').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

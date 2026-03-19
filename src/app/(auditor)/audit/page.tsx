@@ -397,11 +397,11 @@ export default function AuditDashboard() {
                     <div className="text-xs text-gray-600 space-y-1">
                       <div>Tenant: <span className="font-medium">{log.tenantName || 'Platform'}</span></div>
                       <div>IP: <span className="font-mono">{log.ipAddress}</span></div>
-                      <div>Time: <span className="font-medium">{log.timestamp.toLocaleString()}</span></div>
+                      <div>Time: <span className="font-medium">{new Date(log.timestamp).toLocaleString()}</span></div>
                     </div>
                   </div>
                   <div className="text-right text-xs text-gray-500">
-                    <div>{log.timestamp.toLocaleTimeString()}</div>
+                    <div>{new Date(log.timestamp).toLocaleTimeString()}</div>
                   </div>
                 </div>
               </div>
@@ -543,7 +543,7 @@ export default function AuditDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {tenant.lastActivity.toLocaleString()}
+                    {new Date(tenant.lastActivity).toLocaleString()}
                   </td>
                 </tr>
               ))}

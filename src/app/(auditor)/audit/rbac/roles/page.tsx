@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Shield,
   Search,
@@ -56,17 +57,7 @@ export default function RBACRolesPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/rbac/roles?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch role definitions')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/rbac/roles?${params}`)
       
       if (data.success) {
         setRoles(data.data.data)
@@ -442,12 +433,12 @@ export default function RBACRolesPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>{role.createdAt.toLocaleDateString()}</div>
-                    <div className="text-gray-500 text-xs">{role.createdAt.toLocaleTimeString()}</div>
+                    <div>{new Date(role.createdAt).toLocaleDateString()}</div>
+                    <div className="text-gray-500 text-xs">{new Date(role.createdAt).toLocaleTimeString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>{role.updatedAt.toLocaleDateString()}</div>
-                    <div className="text-gray-500 text-xs">{role.updatedAt.toLocaleTimeString()}</div>
+                    <div>{new Date(role.updatedAt).toLocaleDateString()}</div>
+                    <div className="text-gray-500 text-xs">{new Date(role.updatedAt).toLocaleTimeString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <button className="text-blue-600 hover:text-blue-900 mr-3">

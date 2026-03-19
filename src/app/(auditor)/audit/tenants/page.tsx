@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   Building2,
   DollarSign,
@@ -46,17 +47,10 @@ export default function CrossTenantOverviewPage() {
     try {
       setLoading(true)
       
-      const response = await fetch(`${API_BASE}/superadmin/audit/tenants`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setTenants(data.data.tenants)
-        }
+      const data = await superAdminApi.get('/audit/tenants')
+
+      if (data.success) {
+        setTenants(data.data.tenants)
       }
     } catch (error) {
       console.error('Error fetching tenant overview:', error)
@@ -91,8 +85,8 @@ export default function CrossTenantOverviewPage() {
 
   const filteredTenants = tenants
     .filter(tenant => {
-      const matchesSearch = tenant.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           tenant.subdomain.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = (tenant.businessName || tenant.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (tenant.subdomain || '').toLowerCase().includes(searchQuery.toLowerCase())
       const matchesStatus = selectedStatus === 'all' || 
                            (selectedStatus === 'active' && tenant.isActive) ||
                            (selectedStatus === 'inactive' && !tenant.isActive)
@@ -104,7 +98,7 @@ export default function CrossTenantOverviewPage() {
         case 'totalOrders': return b.totalOrders - a.totalOrders
         case 'activeUsers': return b.activeUsers - a.activeUsers
         case 'riskScore': return b.riskScore - a.riskScore
-        case 'businessName': return a.businessName.localeCompare(b.businessName)
+        case 'businessName': return (a.businessName || '').localeCompare(b.businessName || '')
         default: return 0
       }
     })
@@ -275,12 +269,12 @@ export default function CrossTenantOverviewPage() {
                   <tr key={tenant._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{tenant.businessName}</div>
-                        <div className="text-sm text-gray-500">{tenant.subdomain}</div>
+                        <div className="text-sm font-medium text-gray-900">{tenant.businessName || tenant.name || tenant.subdomain || 'N/A'}</div>
+                        <div className="text-sm text-gray-500">{tenant.subdomain || ''}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {tenant.totalOrders.toLocaleString()}
+                      {(tenant.totalOrders || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(tenant.totalRevenue)}

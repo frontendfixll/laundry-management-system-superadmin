@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   ArrowUpRight,
   Search,
@@ -155,17 +156,7 @@ export default function SupportEscalationsPage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/support/escalations?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch escalations')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/support/escalations?${params}`)
       
       if (data.success) {
         setEscalations(data.data.escalations)
@@ -778,7 +769,7 @@ export default function SupportEscalationsPage() {
                       <div key={comm.id} className="bg-blue-50 p-2 rounded text-sm">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium text-blue-900">{comm.from}</span>
-                          <span className="text-xs text-blue-600">{comm.timestamp.toLocaleString()}</span>
+                          <span className="text-xs text-blue-600">{new Date(comm.timestamp).toLocaleString()}</span>
                         </div>
                         <p className="text-blue-800">{comm.message}</p>
                       </div>
@@ -803,8 +794,8 @@ export default function SupportEscalationsPage() {
                 </button>
                 <div className="text-xs text-gray-500 text-right">
                   <div>Escalated:</div>
-                  <div>{escalation.timeline.escalatedAt.toLocaleDateString()}</div>
-                  <div className="text-gray-400">{escalation.timeline.escalatedAt.toLocaleTimeString()}</div>
+                  <div>{new Date(escalation.timeline.escalatedAt).toLocaleDateString()}</div>
+                  <div className="text-gray-400">{new Date(escalation.timeline.escalatedAt).toLocaleTimeString()}</div>
                 </div>
               </div>
             </div>

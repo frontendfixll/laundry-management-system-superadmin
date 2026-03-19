@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   RefreshCw,
   Search,
@@ -103,136 +104,33 @@ export default function RefundOversightPage() {
         range: dateRange
       })
 
-      const response = await fetch(`${API_BASE}/support/audit/financial/refunds?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch refund data')
-      }
-      
-      const data = await response.json()
-      
+      const data = await superAdminApi.get(`/audit/financial/refunds?${params}`)
+
       if (data.success) {
-        setRefunds(data.data.refunds)
-        setStats(data.data.stats)
-        setTotalPages(data.data.pagination.pages)
+        // Backend returns { data: [...], type: 'refunds' }
+        const refundList = data.data.refunds || data.data.data || []
+        setRefunds(refundList)
+        if (data.data.stats) setStats(data.data.stats)
+        if (data.data.pagination) setTotalPages(data.data.pagination.pages || 1)
+
+        // Calculate stats from data if not provided
+        if (!data.data.stats && refundList.length > 0) {
+          setStats({
+            totalRefunds: refundList.length,
+            totalAmount: refundList.reduce((sum: number, r: any) => sum + (r.amount || r.pricing?.total || 0), 0),
+            pendingApproval: refundList.filter((r: any) => r.status === 'pending' || r.paymentStatus === 'pending').length,
+            averageProcessingTime: 0,
+            refundRate: 0,
+            suspiciousRefunds: 0
+          })
+        }
       } else {
         throw new Error(data.message || 'Failed to fetch refund data')
       }
-      
-    } catch (error) {
-      console.error('Error fetching refund data:', error)
-      // Keep existing mock data as fallback
-      const mockRefunds: RefundRecord[] = [
-        {
-          _id: '1',
-          refundId: 'REF-2024-001234',
-          originalTransactionId: 'TXN-2024-567890',
-          tenantId: 'tenant_001',
-          tenantName: 'clean-fresh',
-          businessName: 'Clean & Fresh Laundry',
-          customerId: 'cust_123',
-          customerEmail: 'customer@example.com',
-          amount: 1500,
-          originalAmount: 1500,
-          refundType: 'full',
-          reason: 'Service not delivered on time',
-          category: 'service_delay',
-          status: 'completed',
-          requestedAt: new Date(Date.now() - 86400000),
-          approvedAt: new Date(Date.now() - 82800000),
-          processedAt: new Date(Date.now() - 79200000),
-          completedAt: new Date(Date.now() - 75600000),
-          approvedBy: 'support@laundrylobby.com',
-          processedBy: 'finance@laundrylobby.com',
-          paymentMethod: 'Credit Card',
-          processingFee: 25,
-          notes: [
-            'Customer complained about 2-day delay',
-            'Verified delivery was indeed late',
-            'Full refund approved as per policy'
-          ],
-          attachments: ['complaint_screenshot.jpg'],
-          customerSatisfaction: 4,
-          followUpRequired: false,
-          riskFlags: [],
-          relatedRefunds: []
-        },
-        {
-          _id: '2',
-          refundId: 'REF-2024-001235',
-          originalTransactionId: 'TXN-2024-567891',
-          tenantId: 'tenant_002',
-          tenantName: 'quickwash',
-          businessName: 'QuickWash Services',
-          customerId: 'cust_456',
-          customerEmail: 'suspicious@example.com',
-          amount: 2500,
-          originalAmount: 2500,
-          refundType: 'full',
-          reason: 'Damaged clothes',
-          category: 'quality_issue',
-          status: 'pending',
-          requestedAt: new Date(Date.now() - 3600000),
-          paymentMethod: 'UPI',
-          processingFee: 0,
-          notes: [
-            'Customer claims clothes were damaged',
-            'Photos provided show stains',
-            'Investigating with tenant'
-          ],
-          attachments: ['damage_photo1.jpg', 'damage_photo2.jpg'],
-          followUpRequired: true,
-          riskFlags: ['MULTIPLE_RECENT_REFUNDS', 'HIGH_VALUE_REFUND'],
-          relatedRefunds: ['REF-2024-001200', 'REF-2024-001180']
-        },
-        {
-          _id: '3',
-          refundId: 'REF-2024-001236',
-          originalTransactionId: 'TXN-2024-567892',
-          tenantId: 'tenant_003',
-          tenantName: 'express-laundry',
-          businessName: 'Express Laundry',
-          customerId: 'cust_789',
-          customerEmail: 'regular@example.com',
-          amount: 750,
-          originalAmount: 1500,
-          refundType: 'partial',
-          reason: 'One item not cleaned properly',
-          category: 'quality_issue',
-          status: 'approved',
-          requestedAt: new Date(Date.now() - 7200000),
-          approvedAt: new Date(Date.now() - 3600000),
-          approvedBy: 'support@laundrylobby.com',
-          paymentMethod: 'Credit Card',
-          processingFee: 15,
-          notes: [
-            'Partial refund for one item',
-            'Customer satisfied with resolution',
-            'Tenant will re-clean the item'
-          ],
-          attachments: [],
-          customerSatisfaction: 5,
-          followUpRequired: false,
-          riskFlags: [],
-          relatedRefunds: []
-        }
-      ]
 
-      const mockStats = {
-        totalRefunds: 0,
-        totalAmount: 234500,
-        pendingApproval: 12,
-        averageProcessingTime: 4.2,
-        refundRate: 2.8,
-        suspiciousRefunds: 3
-      }
-
-      setRefunds(mockRefunds)
-      setStats(mockStats)
+    } catch (error: any) {
+      console.error('Error fetching refund data:', error?.message || error)
+      setRefunds([])
       setTotalPages(1)
     } finally {
       setLoading(false)
@@ -489,70 +387,73 @@ export default function RefundOversightPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {refunds.map((refund) => (
+              {(refunds || []).length === 0 && (
+                <tr>
+                  <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
+                    <RefreshCw className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p className="font-medium">No refund records found</p>
+                    <p className="text-sm">No refunded orders in the selected period</p>
+                  </td>
+                </tr>
+              )}
+              {(refunds || []).map((refund: any) => (
                 <tr key={refund._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{refund.refundId}</div>
-                      <div className="text-xs text-gray-500 font-mono">{refund.originalTransactionId}</div>
+                      <div className="text-sm font-medium text-gray-900">{refund.refundId || refund.orderId || refund.orderNumber || refund._id?.toString().slice(-8)}</div>
+                      <div className="text-xs text-gray-500 font-mono">{refund.originalTransactionId || refund.paymentDetails?.transactionId || '-'}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{refund.customerEmail}</div>
-                      <div className="text-xs text-gray-500">{refund.customerId}</div>
+                      <div className="text-sm font-medium text-gray-900">{refund.customerEmail || refund.customer?.email || '-'}</div>
+                      <div className="text-xs text-gray-500">{refund.customerId || refund.customer?.name || ''}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{refund.businessName}</div>
-                      <div className="text-xs text-gray-500">{refund.tenantName}</div>
+                      <div className="text-sm font-medium text-gray-900">{refund.businessName || refund.tenantName || refund.tenancyId?.name || '-'}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-bold text-gray-900">{formatCurrency(refund.amount)}</div>
-                      <div className="text-xs text-gray-500">of {formatCurrency(refund.originalAmount)}</div>
+                      <div className="text-sm font-bold text-gray-900">{formatCurrency(refund.amount || refund.pricing?.total || 0)}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium text-blue-700 bg-blue-100 flex items-center w-fit">
-                      {getTypeIcon(refund.refundType)}
-                      <span className="ml-1">{refund.refundType.toUpperCase()}</span>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium text-blue-700 bg-blue-100">
+                      {(refund.refundType || refund.type || 'refund').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(refund.category)}`}>
-                      {refund.category.replace('_', ' ').toUpperCase()}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(refund.category || 'customer_request')}`}>
+                      {(refund.category || refund.reason || 'refund').replace('_', ' ').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(refund.status)}`}>
-                      {refund.status.toUpperCase()}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(refund.status || refund.paymentStatus || 'completed')}`}>
+                      {(refund.status || refund.paymentStatus || 'refunded').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="space-y-1">
-                      {refund.riskFlags.map((flag, index) => (
+                      {(refund.riskFlags || []).map((flag: string, index: number) => (
                         <span key={index} className="px-1 py-0.5 rounded text-xs font-medium text-red-700 bg-red-100 block">
                           {flag.replace('_', ' ')}
                         </span>
                       ))}
-                      {refund.riskFlags.length === 0 && (
+                      {(!refund.riskFlags || refund.riskFlags.length === 0) && (
                         <span className="text-xs text-gray-400">No flags</span>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>{refund.requestedAt.toLocaleDateString()}</div>
-                    <div className="text-gray-500 text-xs">{refund.requestedAt.toLocaleTimeString()}</div>
+                    <div>{new Date(refund.requestedAt || refund.createdAt).toLocaleDateString()}</div>
+                    <div className="text-gray-500 text-xs">{new Date(refund.requestedAt || refund.createdAt).toLocaleTimeString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">
+                    <button className="text-blue-600 hover:text-blue-900">
                       <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="text-green-600 hover:text-green-900">
-                      <FileText className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>

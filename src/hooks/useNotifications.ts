@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || API_URL.replace('/api', '');
 
 export interface Notification {
   _id: string;
@@ -119,7 +120,7 @@ export function useNotifications(): UseNotificationsReturn {
     // console.log('🔌 Initializing WebSocket connection...');
 
     // Create socket connection with auto-reconnection
-    const socket = io(API_URL, {
+    const socket = io(SOCKET_URL, {
       auth: { token },
       reconnection: true,
       reconnectionDelay: 1000,

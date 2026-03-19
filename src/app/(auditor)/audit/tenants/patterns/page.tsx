@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { superAdminApi } from '@/lib/superAdminApi'
 import { 
   TrendingUp,
   Search,
@@ -90,20 +91,10 @@ export default function TenantPatternsPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const response = await fetch(`${API_BASE}/superadmin/audit/tenants/patterns?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth-storage') ? JSON.parse(localStorage.getItem('auth-storage')).state?.token : ''}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch tenant patterns')
-      }
-      
-      const data = await response.json()
+      const data = await superAdminApi.get(`/audit/tenants/patterns?${params}`)
       
       if (data.success) {
-        setPatterns(data.data.patterns)
+        setPatterns(data.data.patterns || data.data.tenants || [])
       } else {
         throw new Error(data.message || 'Failed to fetch tenant patterns')
       }
@@ -280,7 +271,7 @@ export default function TenantPatternsPage() {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-blue-100">Analyzed Tenants: {patterns.length}</p>
+            <p className="text-sm text-blue-100">Analyzed Tenants: {(patterns || []).length}</p>
             <p className="text-xs text-blue-200">Pattern Analysis</p>
           </div>
         </div>
@@ -331,16 +322,16 @@ export default function TenantPatternsPage() {
 
       {/* Pattern Analysis Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {patterns.map((pattern) => (
+        {(patterns || []).map((pattern) => (
           <div key={pattern._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">{pattern.businessName}</h3>
-                <p className="text-sm text-gray-500">{pattern.tenantName}</p>
+                <h3 className="text-lg font-bold text-gray-900">{pattern.businessName || pattern.name || pattern.subdomain || 'N/A'}</h3>
+                <p className="text-sm text-gray-500">{pattern.subdomain || ''}</p>
               </div>
               <div className="flex items-center space-x-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(pattern.riskScore)}`}>
-                  Risk: {pattern.riskScore}/5
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${pattern.isActive !== false ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
+                  {pattern.isActive !== false ? 'ACTIVE' : 'INACTIVE'}
                 </span>
                 <button className="text-blue-600 hover:text-blue-800">
                   <Eye className="w-4 h-4" />
@@ -348,66 +339,46 @@ export default function TenantPatternsPage() {
               </div>
             </div>
 
-            {/* Peak Hours Chart */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Peak Hours Pattern</h4>
-              <div className="h-32">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={pattern.pattern.peakHours}>
-                    <XAxis dataKey="hour" tickFormatter={(hour) => `${hour}:00`} />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [value, 'Orders']} />
-                    <Bar dataKey="orderCount" fill="#3B82F6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Customer Behavior Metrics */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <p className="text-xs text-blue-700 font-medium">Retention Rate</p>
+                <p className="text-xs text-blue-700 font-medium">Total Orders</p>
                 <p className="text-lg font-bold text-blue-900">
-                  {pattern.pattern.customerBehavior.customerRetentionRate}%
+                  {(pattern.totalOrders || 0).toLocaleString()}
                 </p>
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
-                <p className="text-xs text-green-700 font-medium">Avg Order Value</p>
+                <p className="text-xs text-green-700 font-medium">Total Revenue</p>
                 <p className="text-lg font-bold text-green-900">
-                  ₹{pattern.pattern.customerBehavior.averageOrderValue.toFixed(0)}
+                  ₹{(pattern.totalRevenue || 0).toLocaleString()}
                 </p>
               </div>
               <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <p className="text-xs text-purple-700 font-medium">Order Frequency</p>
+                <p className="text-xs text-purple-700 font-medium">Avg Order Value</p>
                 <p className="text-lg font-bold text-purple-900">
-                  {pattern.pattern.customerBehavior.averageOrderFrequency}/month
+                  ₹{(pattern.avgOrderValue || 0).toFixed(0)}
                 </p>
               </div>
               <div className="text-center p-3 bg-orange-50 rounded-lg">
-                <p className="text-xs text-orange-700 font-medium">Quality Rating</p>
-                <p className="text-lg font-bold text-orange-900">
-                  {pattern.pattern.operationalMetrics.qualityRating}/5
+                <p className="text-xs text-orange-700 font-medium">Created</p>
+                <p className="text-sm font-bold text-orange-900">
+                  {pattern.createdAt ? new Date(pattern.createdAt).toLocaleDateString() : 'N/A'}
                 </p>
               </div>
             </div>
 
-            {/* Anomalies */}
-            {pattern.anomalies.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                  <AlertTriangle className="w-4 h-4 mr-1 text-orange-600" />
-                  Recent Anomalies
-                </h4>
-                <div className="space-y-2">
-                  {pattern.anomalies.slice(0, 2).map((anomaly, index) => (
-                    <div key={index} className="p-2 bg-gray-50 rounded text-xs">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium">{anomaly.type.replace('_', ' ')}</span>
-                        <span className={`px-1 py-0.5 rounded text-xs ${getSeverityColor(anomaly.severity)}`}>
-                          {anomaly.severity}
-                        </span>
-                      </div>
-                      <p className="text-gray-600">{anomaly.description}</p>
+            {/* Monthly Order Trend */}
+            {pattern.ordersByMonth && pattern.ordersByMonth.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Monthly Order Trend (Last 6 Months)</h4>
+                <div className="flex items-end space-x-2 h-20">
+                  {pattern.ordersByMonth.map((count: number, index: number) => (
+                    <div key={index} className="flex-1 flex flex-col items-center">
+                      <div
+                        className="w-full bg-blue-400 rounded-t"
+                        style={{ height: `${Math.max(4, (count / (Math.max(...pattern.ordersByMonth) || 1)) * 60)}px` }}
+                      />
+                      <span className="text-xs text-gray-500 mt-1">{count}</span>
                     </div>
                   ))}
                 </div>
