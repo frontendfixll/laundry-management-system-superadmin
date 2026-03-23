@@ -16,7 +16,7 @@ import {
   DollarSign,
   MessageSquare,
   AlertTriangle,
-  Building,
+  Building2,
   UserPlus,
   ShieldAlert,
   CreditCard,
@@ -24,6 +24,19 @@ import {
   AlertCircle,
   Info,
   FileText,
+  Hash,
+  Phone,
+  Mail,
+  MapPin,
+  Target,
+  IndianRupee,
+  Timer,
+  Layers,
+  Users,
+  BarChart3,
+  Shield,
+  Globe,
+  Monitor,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -76,6 +89,159 @@ function getIcon(notification: SuperAdminNotification) {
   }
 }
 
+// Type-specific detail helpers
+const InfoRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: unknown }) => {
+  if (!value && value !== 0) return null
+  return (
+    <div className="flex items-start gap-3 py-2">
+      <Icon className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</p>
+        <p className="text-sm font-medium text-gray-900 break-words">{String(value)}</p>
+      </div>
+    </div>
+  )
+}
+
+const DetailSection = ({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) => (
+  <div className="space-y-2">
+    <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+      <Icon className="w-3.5 h-3.5" /> {title}
+    </h4>
+    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 divide-y divide-gray-100">
+      {children}
+    </div>
+  </div>
+)
+
+function renderTypeSpecificDetails(notification: SuperAdminNotification) {
+  const data = notification.data || {}
+  const type = notification.type?.toLowerCase()
+
+  // Tenancy notifications
+  if (type?.includes('tenancy') || type === 'new_tenancy_signup') {
+    return (
+      <DetailSection title="Tenancy Details" icon={Building2}>
+        <InfoRow icon={Building2} label="Business Name" value={data.tenancyName || data.businessName} />
+        <InfoRow icon={Users} label="Owner" value={data.ownerName} />
+        <InfoRow icon={Mail} label="Email" value={data.email || data.ownerEmail} />
+        <InfoRow icon={Phone} label="Phone" value={data.phone || data.ownerPhone} />
+        <InfoRow icon={Layers} label="Plan" value={data.planName || data.plan} />
+        <InfoRow icon={MapPin} label="City" value={data.city} />
+        <InfoRow icon={IndianRupee} label="Amount" value={data.amount ? `₹${Number(data.amount).toLocaleString('en-IN')}` : undefined} />
+        <InfoRow icon={Timer} label="Days Left" value={data.daysLeft ? `${data.daysLeft} days` : undefined} />
+      </DetailSection>
+    )
+  }
+
+  // Lead notifications
+  if (type?.includes('lead')) {
+    return (
+      <DetailSection title="Lead Details" icon={Target}>
+        <InfoRow icon={Building2} label="Business" value={data.businessName || data.name} />
+        <InfoRow icon={Mail} label="Email" value={data.email} />
+        <InfoRow icon={Phone} label="Phone" value={data.phone} />
+        <InfoRow icon={Target} label="Source" value={data.source} />
+        <InfoRow icon={MapPin} label="City" value={data.city} />
+      </DetailSection>
+    )
+  }
+
+  // Order notifications
+  if (type?.includes('order')) {
+    return (
+      <DetailSection title="Order Details" icon={Package}>
+        <InfoRow icon={Hash} label="Order Number" value={data.orderNumber} />
+        <InfoRow icon={Users} label="Customer" value={data.customerName} />
+        <InfoRow icon={IndianRupee} label="Amount" value={data.totalAmount ? `₹${Number(data.totalAmount).toLocaleString('en-IN')}` : undefined} />
+        <InfoRow icon={Layers} label="Items" value={data.itemCount ? `${data.itemCount} item(s)` : undefined} />
+        <InfoRow icon={Building2} label="Tenant" value={data.tenancyName} />
+      </DetailSection>
+    )
+  }
+
+  // Payment notifications
+  if (type?.includes('payment') || type?.includes('refund')) {
+    return (
+      <DetailSection title="Payment Details" icon={CreditCard}>
+        <InfoRow icon={IndianRupee} label="Amount" value={data.amount ? `₹${Number(data.amount).toLocaleString('en-IN')}` : undefined} />
+        <InfoRow icon={CreditCard} label="Method" value={data.paymentMethod} />
+        <InfoRow icon={Hash} label="Transaction ID" value={data.transactionId} />
+        <InfoRow icon={Building2} label="Tenant" value={data.tenancyName} />
+      </DetailSection>
+    )
+  }
+
+  // Complaint/ticket notifications
+  if (type?.includes('complaint') || type?.includes('ticket')) {
+    return (
+      <DetailSection title="Ticket Details" icon={MessageSquare}>
+        <InfoRow icon={Hash} label="Ticket Number" value={data.ticketNumber} />
+        <InfoRow icon={FileText} label="Subject" value={data.subject} />
+        <InfoRow icon={Layers} label="Category" value={data.category} />
+        <InfoRow icon={Users} label="Customer" value={data.customerName} />
+        <InfoRow icon={Building2} label="Tenant" value={data.tenancyName} />
+      </DetailSection>
+    )
+  }
+
+  // Security notifications
+  if (type?.includes('security') || type?.includes('locked') || type?.includes('login_attempts')) {
+    return (
+      <DetailSection title="Security Details" icon={Shield}>
+        <InfoRow icon={Shield} label="Alert Type" value={data.alertType} />
+        <InfoRow icon={Globe} label="IP Address" value={data.ipAddress || data.ip} />
+        <InfoRow icon={Monitor} label="Device" value={data.device} />
+        <InfoRow icon={MapPin} label="Location" value={data.location} />
+        <InfoRow icon={Hash} label="Attempts" value={data.attemptCount} />
+      </DetailSection>
+    )
+  }
+
+  // Inventory notifications
+  if (type?.includes('inventory')) {
+    return (
+      <DetailSection title="Inventory Details" icon={BarChart3}>
+        <InfoRow icon={Package} label="Item" value={data.itemName} />
+        <InfoRow icon={BarChart3} label="Current Stock" value={data.currentStock} />
+        <InfoRow icon={AlertTriangle} label="Urgency" value={data.urgency} />
+        <InfoRow icon={Building2} label="Tenant" value={data.tenancyName} />
+      </DetailSection>
+    )
+  }
+
+  // Subscription notifications
+  if (type?.includes('subscription') || type?.startsWith('plan_')) {
+    return (
+      <DetailSection title="Subscription Details" icon={Layers}>
+        <InfoRow icon={Layers} label="Plan" value={data.planName || data.plan} />
+        <InfoRow icon={Timer} label="Days Left" value={data.daysLeft ? `${data.daysLeft} days` : undefined} />
+        <InfoRow icon={IndianRupee} label="Amount" value={data.amount ? `₹${Number(data.amount).toLocaleString('en-IN')}` : undefined} />
+        <InfoRow icon={Building2} label="Tenant" value={data.tenancyName} />
+      </DetailSection>
+    )
+  }
+
+  // Generic fallback
+  const entries = Object.entries(data).filter(
+    ([key, value]) => !['link'].includes(key) && value !== undefined && value !== null && typeof value !== 'object'
+  )
+  if (entries.length === 0) return null
+
+  return (
+    <DetailSection title="Details" icon={FileText}>
+      {entries.map(([key, value]) => (
+        <InfoRow
+          key={key}
+          icon={FileText}
+          label={key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}
+          value={value}
+        />
+      ))}
+    </DetailSection>
+  )
+}
+
 interface NotificationDetailDrawerProps {
   notification: SuperAdminNotification | null
   open: boolean
@@ -126,13 +292,6 @@ export function NotificationDetailDrawer({
   }
 
   const data = notification.data || {}
-  const metaEntries = Object.entries(data).filter(
-    ([key, value]) =>
-      !['link'].includes(key) &&
-      value !== undefined &&
-      value !== null &&
-      typeof value !== 'object'
-  )
 
   return (
     <>
@@ -205,26 +364,8 @@ export function NotificationDetailDrawer({
             <p className="text-sm font-bold text-gray-700">{notification.type.replace(/_/g, ' ')}</p>
           </div>
 
-          {metaEntries.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5" />
-                Related data
-              </h4>
-              <div className="grid grid-cols-2 gap-2">
-                {metaEntries.map(([key, value]) => (
-                  <div key={key} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
-                    </p>
-                    <p className="text-xs font-medium text-gray-900 truncate" title={String(value)}>
-                      {String(value)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Type-specific detail content */}
+          {renderTypeSpecificDetails(notification)}
 
           {data.link && (
             <div className="pt-4 border-t border-gray-100">

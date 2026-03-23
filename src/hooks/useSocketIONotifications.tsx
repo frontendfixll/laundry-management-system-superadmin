@@ -129,8 +129,11 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
     // }
   }, []);
 
+  // Track which notification IDs have already shown a toast to prevent duplicates
+  const shownToastIdsRef = useRef<Set<string>>(new Set());
+
   // Handle new notification with SuperAdmin-specific treatment
-  const handleNewNotification = useCallback((notification: Notification) => {
+  const handleNewNotification = useCallback((notification: Notification, { silent = false }: { silent?: boolean } = {}) => {
     // Ensure priority exists
     if (!notification.priority) {
       notification.priority = 'P3';
@@ -154,38 +157,62 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
       notification.category = 'system';
     }
 
+    const notifId = notification.id || notification._id || '';
+
+    // DEDUPLICATION: Skip if already processed
+    if (shownToastIdsRef.current.has(notifId)) {
+      return;
+    }
+
+    let isNew = false;
     setNotifications(prev => {
-      // DEDUPLICATION: Check if this notification already exists
-      const exists = prev.some(n => (n.id === notification.id) || (n._id === notification.id));
+      const exists = prev.some(n => (n.id === notifId) || (n._id === notifId));
       if (exists) {
-        // console.log(`♻️ Skipping duplicate SuperAdmin notification: ${notification.id}`);
         return prev;
       }
-
+      isNew = true;
       const updated = [notification, ...prev];
       setStats(calculateStats(updated));
       return updated;
     });
+
+    // Only show toast for real-time notifications (not historical fetch)
+    // and only if not already shown
+    if (silent || !isNew) {
+      shownToastIdsRef.current.add(notifId);
+      return;
+    }
+
+    shownToastIdsRef.current.add(notifId);
 
     // Play sound for high priority notifications
     if (['P0', 'P1'].includes(notification.priority)) {
       playNotificationSound(notification.priority);
     }
 
-    // SuperAdmin-specific toast notifications
+    // P0/P1 are handled by PriorityNotificationHandler - don't show duplicate toast here
     const isHighPriority = ['P0', 'P1'].includes(notification.priority);
-    const isCritical = notification.priority === 'P0';
+    if (isHighPriority) {
+      // Browser notification for critical alerts only
+      if (notification.priority === 'P0' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification(`CRITICAL: ${notification.title}`, {
+          body: notification.message,
+          icon: '/favicon.ico',
+          tag: notifId,
+          requireInteraction: true
+        });
+      }
+      return; // Let PriorityNotificationHandler handle the UI
+    }
 
+    // Regular (P2-P4) toast - single, clean notification
     toast(
       (t) => (
         <div className="flex flex-col gap-2">
           <div className="font-bold flex items-center gap-2">
-            {isCritical && <span className="text-red-500 animate-pulse">🚨</span>}
-            {isHighPriority && !isCritical && <span className="text-orange-500">⚠️</span>}
             <span className={cn(
               "text-xs px-2 py-0.5 rounded-full font-black uppercase tracking-wider",
-              isCritical ? "bg-red-100 text-red-700" :
-                isHighPriority ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"
+              "bg-blue-100 text-blue-700"
             )}>
               {notification.priority} PLATFORM ALERT
             </span>
@@ -197,41 +224,20 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
               Affects {notification.metadata.tenantCount} tenant(s)
             </div>
           )}
-          {notification.requiresAck && (
-            <button
-              onClick={() => {
-                acknowledgeNotification(notification.id);
-                toast.dismiss(t.id);
-              }}
-              className="mt-2 bg-red-600 text-white text-xs px-3 py-1.5 rounded hover:bg-red-700 transition-colors font-bold"
-            >
-              🛡️ Acknowledge Critical Alert
-            </button>
-          )}
         </div>
       ),
       {
-        duration: isCritical ? Infinity : isHighPriority ? 15000 : 8000,
+        duration: 8000,
         position: 'top-right',
+        id: `notif-${notifId}`, // Prevent duplicate toasts with same ID
         style: {
-          borderLeft: isCritical ? '4px solid #dc2626' :
-            isHighPriority ? '4px solid #ea580c' : '4px solid #2563eb',
+          borderLeft: '4px solid #2563eb',
           minWidth: '350px',
           maxWidth: '450px'
         }
       }
     );
-
-    // Browser notification for critical alerts
-    if (isCritical && 'Notification' in window && Notification.permission === 'granted') {
-      new Notification(`🚨 CRITICAL: ${notification.title}`, {
-        body: notification.message,
-        icon: '/favicon.ico',
-        tag: notification.id,
-        requireInteraction: true
-      });
-    }
-  }, [calculateStats, acknowledgeNotification, playNotificationSound]);
+  }, [calculateStats, playNotificationSound]);
 
   // Fetch initial notifications from SuperAdmin API
   const fetchNotifications = useCallback(async () => {
@@ -251,9 +257,10 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
           type: n.type || n.eventType || 'general_alert',
           category: n.category || 'system'
         }));
+        // Mark all historical notifications as already shown (no toast on load)
+        mapped.forEach((n: any) => shownToastIdsRef.current.add(n.id));
         setNotifications(mapped);
         setStats(calculateStats(mapped));
-        // console.log(`✅ Loaded ${mapped.length} SuperAdmin notifications`);
       }
     } catch (error) {
       // console.error('❌ Failed to fetch SuperAdmin notifications:', error);
@@ -320,15 +327,11 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
         scheduleReconnect();
       });
 
-      // SuperAdmin-specific notification events
-      socket.on('notification', handleNewNotification);
-      socket.on('platform_alert', handleNewNotification);
-      socket.on('critical_alert', handleNewNotification);
-      socket.on('security_alert', handleNewNotification);
-      socket.on('system_alert', handleNewNotification);
+      // Single notification event handler - all notifications come through 'notification' event
+      socket.on('notification', (n: Notification) => handleNewNotification(n));
 
-      // High priority notifications
-      socket.on('high_priority_notification', (notification) => {
+      // High priority notifications (separate channel from relay)
+      socket.on('high_priority_notification', (notification: Notification) => {
         handleNewNotification({
           ...notification,
           metadata: { ...notification.metadata, isHighPriority: true }

@@ -81,17 +81,37 @@ export function PriorityNotificationHandler({
     }
   }, [criticalModal])
 
-  // P1 High priority notifications with enhanced toast
+  // Track P1 notifications that have already shown toast (including from initial load)
+  const shownP1IdsRef = React.useRef<Set<string>>(new Set())
+  const initialLoadDoneRef = React.useRef(false)
+
+  // Mark all initially loaded P1 notifications as already shown (no toast for history)
   useEffect(() => {
+    if (!initialLoadDoneRef.current && notifications.length > 0) {
+      initialLoadDoneRef.current = true
+      notifications.forEach(n => {
+        if (n.priority === 'P1') {
+          shownP1IdsRef.current.add(n.id)
+        }
+      })
+    }
+  }, [notifications])
+
+  // P1 High priority notifications with enhanced toast - ONLY for new real-time ones
+  useEffect(() => {
+    if (!initialLoadDoneRef.current) return
+
     const highPriorityNotifications = notifications.filter(n =>
       n.priority === 'P1' &&
       !acknowledgedIds.has(n.id) &&
+      !shownP1IdsRef.current.has(n.id) &&
       !n.metadata?.isRead &&
       !n.isRead
     )
 
     highPriorityNotifications.forEach(notification => {
-      if (!acknowledgedIds.has(notification.id)) {
+      if (!acknowledgedIds.has(notification.id) && !shownP1IdsRef.current.has(notification.id)) {
+        shownP1IdsRef.current.add(notification.id)
         setAcknowledgedIds(prev => new Set(Array.from(prev).concat(notification.id)))
 
         toast(
@@ -134,6 +154,7 @@ export function PriorityNotificationHandler({
           {
             duration: 15000,
             position: 'top-right',
+            id: `p1-${notification.id}`, // Prevent duplicate toasts
             style: {
               borderLeft: '4px solid #ea580c',
               minWidth: '350px',
