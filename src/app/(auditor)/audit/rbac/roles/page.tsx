@@ -402,9 +402,9 @@ export default function RBACRolesPage() {
                         <details className="cursor-pointer">
                           <summary className="text-blue-600 hover:text-blue-800 text-xs">View permissions</summary>
                           <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                            {role.permissions.map((permission, index) => (
+                            {(Array.isArray(role.permissions) ? role.permissions : Object.keys(role.permissions || {})).map((permission: any, index: number) => (
                               <div key={index} className="py-1">
-                                <code className="bg-gray-200 px-1 rounded">{permission}</code>
+                                <code className="bg-gray-200 px-1 rounded">{typeof permission === 'string' ? permission : JSON.stringify(permission)}</code>
                               </div>
                             ))}
                           </div>
