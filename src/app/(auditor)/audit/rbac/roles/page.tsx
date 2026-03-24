@@ -203,8 +203,11 @@ export default function RBACRolesPage() {
     }
   }
 
-  const getPermissionCount = (permissions: string[]) => {
-    return permissions.length
+  const getPermissionCount = (permissions: any) => {
+    if (!permissions) return 0
+    if (Array.isArray(permissions)) return permissions.length
+    if (typeof permissions === 'object') return Object.keys(permissions).length
+    return 0
   }
 
   if (loading) {
