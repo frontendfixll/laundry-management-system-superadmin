@@ -205,6 +205,7 @@ export default function RBACRolesPage() {
   }
 
   const getPermissionCount = (role: any) => {
+    if (!role) return 0
     // Use backend-enriched permissionCount if available
     if (role.permissionCount !== undefined) return role.permissionCount
     const permissions = role.permissions
@@ -217,6 +218,7 @@ export default function RBACRolesPage() {
   }
 
   const getPermissionsList = (role: any): string[] => {
+    if (!role) return []
     // Use backend-enriched enabledPermissions if available
     if (role.enabledPermissions && Array.isArray(role.enabledPermissions)) return role.enabledPermissions
     const permissions = role.permissions
