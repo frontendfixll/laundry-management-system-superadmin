@@ -317,58 +317,67 @@ export default function SLACompliancePage() {
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* SLA Compliance Trends */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
-            SLA Compliance Trends
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[
-                { week: 'Week 1', compliant: 89, breached: 11, atRisk: 5 },
-                { week: 'Week 2', compliant: 92, breached: 8, atRisk: 3 },
-                { week: 'Week 3', compliant: 87, breached: 13, atRisk: 7 },
-                { week: 'Week 4', compliant: 94, breached: 6, atRisk: 2 }
-              ]}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="week" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="compliant" stackId="1" stroke="#22C55E" fill="#22C55E" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="breached" stackId="2" stroke="#EF4444" fill="#EF4444" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="atRisk" stackId="3" stroke="#EAB308" fill="#EAB308" fillOpacity={0.6} />
-              </AreaChart>
-            </ResponsiveContainer>
+      {/* Charts - only show when there's data */}
+      {slaRecords.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* SLA Compliance Overview */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+              SLA Compliance Overview
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Compliant', value: stats.compliantTickets || 0 },
+                      { name: 'Breached', value: stats.breachedTickets || 0 },
+                      { name: 'At Risk', value: stats.atRiskTickets || 0 }
+                    ].filter(d => d.value > 0)}
+                    cx="50%" cy="50%" outerRadius={80} dataKey="value" label
+                  >
+                    {[COLORS[0], COLORS[1], COLORS[2]].map((color, index) => (
+                      <Cell key={`cell-${index}`} fill={color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
 
-        {/* SLA Performance by Priority */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-            <Target className="w-5 h-5 mr-2 text-purple-600" />
-            Performance by Priority
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={[
-                { priority: 'Critical', compliance: 95, avgResponse: 12, avgResolution: 3.2 },
-                { priority: 'High', compliance: 87, avgResponse: 22, avgResolution: 6.8 },
-                { priority: 'Medium', compliance: 92, avgResponse: 45, avgResolution: 18.5 },
-                { priority: 'Low', compliance: 89, avgResponse: 120, avgResolution: 48.2 }
-              ]}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="priority" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="compliance" fill="#3B82F6" name="Compliance %" />
-              </BarChart>
-            </ResponsiveContainer>
+          {/* SLA Performance by Priority */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <Target className="w-5 h-5 mr-2 text-purple-600" />
+              Performance by Priority
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={
+                  ['critical', 'high', 'medium', 'low'].map(p => {
+                    const priorityRecords = slaRecords.filter(r => r.priority === p)
+                    const compliant = priorityRecords.filter(r => r.compliance.overall.status === 'compliant').length
+                    const total = priorityRecords.length
+                    return {
+                      priority: p.charAt(0).toUpperCase() + p.slice(1),
+                      compliance: total > 0 ? Math.round((compliant / total) * 100) : 0,
+                      total
+                    }
+                  }).filter(d => d.total > 0)
+                }>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="priority" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="compliance" fill="#3B82F6" name="Compliance %" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
