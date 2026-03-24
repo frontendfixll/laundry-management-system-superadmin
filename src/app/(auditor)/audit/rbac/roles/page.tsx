@@ -40,6 +40,7 @@ export default function RBACRolesPage() {
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [selectedRole, setSelectedRole] = useState<any>(null)
 
   useEffect(() => {
     fetchRoles()
@@ -374,10 +375,25 @@ export default function RBACRolesPage() {
                     <div className="text-gray-500 text-xs">{formatTime(role.updatedAt)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">
+                    <button
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      title="View role details"
+                      onClick={() => setSelectedRole(role)}
+                    >
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button className="text-green-600 hover:text-green-900">
+                    <button
+                      className="text-green-600 hover:text-green-900"
+                      title="Export role as JSON"
+                      onClick={() => {
+                        const exportData = { name: role.name, slug: role.slug, description: role.description, isActive: role.isActive, permissions: getPermissionsList(role), userCount: role.userCount || 0 }
+                        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url; a.download = `role-${role.slug}.json`; a.click()
+                        URL.revokeObjectURL(url)
+                      }}
+                    >
                       <Download className="w-4 h-4" />
                     </button>
                   </td>
@@ -412,6 +428,95 @@ export default function RBACRolesPage() {
           </div>
         )}
       </div>
+
+      {/* Role Detail Modal */}
+      {selectedRole && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedRole(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold">{selectedRole.name}</h3>
+                  <p className="text-purple-200 text-sm font-mono">{selectedRole.slug}</p>
+                </div>
+                <button onClick={() => setSelectedRole(null)} className="text-white hover:text-purple-200 text-2xl leading-none">&times;</button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4">
+              {/* Info Row */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-purple-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-purple-700">{getPermissionCount(selectedRole)}</p>
+                  <p className="text-xs text-purple-600">Permissions</p>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-blue-700">{selectedRole.userCount || 0}</p>
+                  <p className="text-xs text-blue-600">Users</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-green-700">{selectedRole.isActive ? 'Active' : 'Inactive'}</p>
+                  <p className="text-xs text-green-600">Status</p>
+                </div>
+              </div>
+
+              {/* Description */}
+              {selectedRole.description && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-1">Description</h4>
+                  <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">{selectedRole.description}</p>
+                </div>
+              )}
+
+              {/* Permissions List */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">Permissions ({getPermissionCount(selectedRole)})</h4>
+                <div className="space-y-2">
+                  {getPermissionsList(selectedRole).length === 0 ? (
+                    <p className="text-sm text-gray-400 italic">No permissions assigned</p>
+                  ) : (
+                    getPermissionsList(selectedRole).map((perm: string, i: number) => {
+                      const [module, actions] = perm.split(': ')
+                      return (
+                        <div key={i} className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-sm font-medium text-gray-800">{module?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(actions || '').split(', ').map((action: string, j: number) => (
+                              <span key={j} className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                action === 'delete' ? 'bg-red-100 text-red-700' :
+                                action === 'create' ? 'bg-green-100 text-green-700' :
+                                action === 'update' ? 'bg-yellow-100 text-yellow-700' :
+                                action === 'export' ? 'bg-purple-100 text-purple-700' :
+                                'bg-blue-100 text-blue-700'
+                              }`}>
+                                {action}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-gray-500 text-xs">Created</p>
+                  <p className="font-medium text-gray-800">{formatDate(selectedRole.createdAt)}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-gray-500 text-xs">Last Updated</p>
+                  <p className="font-medium text-gray-800">{formatDate(selectedRole.updatedAt)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
