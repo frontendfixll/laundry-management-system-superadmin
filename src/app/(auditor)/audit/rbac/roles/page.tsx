@@ -387,9 +387,9 @@ export default function RBACRolesPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit ${getLevelColor(role.level)}`}>
-                      {getLevelIcon(role.level)}
-                      <span className="ml-1">{role.level.toUpperCase()}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit ${getLevelColor(role.level || 'standard')}`}>
+                      {getLevelIcon(role.level || 'standard')}
+                      <span className="ml-1">{(role.level || 'standard').toUpperCase()}</span>
                     </span>
                   </td>
                   <td className="px-6 py-4">
