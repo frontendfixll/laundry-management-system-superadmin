@@ -46,10 +46,10 @@ export default function RBACAssignmentsPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [stats, setStats] = useState({
-    total: 0,
-    newLast7Days: 0,
-    revoked: 0,
-    modified: 0
+    totalAssignments: 0,
+    newAssignments: 0,
+    revokedRoles: 0,
+    modifiedRoles: 0
   })
 
   useEffect(() => {
@@ -71,152 +71,31 @@ export default function RBACAssignmentsPage() {
       const data = await superAdminApi.get(`/audit/rbac/assignments?${params}`)
 
       if (data.success) {
-        setAssignments(data.data.data)
-        setTotalPages(Math.ceil(data.data.data.length / 50))
-        if (data.data.stats) {
-          setStats(data.data.stats)
-        }
+        const records = data.data?.data || data.data || []
+        const recordsArr = Array.isArray(records) ? records : []
+        setAssignments(recordsArr)
+        setTotalPages(Math.ceil(recordsArr.length / 50))
+
+        // Calculate stats from real data
+        const now = Date.now()
+        const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000
+        const assignActions = ['ASSIGN_ROLE', 'CREATE_PLATFORM_USER']
+        const revokeActions = ['REVOKE_ROLE', 'DELETE_PLATFORM_USER']
+        const modifyActions = ['UPDATE_PERMISSIONS', 'UPDATE_PLATFORM_USER', 'UPDATE_ROLE']
+        setStats({
+          totalAssignments: recordsArr.length,
+          newAssignments: recordsArr.filter((r: any) => new Date(r.timestamp).getTime() > sevenDaysAgo).length,
+          revokedRoles: recordsArr.filter((r: any) => revokeActions.includes(r.action)).length,
+          modifiedRoles: recordsArr.filter((r: any) => modifyActions.includes(r.action)).length
+        })
       } else {
         throw new Error(data.message || 'Failed to fetch role assignments')
       }
 
     } catch (error) {
       console.error('Error fetching role assignments:', error)
-      // Fallback to mock data
-      const mockAssignments: RoleAssignment[] = [
-        {
-          _id: '1',
-          timestamp: new Date('2026-03-15T10:30:00'),
-          user: 'john.doe@cleanwave.com',
-          userId: 'usr_001',
-          assignedBy: 'admin@laundrylobby.com',
-          assignedByEmail: 'admin@laundrylobby.com',
-          oldRole: '',
-          newRole: 'tenant_admin',
-          reason: 'New franchise owner onboarding - CleanWave Laundry',
-          tenantId: 'tenant_001',
-          tenantName: 'CleanWave Laundry',
-          action: 'assign',
-          status: 'active'
-        },
-        {
-          _id: '2',
-          timestamp: new Date('2026-03-14T14:15:00'),
-          user: 'sarah.m@sparkleClean.com',
-          userId: 'usr_002',
-          assignedBy: 'superadmin@laundrylobby.com',
-          assignedByEmail: 'superadmin@laundrylobby.com',
-          oldRole: 'tenant_user',
-          newRole: 'tenant_admin',
-          reason: 'Promoted to branch manager after performance review',
-          tenantId: 'tenant_002',
-          tenantName: 'SparkleClean Services',
-          action: 'modify',
-          status: 'active'
-        },
-        {
-          _id: '3',
-          timestamp: new Date('2026-03-13T09:45:00'),
-          user: 'mike.r@freshfold.com',
-          userId: 'usr_003',
-          assignedBy: 'admin@laundrylobby.com',
-          assignedByEmail: 'admin@laundrylobby.com',
-          oldRole: 'platform_support',
-          newRole: '',
-          reason: 'Employee termination - contract ended',
-          tenantId: 'tenant_003',
-          tenantName: 'FreshFold Express',
-          action: 'revoke',
-          status: 'active'
-        },
-        {
-          _id: '4',
-          timestamp: new Date('2026-03-12T16:00:00'),
-          user: 'emily.chen@washpro.com',
-          userId: 'usr_004',
-          assignedBy: 'superadmin@laundrylobby.com',
-          assignedByEmail: 'superadmin@laundrylobby.com',
-          oldRole: 'tenant_admin',
-          newRole: 'platform_finance_admin',
-          reason: 'Moved to platform finance team for multi-tenant billing oversight',
-          tenantId: 'tenant_004',
-          tenantName: 'WashPro Solutions',
-          action: 'modify',
-          status: 'active'
-        },
-        {
-          _id: '5',
-          timestamp: new Date('2026-03-11T11:20:00'),
-          user: 'alex.p@laundryhub.com',
-          userId: 'usr_005',
-          assignedBy: 'admin@laundrylobby.com',
-          assignedByEmail: 'admin@laundrylobby.com',
-          oldRole: '',
-          newRole: 'platform_read_only_auditor',
-          reason: 'External auditor access for quarterly compliance review',
-          tenantId: '',
-          tenantName: 'Platform-Wide',
-          action: 'assign',
-          status: 'expired'
-        },
-        {
-          _id: '6',
-          timestamp: new Date('2026-03-10T08:50:00'),
-          user: 'david.k@sudsstation.com',
-          userId: 'usr_006',
-          assignedBy: 'superadmin@laundrylobby.com',
-          assignedByEmail: 'superadmin@laundrylobby.com',
-          oldRole: 'tenant_admin',
-          newRole: 'tenant_user',
-          reason: 'Downgraded after security incident - pending investigation',
-          tenantId: 'tenant_005',
-          tenantName: 'Suds Station',
-          action: 'modify',
-          status: 'reverted'
-        },
-        {
-          _id: '7',
-          timestamp: new Date('2026-03-09T13:30:00'),
-          user: 'lisa.w@bubbleworks.com',
-          userId: 'usr_007',
-          assignedBy: 'admin@laundrylobby.com',
-          assignedByEmail: 'admin@laundrylobby.com',
-          oldRole: '',
-          newRole: 'tenant_user',
-          reason: 'New staff member for pickup and delivery operations',
-          tenantId: 'tenant_006',
-          tenantName: 'BubbleWorks Laundromat',
-          action: 'assign',
-          status: 'active'
-        },
-        {
-          _id: '8',
-          timestamp: new Date('2026-03-08T17:45:00'),
-          user: 'raj.s@presspoint.com',
-          userId: 'usr_008',
-          assignedBy: 'superadmin@laundrylobby.com',
-          assignedByEmail: 'superadmin@laundrylobby.com',
-          oldRole: 'platform_support',
-          newRole: '',
-          reason: 'Temporary support access revoked after ticket resolution',
-          tenantId: 'tenant_007',
-          tenantName: 'PressPoint Dry Cleaning',
-          action: 'revoke',
-          status: 'active'
-        }
-      ]
-
-      setAssignments(mockAssignments)
+      setAssignments([])
       setTotalPages(1)
-
-      const now = new Date()
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      setStats({
-        total: mockAssignments.length,
-        newLast7Days: mockAssignments.filter(a => a.action === 'assign' && a.timestamp >= sevenDaysAgo).length,
-        revoked: mockAssignments.filter(a => a.action === 'revoke').length,
-        modified: mockAssignments.filter(a => a.action === 'modify').length
-      })
     } finally {
       setLoading(false)
     }
@@ -299,7 +178,7 @@ export default function RBACAssignmentsPage() {
             <div>
               <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Total Assignments</p>
               <p className="text-2xl font-bold text-purple-900 mt-1">
-                {stats.total}
+                {stats.totalAssignments}
               </p>
             </div>
             <div className="bg-purple-500 p-3 rounded-lg">
@@ -313,7 +192,7 @@ export default function RBACAssignmentsPage() {
             <div>
               <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">New Assignments (7d)</p>
               <p className="text-2xl font-bold text-green-900 mt-1">
-                {stats.newLast7Days}
+                {stats.newAssignments}
               </p>
             </div>
             <div className="bg-green-500 p-3 rounded-lg">
@@ -327,7 +206,7 @@ export default function RBACAssignmentsPage() {
             <div>
               <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Revoked</p>
               <p className="text-2xl font-bold text-red-900 mt-1">
-                {stats.revoked}
+                {stats.revokedRoles}
               </p>
             </div>
             <div className="bg-red-500 p-3 rounded-lg">
@@ -341,7 +220,7 @@ export default function RBACAssignmentsPage() {
             <div>
               <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Modified</p>
               <p className="text-2xl font-bold text-blue-900 mt-1">
-                {stats.modified}
+                {stats.modifiedRoles}
               </p>
             </div>
             <div className="bg-blue-500 p-3 rounded-lg">
@@ -436,50 +315,61 @@ export default function RBACAssignmentsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {assignments.map((assignment) => (
-                <tr key={assignment._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>{new Date(assignment.timestamp).toLocaleDateString()}</div>
-                    <div className="text-gray-500 text-xs">{new Date(assignment.timestamp).toLocaleTimeString()}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{assignment.user}</div>
-                    <div className="text-xs text-gray-500 font-mono">{assignment.userId}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit ${getActionColor(assignment.action)}`}>
-                      {getActionIcon(assignment.action)}
-                      <span className="ml-1">{assignment.action.toUpperCase()}</span>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {formatRole(assignment.oldRole)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {formatRole(assignment.newRole)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{assignment.assignedByEmail}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{assignment.tenantName}</div>
-                    {assignment.tenantId && (
-                      <div className="text-xs text-gray-500 font-mono">{assignment.tenantId}</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-700 max-w-xs truncate" title={assignment.reason}>
-                      {assignment.reason}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status || 'unknown')}`}>
-                      {getStatusIcon(assignment.status || 'unknown')}
-                      {(assignment.status || 'unknown').toUpperCase()}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {assignments.map((assignment: any) => {
+                // Map AuditLog fields to display fields
+                const user = assignment.user || assignment.who || assignment.details?.email || '-'
+                const userId = assignment.userId || assignment.entityId || ''
+                const action = assignment.action || 'UNKNOWN'
+                const oldRole = assignment.oldRole || assignment.beforeState?.role || assignment.details?.oldRole || ''
+                const newRole = assignment.newRole || assignment.afterState?.role || assignment.details?.newRole || assignment.details?.roles?.[0] || ''
+                const assignedBy = assignment.assignedByEmail || assignment.who || '-'
+                const tenantName = assignment.tenantName || assignment.tenantId?.businessName || 'Platform'
+                const tenantIdStr = typeof assignment.tenantId === 'object' ? assignment.tenantId?._id : assignment.tenantId
+                const reason = assignment.reason || assignment.details?.reason || assignment.details?.description || '-'
+                const status = assignment.status || assignment.outcome || 'success'
+                return (
+                  <tr key={assignment._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div>{new Date(assignment.timestamp).toLocaleDateString()}</div>
+                      <div className="text-gray-500 text-xs">{new Date(assignment.timestamp).toLocaleTimeString()}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{user}</div>
+                      {userId && <div className="text-xs text-gray-500 font-mono">{userId}</div>}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit ${getActionColor(action)}`}>
+                        {getActionIcon(action)}
+                        <span className="ml-1">{action.toUpperCase()}</span>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {formatRole(oldRole)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {formatRole(newRole)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{assignedBy}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{tenantName}</div>
+                      {tenantIdStr && <div className="text-xs text-gray-500 font-mono">{tenantIdStr}</div>}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-700 max-w-xs truncate" title={reason}>
+                        {reason}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                        {getStatusIcon(status)}
+                        {status.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
