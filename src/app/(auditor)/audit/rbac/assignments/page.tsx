@@ -473,9 +473,9 @@ export default function RBACAssignmentsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
-                      {getStatusIcon(assignment.status)}
-                      {assignment.status.toUpperCase()}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status || 'unknown')}`}>
+                      {getStatusIcon(assignment.status || 'unknown')}
+                      {(assignment.status || 'unknown').toUpperCase()}
                     </span>
                   </td>
                 </tr>
