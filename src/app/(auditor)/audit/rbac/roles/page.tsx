@@ -60,8 +60,9 @@ export default function RBACRolesPage() {
       const data = await superAdminApi.get(`/audit/rbac/roles?${params}`)
       
       if (data.success) {
-        setRoles(data.data.data)
-        setTotalPages(Math.ceil(data.data.data.length / 50))
+        const rolesData = data.data?.data || data.data || []
+        setRoles(Array.isArray(rolesData) ? rolesData : [])
+        setTotalPages(Math.ceil((Array.isArray(rolesData) ? rolesData.length : 0) / 50))
       } else {
         throw new Error(data.message || 'Failed to fetch role definitions')
       }
@@ -206,8 +207,40 @@ export default function RBACRolesPage() {
   const getPermissionCount = (permissions: any) => {
     if (!permissions) return 0
     if (Array.isArray(permissions)) return permissions.length
-    if (typeof permissions === 'object') return Object.keys(permissions).length
+    if (typeof permissions === 'object') {
+      // Count non-empty permission modules (e.g. { platform_settings: 'rcude', tenant_management: '' })
+      return Object.values(permissions).filter((v: any) => v && typeof v === 'string' && v.length > 0).length
+    }
     return 0
+  }
+
+  const getPermissionsList = (permissions: any): string[] => {
+    if (!permissions) return []
+    if (Array.isArray(permissions)) return permissions
+    if (typeof permissions === 'object') {
+      const CODES: Record<string, string> = { r: 'view', c: 'create', u: 'update', d: 'delete', e: 'export' }
+      const list: string[] = []
+      Object.entries(permissions).forEach(([module, permStr]: [string, any]) => {
+        if (typeof permStr === 'string' && permStr.length > 0) {
+          const actions = permStr.split('').map((c: string) => CODES[c] || c).join(', ')
+          list.push(`${module}: ${actions}`)
+        }
+      })
+      return list
+    }
+    return []
+  }
+
+  const formatDate = (date: any) => {
+    if (!date) return '-'
+    const d = new Date(date)
+    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString()
+  }
+
+  const formatTime = (date: any) => {
+    if (!date) return ''
+    const d = new Date(date)
+    return isNaN(d.getTime()) ? '' : d.toLocaleTimeString()
   }
 
   if (loading) {
@@ -401,10 +434,10 @@ export default function RBACRolesPage() {
                       <div className="max-w-xs">
                         <details className="cursor-pointer">
                           <summary className="text-blue-600 hover:text-blue-800 text-xs">View permissions</summary>
-                          <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                            {(Array.isArray(role.permissions) ? role.permissions : Object.keys(role.permissions || {})).map((permission: any, index: number) => (
+                          <div className="mt-2 p-2 bg-gray-50 rounded text-xs max-h-48 overflow-y-auto">
+                            {getPermissionsList(role.permissions).map((permission: string, index: number) => (
                               <div key={index} className="py-1">
-                                <code className="bg-gray-200 px-1 rounded">{typeof permission === 'string' ? permission : JSON.stringify(permission)}</code>
+                                <code className="bg-gray-200 px-1 rounded">{permission}</code>
                               </div>
                             ))}
                           </div>
@@ -436,12 +469,12 @@ export default function RBACRolesPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>{new Date(role.createdAt).toLocaleDateString()}</div>
-                    <div className="text-gray-500 text-xs">{new Date(role.createdAt).toLocaleTimeString()}</div>
+                    <div>{formatDate(role.createdAt)}</div>
+                    <div className="text-gray-500 text-xs">{formatTime(role.createdAt)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>{new Date(role.updatedAt).toLocaleDateString()}</div>
-                    <div className="text-gray-500 text-xs">{new Date(role.updatedAt).toLocaleTimeString()}</div>
+                    <div>{formatDate(role.updatedAt)}</div>
+                    <div className="text-gray-500 text-xs">{formatTime(role.updatedAt)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <button className="text-blue-600 hover:text-blue-900 mr-3">
