@@ -204,17 +204,22 @@ export default function RBACRolesPage() {
     }
   }
 
-  const getPermissionCount = (permissions: any) => {
+  const getPermissionCount = (role: any) => {
+    // Use backend-enriched permissionCount if available
+    if (role.permissionCount !== undefined) return role.permissionCount
+    const permissions = role.permissions
     if (!permissions) return 0
     if (Array.isArray(permissions)) return permissions.length
     if (typeof permissions === 'object') {
-      // Count non-empty permission modules (e.g. { platform_settings: 'rcude', tenant_management: '' })
       return Object.values(permissions).filter((v: any) => v && typeof v === 'string' && v.length > 0).length
     }
     return 0
   }
 
-  const getPermissionsList = (permissions: any): string[] => {
+  const getPermissionsList = (role: any): string[] => {
+    // Use backend-enriched enabledPermissions if available
+    if (role.enabledPermissions && Array.isArray(role.enabledPermissions)) return role.enabledPermissions
+    const permissions = role.permissions
     if (!permissions) return []
     if (Array.isArray(permissions)) return permissions
     if (typeof permissions === 'object') {
@@ -430,12 +435,12 @@ export default function RBACRolesPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">
-                      <div className="font-medium mb-1">{getPermissionCount(role.permissions)} permissions</div>
+                      <div className="font-medium mb-1">{getPermissionCount(role)} permissions</div>
                       <div className="max-w-xs">
                         <details className="cursor-pointer">
                           <summary className="text-blue-600 hover:text-blue-800 text-xs">View permissions</summary>
                           <div className="mt-2 p-2 bg-gray-50 rounded text-xs max-h-48 overflow-y-auto">
-                            {getPermissionsList(role.permissions).map((permission: string, index: number) => (
+                            {getPermissionsList(role).map((permission: string, index: number) => (
                               <div key={index} className="py-1">
                                 <code className="bg-gray-200 px-1 rounded">{permission}</code>
                               </div>
