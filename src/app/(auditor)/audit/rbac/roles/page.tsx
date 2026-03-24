@@ -57,7 +57,7 @@ export default function RBACRolesPage() {
         ...(searchQuery && { search: searchQuery })
       })
 
-      const data = await superAdminApi.get(`/audit/rbac/roles?${params}`)
+      const data = await superAdminApi.get(`/audit/rbac/permissions?${params}`)
       
       if (data.success) {
         const rolesData = data.data?.data || data.data || []
@@ -69,117 +69,7 @@ export default function RBACRolesPage() {
       
     } catch (error) {
       console.error('Error fetching role definitions:', error)
-      // Fallback to mock data
-      const mockRoles: RoleDefinition[] = [
-        {
-          _id: '1',
-          name: 'Super Admin',
-          slug: 'super_admin',
-          permissions: [
-            'manage_tenancies',
-            'manage_users',
-            'manage_roles',
-            'view_analytics',
-            'manage_billing',
-            'manage_addons',
-            'system_settings'
-          ],
-          isActive: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date(),
-          userCount: 3,
-          description: 'Full platform access with all permissions',
-          level: 'platform'
-        },
-        {
-          _id: '2',
-          name: 'Platform Support',
-          slug: 'platform-support',
-          permissions: [
-            'view_tickets',
-            'manage_tickets',
-            'impersonate_users',
-            'view_orders',
-            'view_payments',
-            'reset_passwords'
-          ],
-          isActive: true,
-          createdAt: new Date('2024-01-15'),
-          updatedAt: new Date(),
-          userCount: 8,
-          description: 'Customer support with limited access',
-          level: 'platform'
-        },
-        {
-          _id: '3',
-          name: 'Platform Finance Admin',
-          slug: 'platform-finance-admin',
-          permissions: [
-            'view_financials',
-            'manage_billing',
-            'approve_refunds',
-            'view_transactions',
-            'generate_reports'
-          ],
-          isActive: true,
-          createdAt: new Date('2024-02-01'),
-          updatedAt: new Date(),
-          userCount: 2,
-          description: 'Financial operations and billing management',
-          level: 'platform'
-        },
-        {
-          _id: '4',
-          name: 'Platform Read-Only Auditor',
-          slug: 'platform-read-only-auditor',
-          permissions: [
-            'view_audit_logs',
-            'view_all_data',
-            'export_reports',
-            'cross_tenant_visibility'
-          ],
-          isActive: true,
-          createdAt: new Date('2024-02-15'),
-          updatedAt: new Date(),
-          userCount: 1,
-          description: 'Read-only access for auditing and compliance',
-          level: 'platform'
-        },
-        {
-          _id: '5',
-          name: 'Tenant Admin',
-          slug: 'tenant_admin',
-          permissions: [
-            'manage_tenant_users',
-            'view_tenant_orders',
-            'manage_tenant_settings',
-            'view_tenant_analytics'
-          ],
-          isActive: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date(),
-          userCount: 0,
-          description: 'Full access within tenant scope',
-          level: 'tenant'
-        },
-        {
-          _id: '6',
-          name: 'Tenant User',
-          slug: 'tenant_user',
-          permissions: [
-            'view_orders',
-            'create_orders',
-            'view_customers'
-          ],
-          isActive: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date(),
-          userCount: 0,
-          description: 'Basic tenant user access',
-          level: 'tenant'
-        }
-      ]
-      setRoles(mockRoles)
+      setRoles([])
       setTotalPages(1)
     } finally {
       setLoading(false)
