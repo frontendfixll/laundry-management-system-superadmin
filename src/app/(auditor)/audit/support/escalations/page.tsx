@@ -159,9 +159,9 @@ export default function SupportEscalationsPage() {
       const data = await superAdminApi.get(`/audit/support/escalations?${params}`)
       
       if (data.success) {
-        setEscalations(data.data.escalations)
-        setStats(data.data.stats)
-        setTotalPages(data.data.pagination.pages)
+        setEscalations(data.data?.escalations || data.data?.data || [])
+        if (data.data?.stats) setStats(data.data.stats)
+        setTotalPages(data.data?.pagination?.pages || data.data?.pagination?.totalPages || 1)
       } else {
         throw new Error(data.message || 'Failed to fetch escalations')
       }
