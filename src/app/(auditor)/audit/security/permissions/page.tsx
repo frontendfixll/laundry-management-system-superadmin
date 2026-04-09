@@ -98,9 +98,9 @@ export default function PermissionDenialsPage() {
       const data = await superAdminApi.get(`/audit/security/permissions?${params}`)
       
       if (data.success) {
-        setDenials(data.data.denials)
-        setStats(data.data.stats)
-        setTotalPages(data.data.pagination.pages)
+        setDenials(data.data?.denials || data.data?.data || [])
+        if (data.data?.stats) setStats(data.data.stats)
+        setTotalPages(data.data?.pagination?.pages || data.data?.pagination?.totalPages || 1)
       } else {
         throw new Error(data.message || 'Failed to fetch permission denials')
       }

@@ -151,176 +151,16 @@ export default function SLACompliancePage() {
       const data = await superAdminApi.get(`/audit/support/sla?${params}`)
       
       if (data.success) {
-        setSlaRecords(data.data.slaRecords)
-        setStats(data.data.stats)
-        setTotalPages(data.data.pagination.pages)
+        setSlaRecords(data.data?.slaRecords || [])
+        if (data.data?.stats) setStats(data.data.stats)
+        setTotalPages(data.data?.pagination?.pages || 1)
       } else {
         throw new Error(data.message || 'Failed to fetch SLA compliance data')
       }
-      
+
     } catch (error) {
       console.error('Error fetching SLA compliance data:', error)
-      // Fallback to mock data
-      const mockSlaRecords: SLACompliance[] = [
-        {
-          _id: '1',
-          slaId: 'SLA-2024-001',
-          ticketId: 'TKT-2024-001',
-          ticketTitle: 'Payment gateway not working',
-          priority: 'critical',
-          category: 'Technical Issues',
-          customer: {
-            id: 'cust_001',
-            name: 'Rajesh Kumar',
-            email: 'rajesh@example.com'
-          },
-          tenant: {
-            id: 'tenant_001',
-            name: 'clean-fresh',
-            businessName: 'Clean & Fresh Laundry'
-          },
-          assignedTo: {
-            id: 'support_001',
-            name: 'Support Agent 1',
-            email: 'support1@laundrylobby.com'
-          },
-          slaTargets: {
-            firstResponseTime: 15, // 15 minutes for critical
-            resolutionTime: 240, // 4 hours for critical
-            escalationTime: 60 // 1 hour for critical
-          },
-          actualTimes: {
-            firstResponseTime: 12,
-            resolutionTime: 180,
-            escalationTime: 45
-          },
-          timestamps: {
-            createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-            firstResponseAt: new Date(Date.now() - 3.8 * 60 * 60 * 1000),
-            resolvedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
-            escalatedAt: new Date(Date.now() - 3.25 * 60 * 60 * 1000)
-          },
-          compliance: {
-            firstResponse: {
-              status: 'met',
-              variance: 3, // 3 minutes early
-              percentage: 120
-            },
-            resolution: {
-              status: 'met',
-              variance: 60, // 1 hour early
-              percentage: 133
-            },
-            escalation: {
-              status: 'met',
-              variance: 15, // 15 minutes early
-              percentage: 133
-            },
-            overall: {
-              status: 'compliant',
-              score: 95.5
-            }
-          },
-          customerSatisfaction: {
-            rating: 5,
-            feedback: 'Excellent support, resolved quickly',
-            submittedAt: new Date(Date.now() - 30 * 60 * 1000)
-          }
-        },
-        {
-          _id: '2',
-          slaId: 'SLA-2024-002',
-          ticketId: 'TKT-2024-002',
-          ticketTitle: 'Order delivery delayed',
-          priority: 'high',
-          category: 'Delivery Issues',
-          customer: {
-            id: 'cust_002',
-            name: 'Priya Sharma',
-            email: 'priya@example.com'
-          },
-          tenant: {
-            id: 'tenant_002',
-            name: 'quickwash',
-            businessName: 'QuickWash Services'
-          },
-          assignedTo: {
-            id: 'support_002',
-            name: 'Support Agent 2',
-            email: 'support2@laundrylobby.com'
-          },
-          slaTargets: {
-            firstResponseTime: 30, // 30 minutes for high
-            resolutionTime: 480, // 8 hours for high
-            escalationTime: 120 // 2 hours for high
-          },
-          actualTimes: {
-            firstResponseTime: 45,
-            resolutionTime: 600
-          },
-          timestamps: {
-            createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
-            firstResponseAt: new Date(Date.now() - 11.25 * 60 * 60 * 1000),
-            resolvedAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
-          },
-          compliance: {
-            firstResponse: {
-              status: 'breached',
-              variance: -15, // 15 minutes late
-              percentage: 67
-            },
-            resolution: {
-              status: 'breached',
-              variance: -120, // 2 hours late
-              percentage: 80
-            },
-            escalation: {
-              status: 'not_applicable',
-              variance: 0,
-              percentage: 100
-            },
-            overall: {
-              status: 'breached',
-              score: 65.2
-            }
-          },
-          breachDetails: [
-            {
-              type: 'first_response',
-              breachTime: 15,
-              impact: 'Customer dissatisfaction',
-              reason: 'Agent was handling another critical issue',
-              mitigationActions: ['Reassigned to available agent', 'Sent apology email']
-            },
-            {
-              type: 'resolution',
-              breachTime: 120,
-              impact: 'Escalation to management',
-              reason: 'Required coordination with delivery partner',
-              mitigationActions: ['Escalated to operations team', 'Direct contact with delivery partner']
-            }
-          ],
-          customerSatisfaction: {
-            rating: 2,
-            feedback: 'Response was slow, not satisfied with resolution time',
-            submittedAt: new Date(Date.now() - 1.5 * 60 * 60 * 1000)
-          }
-        }
-      ]
-
-      const mockStats = {
-        totalTickets: 0,
-        compliantTickets: 1089,
-        breachedTickets: 158,
-        atRiskTickets: 45,
-        avgFirstResponseTime: 18.5,
-        avgResolutionTime: 4.2,
-        overallComplianceRate: 87.3,
-        customerSatisfaction: 4.2
-      }
-
-      setSlaRecords(mockSlaRecords)
-      setStats(mockStats)
+      setSlaRecords([])
       setTotalPages(1)
     } finally {
       setLoading(false)
@@ -477,58 +317,67 @@ export default function SLACompliancePage() {
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* SLA Compliance Trends */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
-            SLA Compliance Trends
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[
-                { week: 'Week 1', compliant: 89, breached: 11, atRisk: 5 },
-                { week: 'Week 2', compliant: 92, breached: 8, atRisk: 3 },
-                { week: 'Week 3', compliant: 87, breached: 13, atRisk: 7 },
-                { week: 'Week 4', compliant: 94, breached: 6, atRisk: 2 }
-              ]}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="week" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="compliant" stackId="1" stroke="#22C55E" fill="#22C55E" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="breached" stackId="2" stroke="#EF4444" fill="#EF4444" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="atRisk" stackId="3" stroke="#EAB308" fill="#EAB308" fillOpacity={0.6} />
-              </AreaChart>
-            </ResponsiveContainer>
+      {/* Charts - only show when there's data */}
+      {slaRecords.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* SLA Compliance Overview */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+              SLA Compliance Overview
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Compliant', value: stats.compliantTickets || 0 },
+                      { name: 'Breached', value: stats.breachedTickets || 0 },
+                      { name: 'At Risk', value: stats.atRiskTickets || 0 }
+                    ].filter(d => d.value > 0)}
+                    cx="50%" cy="50%" outerRadius={80} dataKey="value" label
+                  >
+                    {[COLORS[0], COLORS[1], COLORS[2]].map((color, index) => (
+                      <Cell key={`cell-${index}`} fill={color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
 
-        {/* SLA Performance by Priority */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-            <Target className="w-5 h-5 mr-2 text-purple-600" />
-            Performance by Priority
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={[
-                { priority: 'Critical', compliance: 95, avgResponse: 12, avgResolution: 3.2 },
-                { priority: 'High', compliance: 87, avgResponse: 22, avgResolution: 6.8 },
-                { priority: 'Medium', compliance: 92, avgResponse: 45, avgResolution: 18.5 },
-                { priority: 'Low', compliance: 89, avgResponse: 120, avgResolution: 48.2 }
-              ]}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="priority" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="compliance" fill="#3B82F6" name="Compliance %" />
-              </BarChart>
-            </ResponsiveContainer>
+          {/* SLA Performance by Priority */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <Target className="w-5 h-5 mr-2 text-purple-600" />
+              Performance by Priority
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={
+                  ['critical', 'high', 'medium', 'low'].map(p => {
+                    const priorityRecords = slaRecords.filter(r => r.priority === p)
+                    const compliant = priorityRecords.filter(r => r.compliance.overall.status === 'compliant').length
+                    const total = priorityRecords.length
+                    return {
+                      priority: p.charAt(0).toUpperCase() + p.slice(1),
+                      compliance: total > 0 ? Math.round((compliant / total) * 100) : 0,
+                      total
+                    }
+                  }).filter(d => d.total > 0)
+                }>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="priority" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="compliance" fill="#3B82F6" name="Compliance %" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">

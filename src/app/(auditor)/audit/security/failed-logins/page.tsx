@@ -50,18 +50,24 @@ export default function FailedLoginsPage() {
       
       const params: any = {
         page,
-        limit: 50
+        limit: 50,
+        dateRange
       }
-      
+
       if (selectedStatus !== 'all') params.status = selectedStatus
       if (searchQuery) params.search = searchQuery
-      
+
       const data = await superAdminApi.get(`/audit/security/failed-logins?${new URLSearchParams(params)}`)
-      
+
       if (data.success) {
-        setFailedLogins(data.data.data)
-        setTotalPages(Math.ceil(data.data.data.length / 50))
-        
+        setFailedLogins(data.data?.data || [])
+        const pagination = data.data?.pagination
+        if (pagination) {
+          setTotalPages(pagination.totalPages || 1)
+        } else {
+          setTotalPages(Math.ceil((data.data?.data?.length || 0) / 50))
+        }
+
         console.log('✅ Successfully loaded real failed logins data')
       } else {
         throw new Error(data.message || 'Failed to fetch failed login attempts')
