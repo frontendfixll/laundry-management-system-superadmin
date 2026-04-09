@@ -58,6 +58,7 @@ export default function CrossTenantRolesPage() {
   const [selectedRisk, setSelectedRisk] = useState('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [selectedTenant, setSelectedTenant] = useState<TenantRoleAnalysis | null>(null)
   const [stats, setStats] = useState<Stats>({
     totalTenants: 0,
     highRiskTenants: 0,
@@ -83,390 +84,63 @@ export default function CrossTenantRolesPage() {
       const data = await superAdminApi.get(`/audit/rbac/cross-tenant?${params}`)
 
       if (data.success) {
-        setTenants(data.data.data)
-        setTotalPages(Math.ceil(data.data.total / 20))
-        if (data.data.stats) {
-          setStats(data.data.stats)
+        const rawData = data.data?.data || data.data || []
+        const tenantsArr = Array.isArray(rawData) ? rawData : []
+
+        // Transform backend data to frontend shape
+        const transformed: TenantRoleAnalysis[] = tenantsArr.map((t: any) => {
+          const adminCount = t.adminCount || 0
+          const rolesList = Array.isArray(t.roles) ? t.roles : []
+          // Deduplicate roles and count
+          const roleMap: Record<string, number> = {}
+          rolesList.forEach((r: string) => { roleMap[r] = (roleMap[r] || 0) + 1 })
+          const rolesFormatted = Object.entries(roleMap).map(([name, count]) => ({
+            name: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '),
+            slug: name,
+            userCount: count,
+            permissions: [] as string[]
+          }))
+
+          return {
+            _id: t._id?.toString() || '',
+            tenantId: t._id?.toString() || '',
+            businessName: t.businessName || 'Unknown',
+            subdomain: t.subdomain || '',
+            adminCount,
+            roles: rolesFormatted,
+            totalUsers: adminCount,
+            riskLevel: adminCount > 5 ? 'high' : adminCount > 3 ? 'medium' : 'low' as any,
+            lastRoleChange: t.updatedAt || t.createdAt || new Date().toISOString(),
+            privilegeEscalationRisk: adminCount > 5,
+            crossTenantAccess: false
+          }
+        })
+
+        // Apply frontend filters
+        let filtered = transformed
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase()
+          filtered = filtered.filter(t => t.businessName.toLowerCase().includes(q) || t.subdomain.toLowerCase().includes(q))
         }
+        if (selectedRisk !== 'all') {
+          filtered = filtered.filter(t => t.riskLevel === selectedRisk)
+        }
+
+        setTenants(filtered)
+        setTotalPages(Math.ceil(filtered.length / 20))
+        setStats({
+          totalTenants: transformed.length,
+          highRiskTenants: transformed.filter(t => t.riskLevel === 'high').length,
+          crossTenantAccessCount: 0,
+          avgRolesPerTenant: transformed.length > 0 ? parseFloat((transformed.reduce((s, t) => s + t.roles.length, 0) / transformed.length).toFixed(1)) : 0
+        })
       } else {
         throw new Error(data.message || 'Failed to fetch cross-tenant role data')
       }
     } catch (error) {
       console.error('Error fetching cross-tenant role data:', error)
-      // Fallback to mock data
-      const mockTenants: TenantRoleAnalysis[] = [
-        {
-          _id: '1',
-          tenantId: 'tenant-001',
-          businessName: 'SparkleWash Laundry Co.',
-          subdomain: 'sparklewash',
-          adminCount: 3,
-          roles: [
-            {
-              name: 'Owner',
-              slug: 'owner',
-              userCount: 1,
-              permissions: [
-                'manage_all',
-                'manage_users',
-                'manage_billing',
-                'manage_orders',
-                'view_analytics',
-                'manage_settings',
-                'manage_roles',
-                'export_data'
-              ]
-            },
-            {
-              name: 'Store Manager',
-              slug: 'store-manager',
-              userCount: 2,
-              permissions: [
-                'manage_orders',
-                'view_analytics',
-                'manage_staff',
-                'manage_inventory',
-                'view_reports'
-              ]
-            },
-            {
-              name: 'Front Desk Staff',
-              slug: 'front-desk-staff',
-              userCount: 5,
-              permissions: [
-                'create_orders',
-                'view_orders',
-                'manage_customers',
-                'process_payments'
-              ]
-            },
-            {
-              name: 'Delivery Driver',
-              slug: 'delivery-driver',
-              userCount: 4,
-              permissions: [
-                'view_assigned_orders',
-                'update_delivery_status',
-                'view_route'
-              ]
-            }
-          ],
-          totalUsers: 12,
-          riskLevel: 'low',
-          lastRoleChange: '2026-03-10T14:30:00Z',
-          privilegeEscalationRisk: false,
-          crossTenantAccess: false
-        },
-        {
-          _id: '2',
-          tenantId: 'tenant-002',
-          businessName: 'FreshFold Express',
-          subdomain: 'freshfold',
-          adminCount: 7,
-          roles: [
-            {
-              name: 'Super Admin',
-              slug: 'super-admin',
-              userCount: 3,
-              permissions: [
-                'manage_all',
-                'manage_users',
-                'manage_billing',
-                'manage_orders',
-                'view_analytics',
-                'manage_settings',
-                'manage_roles',
-                'export_data',
-                'delete_data',
-                'api_access'
-              ]
-            },
-            {
-              name: 'Admin',
-              slug: 'admin',
-              userCount: 4,
-              permissions: [
-                'manage_users',
-                'manage_orders',
-                'view_analytics',
-                'manage_settings',
-                'manage_roles',
-                'export_data'
-              ]
-            },
-            {
-              name: 'Operator',
-              slug: 'operator',
-              userCount: 8,
-              permissions: [
-                'manage_orders',
-                'view_analytics',
-                'manage_inventory'
-              ]
-            }
-          ],
-          totalUsers: 15,
-          riskLevel: 'high',
-          lastRoleChange: '2026-03-16T09:15:00Z',
-          privilegeEscalationRisk: true,
-          crossTenantAccess: true
-        },
-        {
-          _id: '3',
-          tenantId: 'tenant-003',
-          businessName: 'CleanPress Laundromat',
-          subdomain: 'cleanpress',
-          adminCount: 2,
-          roles: [
-            {
-              name: 'Owner',
-              slug: 'owner',
-              userCount: 1,
-              permissions: [
-                'manage_all',
-                'manage_users',
-                'manage_billing',
-                'manage_orders',
-                'view_analytics',
-                'manage_settings'
-              ]
-            },
-            {
-              name: 'Manager',
-              slug: 'manager',
-              userCount: 1,
-              permissions: [
-                'manage_orders',
-                'view_analytics',
-                'manage_staff',
-                'manage_inventory',
-                'view_reports',
-                'manage_customers'
-              ]
-            },
-            {
-              name: 'Cashier',
-              slug: 'cashier',
-              userCount: 3,
-              permissions: [
-                'create_orders',
-                'view_orders',
-                'process_payments'
-              ]
-            },
-            {
-              name: 'Washer',
-              slug: 'washer',
-              userCount: 6,
-              permissions: [
-                'view_assigned_orders',
-                'update_order_status'
-              ]
-            },
-            {
-              name: 'Delivery',
-              slug: 'delivery',
-              userCount: 2,
-              permissions: [
-                'view_assigned_orders',
-                'update_delivery_status'
-              ]
-            }
-          ],
-          totalUsers: 13,
-          riskLevel: 'low',
-          lastRoleChange: '2026-02-28T11:45:00Z',
-          privilegeEscalationRisk: false,
-          crossTenantAccess: false
-        },
-        {
-          _id: '4',
-          tenantId: 'tenant-004',
-          businessName: 'QuickDry Garment Care',
-          subdomain: 'quickdry',
-          adminCount: 4,
-          roles: [
-            {
-              name: 'Administrator',
-              slug: 'administrator',
-              userCount: 2,
-              permissions: [
-                'manage_all',
-                'manage_users',
-                'manage_billing',
-                'manage_orders',
-                'view_analytics',
-                'manage_settings',
-                'manage_roles',
-                'export_data',
-                'api_access'
-              ]
-            },
-            {
-              name: 'Shift Lead',
-              slug: 'shift-lead',
-              userCount: 2,
-              permissions: [
-                'manage_orders',
-                'view_analytics',
-                'manage_staff',
-                'manage_inventory',
-                'approve_refunds'
-              ]
-            },
-            {
-              name: 'Staff',
-              slug: 'staff',
-              userCount: 7,
-              permissions: [
-                'create_orders',
-                'view_orders',
-                'process_payments',
-                'manage_customers'
-              ]
-            }
-          ],
-          totalUsers: 11,
-          riskLevel: 'medium',
-          lastRoleChange: '2026-03-14T16:20:00Z',
-          privilegeEscalationRisk: true,
-          crossTenantAccess: false
-        },
-        {
-          _id: '5',
-          tenantId: 'tenant-005',
-          businessName: 'UrbanWash Premium Services',
-          subdomain: 'urbanwash',
-          adminCount: 5,
-          roles: [
-            {
-              name: 'Platform Admin',
-              slug: 'platform-admin',
-              userCount: 2,
-              permissions: [
-                'manage_all',
-                'manage_users',
-                'manage_billing',
-                'manage_orders',
-                'view_analytics',
-                'manage_settings',
-                'manage_roles',
-                'export_data',
-                'delete_data',
-                'api_access',
-                'cross_tenant_view'
-              ]
-            },
-            {
-              name: 'Branch Manager',
-              slug: 'branch-manager',
-              userCount: 3,
-              permissions: [
-                'manage_orders',
-                'view_analytics',
-                'manage_staff',
-                'manage_inventory',
-                'view_reports',
-                'approve_refunds'
-              ]
-            },
-            {
-              name: 'Customer Service',
-              slug: 'customer-service',
-              userCount: 4,
-              permissions: [
-                'view_orders',
-                'manage_customers',
-                'create_tickets',
-                'process_payments'
-              ]
-            },
-            {
-              name: 'Warehouse Staff',
-              slug: 'warehouse-staff',
-              userCount: 6,
-              permissions: [
-                'view_assigned_orders',
-                'update_order_status',
-                'manage_inventory'
-              ]
-            }
-          ],
-          totalUsers: 15,
-          riskLevel: 'high',
-          lastRoleChange: '2026-03-15T22:10:00Z',
-          privilegeEscalationRisk: true,
-          crossTenantAccess: true
-        },
-        {
-          _id: '6',
-          tenantId: 'tenant-006',
-          businessName: 'BrightSpin Laundry Hub',
-          subdomain: 'brightspin',
-          adminCount: 2,
-          roles: [
-            {
-              name: 'Owner',
-              slug: 'owner',
-              userCount: 1,
-              permissions: [
-                'manage_all',
-                'manage_users',
-                'manage_billing',
-                'manage_orders',
-                'view_analytics',
-                'manage_settings'
-              ]
-            },
-            {
-              name: 'Attendant',
-              slug: 'attendant',
-              userCount: 4,
-              permissions: [
-                'create_orders',
-                'view_orders',
-                'process_payments',
-                'manage_customers'
-              ]
-            }
-          ],
-          totalUsers: 5,
-          riskLevel: 'low',
-          lastRoleChange: '2026-01-20T08:00:00Z',
-          privilegeEscalationRisk: false,
-          crossTenantAccess: false
-        }
-      ]
-
-      // Apply filters to mock data
-      let filtered = mockTenants
-
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        filtered = filtered.filter(
-          (t) =>
-            t.businessName.toLowerCase().includes(query) ||
-            t.subdomain.toLowerCase().includes(query) ||
-            t.tenantId.toLowerCase().includes(query)
-        )
-      }
-
-      if (selectedRisk !== 'all') {
-        filtered = filtered.filter((t) => t.riskLevel === selectedRisk)
-      }
-
-      setTenants(filtered)
-      setTotalPages(Math.ceil(filtered.length / 20))
-
-      // Calculate stats from mock data
-      setStats({
-        totalTenants: mockTenants.length,
-        highRiskTenants: mockTenants.filter((t) => t.riskLevel === 'high').length,
-        crossTenantAccessCount: mockTenants.filter((t) => t.crossTenantAccess).length,
-        avgRolesPerTenant: parseFloat(
-          (mockTenants.reduce((sum, t) => sum + t.roles.length, 0) / mockTenants.length).toFixed(1)
-        )
-      })
+      setTenants([])
+      setTotalPages(1)
     } finally {
       setLoading(false)
     }
@@ -779,7 +453,10 @@ export default function CrossTenantRolesPage() {
                 <div className="text-xs text-gray-500">
                   Last role change: {formatDateTime(tenant.lastRoleChange)}
                 </div>
-                <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center">
+                <button
+                  onClick={() => setSelectedTenant(tenant)}
+                  className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
+                >
                   <Eye className="w-4 h-4 mr-1" />
                   View Full Audit
                 </button>
@@ -788,6 +465,68 @@ export default function CrossTenantRolesPage() {
           ))
         )}
       </div>
+
+      {/* Tenant Detail Modal */}
+      {selectedTenant && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedTenant(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold">{selectedTenant.businessName}</h3>
+                  <p className="text-indigo-200 text-sm font-mono">{selectedTenant.subdomain}.laundrylobby.com</p>
+                </div>
+                <button onClick={() => setSelectedTenant(null)} className="text-white hover:text-indigo-200 text-2xl leading-none">&times;</button>
+              </div>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-indigo-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-indigo-700">{selectedTenant.totalUsers}</p>
+                  <p className="text-xs text-indigo-600">Total Users</p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-purple-700">{selectedTenant.adminCount}</p>
+                  <p className="text-xs text-purple-600">Admins</p>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-blue-700">{selectedTenant.roles.length}</p>
+                  <p className="text-xs text-blue-600">Roles</p>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${getRiskColor(selectedTenant.riskLevel)}`}>
+                  {selectedTenant.riskLevel} Risk
+                </span>
+                {selectedTenant.privilegeEscalationRisk && (
+                  <span className="px-3 py-1 rounded-full text-xs font-medium text-orange-700 bg-orange-100">Escalation Risk</span>
+                )}
+                {selectedTenant.crossTenantAccess && (
+                  <span className="px-3 py-1 rounded-full text-xs font-medium text-red-700 bg-red-100">Cross-Tenant Access</span>
+                )}
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">Roles ({selectedTenant.roles.length})</h4>
+                <div className="space-y-2">
+                  {selectedTenant.roles.map((role, i) => (
+                    <div key={i} className="bg-gray-50 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-900">{role.name}</p>
+                        <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{role.userCount} users</span>
+                      </div>
+                      <p className="text-xs text-gray-500 font-mono">{role.slug}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                <p className="text-gray-500 text-xs">Tenant ID</p>
+                <p className="font-mono text-gray-800">{selectedTenant.tenantId}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
