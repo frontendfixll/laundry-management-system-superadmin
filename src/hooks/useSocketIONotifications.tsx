@@ -74,7 +74,6 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { user, token } = useAuthStore();
 
-  // Calculate stats from notifications
   const calculateStats = useCallback((notifs: Notification[]) => {
     const stats: NotificationStats = {
       total: notifs.length,
@@ -94,7 +93,7 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
     return stats;
   }, []);
 
-  // Acknowledge notification (for P0/P1)
+  // Acknowledge P0/P1 notifications back to the server
   const acknowledgeNotification = useCallback((notificationId: string) => {
     if (socketRef.current?.connected) {
       socketRef.current.emit('notification_ack', {
@@ -104,42 +103,16 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
     }
   }, []);
 
-  // Play notification sound for SuperAdmin
-  const playNotificationSound = useCallback((priority: string) => {
-    // try {
-    //   let soundFile = '/notification-sound.mp3';
+  // Notification sound disabled; keep the callback signature so callers do not break.
+  const playNotificationSound = useCallback((priority: string) => {}, []);
 
-    //   // Different sounds for different priorities
-    //   if (priority === 'P0') {
-    //     soundFile = '/critical-alert.mp3'; // Fallback to default if not found
-    //   } else if (priority === 'P1') {
-    //     soundFile = '/high-priority.mp3'; // Fallback to default if not found
-    //   }
-
-    //   const audio = new Audio(soundFile);
-    //   audio.volume = priority === 'P0' ? 0.8 : 0.5;
-    //   audio.play().catch(() => {
-    //     // Fallback to default sound
-    //     const fallbackAudio = new Audio('/notification-sound.mp3');
-    //     fallbackAudio.volume = 0.5;
-    //     fallbackAudio.play().catch(() => { });
-    //   });
-    // } catch (error) {
-    //   // console.warn('Could not play notification sound:', error);
-    // }
-  }, []);
-
-  // Track which notification IDs have already shown a toast to prevent duplicates
   const shownToastIdsRef = useRef<Set<string>>(new Set());
 
-  // Handle new notification with SuperAdmin-specific treatment
   const handleNewNotification = useCallback((notification: Notification, { silent = false }: { silent?: boolean } = {}) => {
-    // Ensure priority exists
     if (!notification.priority) {
       notification.priority = 'P3';
     }
 
-    // Ensure eventType and type exist and are synced
     if (!notification.eventType && (notification as any).type) {
       notification.eventType = (notification as any).type;
     }
@@ -239,7 +212,6 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
     );
   }, [calculateStats, playNotificationSound]);
 
-  // Fetch initial notifications from SuperAdmin API
   const fetchNotifications = useCallback(async () => {
     if (!user || !token) return;
 
@@ -267,7 +239,6 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
     }
   }, [user, token, calculateStats]);
 
-  // Connect to Socket.IO server with SuperAdmin context
   const connect = useCallback(() => {
     if (!user || !token || socketRef.current?.connected) {
       return;
@@ -293,7 +264,6 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
 
       socketRef.current = socket;
 
-      // Connection events
       socket.on('connect', () => {
         // console.log(`✅ SuperAdmin Socket.IO connected: ${socket.id} for user: ${user?._id || 'unknown'}`);
         setIsConnected(true);
@@ -327,10 +297,9 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
         scheduleReconnect();
       });
 
-      // Single notification event handler - all notifications come through 'notification' event
       socket.on('notification', (n: Notification) => handleNewNotification(n));
 
-      // High priority notifications (separate channel from relay)
+      // Separate channel so PriorityNotificationHandler can react independently
       socket.on('high_priority_notification', (notification: Notification) => {
         handleNewNotification({
           ...notification,
@@ -338,7 +307,6 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
         });
       });
 
-      // Platform-wide events
       socket.on('tenant_created', (data) => {
         handleNewNotification({
           id: `tenant_created_${Date.now()}`,
@@ -380,13 +348,11 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
         });
       });
 
-      // Acknowledgment confirmation
       socket.on('ack_confirmed', (data) => {
         // console.log('✅ SuperAdmin acknowledgment confirmed:', data);
         toast.success('Critical alert acknowledged');
       });
 
-      // Error handling
       socket.on('ack_error', (error) => {
         // console.error('❌ SuperAdmin acknowledgment error:', error);
         toast.error('Failed to acknowledge alert');
@@ -400,7 +366,6 @@ export const useSocketIONotifications = (): UseSocketIONotificationsReturn => {
     }
   }, [user, token, handleNewNotification, fetchNotifications]);
 
-  // Schedule reconnection
   const scheduleReconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);

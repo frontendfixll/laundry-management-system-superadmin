@@ -40,35 +40,10 @@ export function useNotifications(): UseNotificationsReturn {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<{ [key: string]: HTMLAudioElement }>({});
 
-  // Preload notification sounds
-  useEffect(() => {
-    // if (typeof window !== 'undefined') {
-    //   audioRef.current = {
-    //     success: new Audio('/sounds/success.mp3'),
-    //     error: new Audio('/sounds/error.mp3'),
-    //     warning: new Audio('/sounds/warning.mp3'),
-    //     info: new Audio('/sounds/notification.mp3'),
-    //   };
+  // Notification sounds are disabled. Hook retains the audioRef and callback
+  // shape so other code paths do not break if they are re-enabled later.
+  const playNotificationSound = useCallback((severity: string) => {}, []);
 
-    //   // Set volume
-    //   Object.values(audioRef.current).forEach(audio => {
-    //     audio.volume = 0.5;
-    //   });
-    // }
-  }, []);
-
-  // Play notification sound
-  const playNotificationSound = useCallback((severity: string) => {
-    // try {
-    //   const audio = audioRef.current[severity] || audioRef.current.info;
-    //   audio.currentTime = 0;
-    //   audio.play().catch(err => { /* console.log('Audio play failed:', err) */ });
-    // } catch (error) {
-    //   // console.log('Sound playback error:', error);
-    // }
-  }, []);
-
-  // Get token (support auth-storage from unified/sales login)
   const getToken = useCallback((): string | null => {
     if (typeof window === 'undefined') return null;
     const authStorage = localStorage.getItem('auth-storage');
