@@ -41,21 +41,7 @@ export function PriorityNotificationHandler({
       const latest = criticalNotifications[0]
       setCriticalModal(latest)
 
-      // Play critical alert sound
-      // try {
-      //   const audio = new Audio('/critical-alert.mp3')
-      //   audio.volume = 0.8
-      //   audio.play().catch(() => {
-      //     // Fallback to default sound
-      //     const fallbackAudio = new Audio('/notification-sound.mp3')
-      //     fallbackAudio.volume = 0.8
-      //     fallbackAudio.play().catch(() => {})
-      //   })
-      // } catch (error) {
-      //   // console.warn('Could not play critical alert sound:', error)
-      // }
-
-      // Browser notification for critical alerts
+      // Critical alert sound is disabled — browser notification is sufficient.
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(`🚨 CRITICAL PLATFORM ALERT`, {
           body: `${latest.title}: ${latest.message}`,
@@ -171,7 +157,6 @@ export function PriorityNotificationHandler({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl border-4 border-red-500 animate-in zoom-in-95 duration-300">
-        {/* Critical Alert Header */}
         <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -194,7 +179,6 @@ export function PriorityNotificationHandler({
           </div>
         </div>
 
-        {/* Alert Content */}
         <div className="p-6 space-y-4">
           <div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -205,7 +189,6 @@ export function PriorityNotificationHandler({
             </p>
           </div>
 
-          {/* Metadata */}
           {criticalModal.metadata && (
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
               {criticalModal.metadata.tenantCount && (
@@ -229,7 +212,6 @@ export function PriorityNotificationHandler({
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <button
               onClick={() => handleAcknowledge(criticalModal.id)}
@@ -246,7 +228,6 @@ export function PriorityNotificationHandler({
             </button>
           </div>
 
-          {/* Warning */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />

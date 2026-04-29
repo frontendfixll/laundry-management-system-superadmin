@@ -4,7 +4,7 @@ class SuperAdminAPI {
   private getAuthHeaders() {
     let token = null
 
-    // Try unified auth-storage (new unified store)
+    // Lookup order: unified auth-storage → legacy superadmin-storage → legacy flat keys
     const authData = localStorage.getItem('auth-storage')
     if (authData) {
       try {
@@ -15,7 +15,6 @@ class SuperAdminAPI {
       }
     }
 
-    // Fallback to legacy superadmin-storage
     if (!token) {
       const superAdminData = localStorage.getItem('superadmin-storage')
       if (superAdminData) {
@@ -28,7 +27,6 @@ class SuperAdminAPI {
       }
     }
 
-    // Fallback to legacy token keys
     if (!token) {
       token = localStorage.getItem('superadmin-token') || localStorage.getItem('superAdminToken') || localStorage.getItem('token')
     }
@@ -57,18 +55,14 @@ class SuperAdminAPI {
     }
 
     if (!response.ok) {
-      // Handle 401 Unauthorized - auto logout
       if (response.status === 401) {
-        // console.log('🔴 401 Unauthorized - clearing auth data')
         this.clearAuthData()
-        // Redirect to login
         if (typeof window !== 'undefined') {
           window.location.href = '/auth/login?expired=true'
         }
         throw new Error('Session expired. Please login again.')
       }
 
-      // Show validation errors if available
       if (data.errors && Array.isArray(data.errors)) {
         const errorMessages = data.errors.map((e: any) => e.msg || e.message).join(', ')
         throw new Error(errorMessages || data.message || 'Validation failed')
@@ -79,11 +73,9 @@ class SuperAdminAPI {
     return data
   }
 
-  // Clear all auth data from localStorage
   private clearAuthData() {
     if (typeof window === 'undefined') return
 
-    // Clear unified auth storage
     const authData = localStorage.getItem('auth-storage')
     if (authData) {
       try {
